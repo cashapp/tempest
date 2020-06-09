@@ -2,12 +2,10 @@ package app.cash.tempest
 
 import app.cash.tempest.internal.LogicalDbFactory
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDeleteExpression
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.ConsistentReads
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.ConsistentReads.EVENTUAL
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBSaveExpression
 import javax.annotation.CheckReturnValue
 import kotlin.reflect.KClass
 
@@ -110,7 +108,7 @@ interface LogicalDb : LogicalTable.Factory {
  * using strongly typed data classes.
  */
 interface LogicalTable<RI : Any> :
-    Scannable<RI, RI>,
+  Scannable<RI, RI>,
   View<RI, RI>,
   InlineView.Factory,
   SecondaryIndex.Factory {
@@ -123,77 +121,7 @@ interface LogicalTable<RI : Any> :
   }
 }
 
-interface View<K : Any, I : Any> {
-  /**
-   * Returns an item whose keys match those of the prototype key object given, or null if no
-   * such item exists.
-   */
-  fun load(key: K, consistentReads: ConsistentReads = EVENTUAL): I?
-
-  /**
-   * Saves an item in DynamoDB. This method uses [DynamoDBMapperConfig.SaveBehavior.PUT] to clear
-   * and replace all attributes, including unmodeled ones, on save. Partial update, i.e.
-   * [DynamoDBMapperConfig.SaveBehavior.UPDATE_SKIP_NULL_ATTRIBUTES], is not supported yet.
-   *
-   * Any options specified in the [saveExpression] parameter will be overlaid on any constraints due
-   * to versioned attributes.
-   *
-   * If [ignoreVersionConstraints] is true, version attributes will be discarded.
-   */
-  fun save(
-    item: I,
-    saveExpression: DynamoDBSaveExpression? = null,
-    ignoreVersionConstraints: Boolean = false
-  )
-
-  /**
-   * Deletes the item identified by [key] from its DynamoDB table using [deleteExpression]. Any
-   * options specified in the [deleteExpression] parameter will be overlaid on any constraints due
-   * to versioned attributes.
-   *
-   * If the item to be deleted has versioned attributes, load the item and use [delete] instead or
-   * use [ignoreVersionConstraints] to discard them.
-   */
-  fun deleteKey(
-    key: K,
-    deleteExpression: DynamoDBDeleteExpression? = null,
-    ignoreVersionConstraints: Boolean = false
-  )
-
-  /**
-   * Deletes [item] from its DynamoDB table using [deleteExpression]. Any options specified in the
-   * [deleteExpression] parameter will be overlaid on any constraints due to versioned attributes.
-   *
-   * If [ignoreVersionConstraints] is true, version attributes will not be considered when deleting
-   * the object.
-   */
-  fun delete(
-    item: I,
-    deleteExpression: DynamoDBDeleteExpression? = null,
-    ignoreVersionConstraints: Boolean = false
-  )
-}
-
-interface Queryable<K : Any, I : Any> {
-  /** Reads up to the [pageSize] items or a maximum of 1 MB of data. */
-  fun query(
-    startInclusive: K,
-    endExclusive: K,
-    consistentRead: Boolean = false,
-    asc: Boolean = true,
-    pageSize: Int = 100,
-    initialOffset: Offset<K>? = null
-  ): Page<K, I>
-}
-
-interface Scannable<K : Any, I : Any> {
-  fun scan(): Page<K, I> = TODO("")
-  fun parallelScan(threads: Int): Page<K, I> = TODO("")
-  fun count(): Int = TODO("")
-}
-
-interface InlineView<K : Any, I : Any> : View<K, I>,
-  Queryable<K, I> {
+interface InlineView<K : Any, I : Any> : View<K, I>, Queryable<K, I> {
 
   interface Factory {
     fun <K : Any, I : Any> inlineView(
@@ -203,8 +131,7 @@ interface InlineView<K : Any, I : Any> : View<K, I>,
   }
 }
 
-interface SecondaryIndex<K : Any, I : Any> : Scannable<K, I>,
-  Queryable<K, I> {
+interface SecondaryIndex<K : Any, I : Any> : Scannable<K, I>, Queryable<K, I> {
 
   interface Factory {
     fun <K : Any, I : Any> secondaryIndex(
