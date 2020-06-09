@@ -1,0 +1,79 @@
+buildscript {
+  repositories {
+    mavenCentral()
+    jcenter()
+  }
+
+  apply from: new File("./dependencies.gradle")
+
+  dependencies {
+    classpath dep.junitGradlePlugin
+    classpath dep.kotlinGradlePlugin
+    classpath dep.mavenPublishGradlePlugin
+    classpath dep.shadowJarPlugin
+    classpath dep.spotlessPlugin
+    classpath dep.wireGradlePlugin
+  }
+}
+
+subprojects { subProject ->
+  apply plugin: 'java'
+  apply plugin: 'kotlin'
+  apply plugin: 'com.diffplug.gradle.spotless'
+  apply plugin: 'org.jetbrains.dokka'
+  apply plugin: 'com.vanniktech.maven.publish'
+
+  compileKotlin {
+    kotlinOptions {
+      jvmTarget = JavaVersion.VERSION_1_8
+    }
+  }
+
+  compileTestKotlin {
+    kotlinOptions {
+      jvmTarget = JavaVersion.VERSION_1_8
+    }
+  }
+
+  compileJava {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+  }
+
+  spotless {
+    kotlin {
+      target "**/*.kt"
+      ktlint(dep.ktlintVersion).userData(['indent_size': '2', 'continuation_indent_size': '2'])
+    }
+  }
+  compileKotlin.dependsOn 'spotlessKotlinApply'
+
+  repositories {
+    mavenCentral()
+    jcenter()
+  }
+
+  test {
+    useJUnitPlatform()
+    testLogging {
+      events "started", "passed", "skipped", "failed"
+      exceptionFormat = 'full'
+      showExceptions = true
+      showStackTraces = true
+    }
+  }
+
+  // SLF4J uses the classpath to decide which logger to use! Banish the Log4J to prevent this:
+  // org.apache.logging.slf4j.Log4jLogger cannot be cast to class ch.qos.logback.classic.Logger
+  configurations.all {
+    exclude group: 'org.apache.logging.log4j', module: 'log4j-slf4j-impl'
+  }
+
+  // Workaround the Gradle bug resolving multiplatform dependencies.
+  // https://github.com/square/okio/issues/647
+  configurations.all { configuration ->
+    if (name.contains('kapt') || name.contains("wire") || name.contains("proto")) {
+      attributes.attribute(Usage.USAGE_ATTRIBUTE, subProject.objects.named(Usage.class, Usage.JAVA_RUNTIME))
+    }
+  }
+}

@@ -1,0 +1,15 @@
+apply plugin: 'kotlin'
+
+dependencies {
+  api dep.awsApi
+  api dep.findbugsJsr305
+  implementation dep.kotlinReflection
+  implementation dep.kotlinStdLib
+  implementation dep.okio
+
+  testImplementation dep.miskAwsDynamodbTesting
+  testImplementation dep.assertj
+  testImplementation dep.miskTesting
+  testImplementation dep.junitApi
+  testImplementation dep.junitEngine
+}
