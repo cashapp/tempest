@@ -16,77 +16,96 @@
 
 package app.cash.tempest.internal
 
+import app.cash.tempest.BeginsWith
+import app.cash.tempest.Between
+import app.cash.tempest.KeyCondition
 import app.cash.tempest.Offset
 import app.cash.tempest.Page
 import app.cash.tempest.Queryable
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperTableModel
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
+import com.amazonaws.services.dynamodbv2.model.ComparisonOperator.BEGINS_WITH
 import com.amazonaws.services.dynamodbv2.model.ComparisonOperator.BETWEEN
 import com.amazonaws.services.dynamodbv2.model.Condition
 import com.amazonaws.services.dynamodbv2.model.ReturnConsumedCapacity
 import com.amazonaws.services.dynamodbv2.model.Select.SPECIFIC_ATTRIBUTES
+import kotlin.reflect.KClass
 
 internal class DynamoDbQueryable<K : Any, I : Any>(
-  private val keyType: KeyType,
-  private val itemType: ItemType,
-  private val rawItemType: RawItemType,
+  private val hashKeyName: String,
+  private val rangeKeyName: String,
+  private val attributeNames: Set<String>,
+  private val keyCodec: Codec<K, Any>,
+  private val itemCodec: Codec<I, Any>,
+  private val rawType: KClass<Any>,
+  private val tableModel: DynamoDBMapperTableModel<Any>,
   private val dynamoDbMapper: DynamoDBMapper
 ) : Queryable<K, I> {
-  private val tableModel = rawItemType.tableModel
 
   override fun query(
-    startInclusive: K,
-    endExclusive: K,
+    keyCondition: KeyCondition<K>,
     consistentRead: Boolean,
     asc: Boolean,
     pageSize: Int,
     returnConsumedCapacity: ReturnConsumedCapacity,
     initialOffset: Offset<K>?
   ): Page<K, I> {
-    requireNotNull(
-        itemType.primaryIndex.rangeKeyName) { "You can query a table or an index only if it has a composite primary key (partition key and sort key)" }
-    val start = keyType.codec.toDb(startInclusive)
-    val end = keyType.codec.toDb(endExclusive)
-    val startAttributes = tableModel.convert(start)
-    val endAttributes = tableModel.convert(end)
     val query = DynamoDBQueryExpression<Any>()
-    val (hashKeyName, rangeKeyName) = if (keyType.secondaryIndexName != null) {
-      query.withIndexName(keyType.secondaryIndexName)
-      val index = requireNotNull(itemType.secondaryIndexes[keyType.secondaryIndexName])
-      index.hashKeyName to index.rangeKeyName
-    } else {
-      itemType.primaryIndex.hashKeyName to itemType.primaryIndex.rangeKeyName
-    }
-    require(startAttributes[hashKeyName] == endAttributes[hashKeyName])
-    val hashKeyValue = tableModel.unconvert(mapOf(hashKeyName to startAttributes[hashKeyName]))
-    query.withHashKeyValues(hashKeyValue)
-        .withRangeKeyCondition(rangeKeyName,
-            Condition()
-                .withComparisonOperator(BETWEEN)
-                .withAttributeValueList(startAttributes[rangeKeyName], endAttributes[rangeKeyName]))
+    query.apply(keyCondition)
     query.isScanIndexForward = asc
     query.isConsistentRead = consistentRead
     query.limit = pageSize
     query.withSelect(SPECIFIC_ATTRIBUTES)
-    query.projectionExpression = itemType.attributeNames.joinToString(", ")
+    query.projectionExpression = attributeNames.joinToString(", ")
     if (initialOffset != null) {
       query.exclusiveStartKey = initialOffset.encodeOffset()
     }
-    val page = dynamoDbMapper.queryPage(rawItemType.type.java, query)
-    val contents = page.results.map { itemType.codec.toApp(it) }
-    val offset = page.lastEvaluatedKey?.decodeOffset<K>()
-    return Page(contents, offset, page.scannedCount, page.consumedCapacity) as Page<K, I>
+    val page = dynamoDbMapper.queryPage(rawType.java, query)
+    val contents = page.results.map { itemCodec.toApp(it) }
+    val offset = page.lastEvaluatedKey?.decodeOffset()
+    return Page(contents, offset, page.scannedCount, page.consumedCapacity)
   }
 
-  private fun <K : Any> Offset<K>.encodeOffset(): Map<String, AttributeValue> {
-    val offsetKey = keyType.codec.toDb(key)
+  private fun DynamoDBQueryExpression<Any>.apply(keyCondition: KeyCondition<K>) = apply {
+    when (keyCondition) {
+      is BeginsWith -> {
+        val value = keyCodec.toDb(keyCondition.prefix)
+        val valueAttributes = tableModel.convert(value)
+        val hashKeyValue = tableModel.unconvert(mapOf(hashKeyName to valueAttributes[hashKeyName]))
+        withHashKeyValues(hashKeyValue)
+          .withRangeKeyCondition(
+            rangeKeyName,
+            Condition()
+              .withComparisonOperator(BEGINS_WITH)
+              .withAttributeValueList(valueAttributes[rangeKeyName]))
+      }
+      is Between -> {
+        val start = keyCodec.toDb(keyCondition.startInclusive)
+        val end = keyCodec.toDb(keyCondition.endInclusive)
+        val startAttributes = tableModel.convert(start)
+        val endAttributes = tableModel.convert(end)
+        require(startAttributes[hashKeyName] == endAttributes[hashKeyName])
+        val hashKeyValue = tableModel.unconvert(mapOf(hashKeyName to startAttributes[hashKeyName]))
+        withHashKeyValues(hashKeyValue)
+          .withRangeKeyCondition(
+            rangeKeyName,
+            Condition()
+              .withComparisonOperator(BETWEEN)
+              .withAttributeValueList(startAttributes[rangeKeyName], endAttributes[rangeKeyName]))
+      }
+    }
+  }
+
+  private fun Offset<K>.encodeOffset(): Map<String, AttributeValue> {
+    val offsetKey = keyCodec.toDb(key)
     return tableModel.convert(offsetKey)
   }
 
-  private fun <K : Any> Map<String, AttributeValue>.decodeOffset(): Offset<K> {
+  private fun Map<String, AttributeValue>.decodeOffset(): Offset<K> {
     val offsetKeyAttributes = tableModel.unconvert(this)
-    val offsetKey = keyType.codec.toApp(offsetKeyAttributes) as K
+    val offsetKey = keyCodec.toApp(offsetKeyAttributes)
     return Offset(offsetKey)
   }
 }

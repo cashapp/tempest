@@ -42,43 +42,62 @@ class DynamoDbQueryableTest {
   @Inject lateinit var musicDb: MusicDb
 
   @Test
-  fun primaryIndex() {
-    val albumTracks = listOf(
-        AlbumTrack("M_1", "T_1", "Dreamin'", Duration.parse("PT3M28S")),
-        AlbumTrack("M_1", "T_2", "what you do to me", Duration.parse("PT3M24S")),
-        AlbumTrack("M_1", "T_3", "too slow", Duration.parse("PT2M27S"))
-    )
-    for (albumTrack in albumTracks) {
-      musicDb.albums.tracks.save(albumTrack)
-    }
+  fun primaryIndexBetween() {
+    val albumTracks = givenAfterHoursAlbum()
 
-    val page = musicDb.albums.tracks.query(
-        AlbumTrackKey("M_1", "T_1"),
-        AlbumTrackKey("M_1", "T_4"))
-    assertThat(page.offset).isNull()
-    assertThat(page.contents).containsAll(albumTracks)
+    val page1 = musicDb.albums.tracks.query(
+        keyCondition = Between(AlbumTrackKey("M_1", "T_1"), AlbumTrackKey("M_1", "T_1"))
+    )
+    assertThat(page1.offset).isNull()
+    assertThat(page1.contents).containsAll(albumTracks.slice(0..0))
+
+    val page2 = musicDb.albums.tracks.query(
+      keyCondition = Between(AlbumTrackKey("M_1", "T_2"), AlbumTrackKey("M_1", "T_3"))
+    )
+    assertThat(page2.offset).isNull()
+    assertThat(page2.contents).containsAll(albumTracks.slice(1..2))
+
+    val page3 = musicDb.albums.tracks.query(
+      keyCondition = Between(AlbumTrackKey("M_1", "T_1"), AlbumTrackKey("M_1", "T_3"))
+    )
+    assertThat(page3.offset).isNull()
+    assertThat(page3.contents).containsAll(albumTracks)
+  }
+
+  @Test
+  fun primaryIndexBeginsWith() {
+    val albumTracks = givenAfterHoursAlbum()
+
+    val page1 = musicDb.albums.tracks.query(
+      keyCondition = BeginsWith(AlbumTrackKey("M_1", ""))
+    )
+    assertThat(page1.offset).isNull()
+    assertThat(page1.contents).containsAll(albumTracks)
+
+    val page2 = musicDb.albums.tracks.query(
+      keyCondition = BeginsWith(AlbumTrackKey("M_1", "T_"))
+    )
+    assertThat(page2.offset).isNull()
+    assertThat(page2.contents).containsAll(albumTracks)
+
+    val page3 = musicDb.albums.tracks.query(
+      keyCondition = BeginsWith(AlbumTrackKey("M_1", "T_3"))
+    )
+    assertThat(page3.offset).isNull()
+    assertThat(page3.contents).containsAll(albumTracks.slice(2..2))
   }
 
   @Test
   fun primaryIndexPagination() {
-    val albumTracks = listOf(
-        AlbumTrack("M_1", "T_1", "Dreamin'", Duration.parse("PT3M28S")),
-        AlbumTrack("M_1", "T_2", "what you do to me", Duration.parse("PT3M24S")),
-        AlbumTrack("M_1", "T_3", "too slow", Duration.parse("PT2M27S"))
-    )
-    for (albumTrack in albumTracks) {
-      musicDb.albums.tracks.save(albumTrack)
-    }
+    val albumTracks = givenAfterHoursAlbum()
 
     val page1 = musicDb.albums.tracks.query(
-        AlbumTrackKey("M_1", "T_1"),
-        AlbumTrackKey("M_1", "T_4"),
+        keyCondition = BeginsWith(AlbumTrackKey("M_1", "")),
         pageSize = 2)
     assertThat(page1.offset).isNotNull()
     assertThat(page1.contents).containsAll(albumTracks.slice(0..1))
     val page2 = musicDb.albums.tracks.query(
-        AlbumTrackKey("M_1", "T_1"),
-        AlbumTrackKey("M_1", "T_4"),
+        keyCondition = BeginsWith(AlbumTrackKey("M_1", "")),
         pageSize = 2,
         initialOffset = page1.offset)
     assertThat(page2.offset).isNull()
@@ -87,18 +106,10 @@ class DynamoDbQueryableTest {
 
   @Test
   fun primaryIndexDesc() {
-    val albumTracks = listOf(
-        AlbumTrack("M_1", "T_1", "Dreamin'", Duration.parse("PT3M28S")),
-        AlbumTrack("M_1", "T_2", "what you do to me", Duration.parse("PT3M24S")),
-        AlbumTrack("M_1", "T_3", "too slow", Duration.parse("PT2M27S"))
-    )
-    for (albumTrack in albumTracks) {
-      musicDb.albums.tracks.save(albumTrack)
-    }
+    val albumTracks = givenAfterHoursAlbum()
 
     val page = musicDb.albums.tracks.query(
-        AlbumTrackKey("M_1", "T_1"),
-        AlbumTrackKey("M_1", "T_4"),
+        keyCondition = BeginsWith(AlbumTrackKey("M_1", "")),
         asc = false)
     assertThat(page.offset).isNull()
     assertThat(page.contents).containsAll(albumTracks.reversed())
@@ -106,25 +117,16 @@ class DynamoDbQueryableTest {
 
   @Test
   fun primaryIndexDescPagination() {
-    val albumTracks = listOf(
-        AlbumTrack("M_1", "T_1", "Dreamin'", Duration.parse("PT3M28S")),
-        AlbumTrack("M_1", "T_2", "what you do to me", Duration.parse("PT3M24S")),
-        AlbumTrack("M_1", "T_3", "too slow", Duration.parse("PT2M27S"))
-    )
-    for (albumTrack in albumTracks) {
-      musicDb.albums.tracks.save(albumTrack)
-    }
+    val albumTracks = givenAfterHoursAlbum()
 
     val page1 = musicDb.albums.tracks.query(
-        AlbumTrackKey("M_1", "T_1"),
-        AlbumTrackKey("M_1", "T_4"),
+        keyCondition = BeginsWith(AlbumTrackKey("M_1", "")),
         asc = false,
         pageSize = 2)
     assertThat(page1.offset).isNotNull()
     assertThat(page1.contents).containsAll(albumTracks.reversed().slice(0..1))
     val page2 = musicDb.albums.tracks.query(
-        AlbumTrackKey("M_1", "T_1"),
-        AlbumTrackKey("M_1", "T_4"),
+        keyCondition = BeginsWith(AlbumTrackKey("M_1", "")),
         asc = false,
         pageSize = 2,
         initialOffset = page1.offset)
@@ -134,42 +136,25 @@ class DynamoDbQueryableTest {
 
   @Test
   fun localSecondaryIndex() {
-    val albumTracks = listOf(
-        AlbumTrack("M_1", "T_1", "Dreamin'", Duration.parse("PT3M28S")),
-        AlbumTrack("M_1", "T_3", "too slow", Duration.parse("PT2M27S")),
-        AlbumTrack("M_1", "T_2", "what you do to me", Duration.parse("PT3M24S"))
-    )
-    for (albumTrack in albumTracks) {
-      musicDb.albums.tracks.save(albumTrack)
-    }
+    val albumTracks = givenAfterHoursAlbum()
 
     val page = musicDb.albums.tracksByName.query(
-        AlbumTrackByNameOffset("M_1", "e"),
-        AlbumTrackByNameOffset("M_1", "z"))
+        keyCondition = Between(AlbumTrackByNameOffset("M_1", "e"), AlbumTrackByNameOffset("M_1", "z")))
     assertThat(page.offset).isNull()
     assertThat(page.contents).contains(albumTracks[1], albumTracks[2])
   }
 
   @Test
   fun localSecondaryIndexPagination() {
-    val albumTracks = listOf(
-        AlbumTrack("M_1", "T_1", "Dreamin'", Duration.parse("PT3M28S")),
-        AlbumTrack("M_1", "T_3", "too slow", Duration.parse("PT2M27S")),
-        AlbumTrack("M_1", "T_2", "what you do to me", Duration.parse("PT3M24S"))
-    )
-    for (albumTrack in albumTracks) {
-      musicDb.albums.tracks.save(albumTrack)
-    }
+    val albumTracks = givenAfterHoursAlbum().sortedBy { it.track_name }
 
     val page1 = musicDb.albums.tracksByName.query(
-        AlbumTrackByNameOffset("M_1", " "),
-        AlbumTrackByNameOffset("M_1", "~"),
+        keyCondition = Between(AlbumTrackByNameOffset("M_1", " "), AlbumTrackByNameOffset("M_1", "~")),
         pageSize = 2)
     assertThat(page1.offset).isNotNull()
     assertThat(page1.contents).containsAll(albumTracks.slice(0..1))
     val page2 = musicDb.albums.tracksByName.query(
-        AlbumTrackByNameOffset("M_1", " "),
-        AlbumTrackByNameOffset("M_1", "~"),
+        keyCondition = Between(AlbumTrackByNameOffset("M_1", " "), AlbumTrackByNameOffset("M_1", "~")),
         pageSize = 2,
         initialOffset = page1.offset)
     assertThat(page2.offset).isNull()
@@ -198,13 +183,11 @@ class DynamoDbQueryableTest {
     }
 
     val artist1Page = musicDb.albums.albumArtistByArtist.query(
-        AlbumArtistByArtistOffset("ARTIST_1", "M_"),
-        AlbumArtistByArtistOffset("ARTIST_1", "M`"))
+        BeginsWith(AlbumArtistByArtistOffset("ARTIST_1", "M_")))
     assertThat(artist1Page.offset).isNull()
     assertThat(artist1Page.contents).containsAll(artist1Albums)
     val artist2Page = musicDb.albums.albumArtistByArtist.query(
-        AlbumArtistByArtistOffset("ARTIST_2", "M_"),
-        AlbumArtistByArtistOffset("ARTIST_2", "M`"))
+      BeginsWith(AlbumArtistByArtistOffset("ARTIST_2", "M_")))
     assertThat(artist2Page.offset).isNull()
     assertThat(artist2Page.contents).containsAll(artist2Albums)
   }
@@ -231,17 +214,27 @@ class DynamoDbQueryableTest {
     }
 
     val page1 = musicDb.albums.albumArtistByArtist.query(
-        AlbumArtistByArtistOffset("ARTIST_1", "M_"),
-        AlbumArtistByArtistOffset("ARTIST_1", "M`"),
+        keyCondition = Between(AlbumArtistByArtistOffset("ARTIST_1", "M_"), AlbumArtistByArtistOffset("ARTIST_1", "M`")),
         pageSize = 2)
     assertThat(page1.offset).isNotNull()
     assertThat(page1.contents).containsAll(artist1Albums.slice(0..1))
     val page2 = musicDb.albums.albumArtistByArtist.query(
-        AlbumArtistByArtistOffset("ARTIST_1", "M_"),
-        AlbumArtistByArtistOffset("ARTIST_1", "M`"),
+        keyCondition = Between(AlbumArtistByArtistOffset("ARTIST_1", "M_"), AlbumArtistByArtistOffset("ARTIST_1", "M`")),
         pageSize = 2,
         initialOffset = page1.offset)
     assertThat(page2.offset).isNull()
     assertThat(page2.contents).containsAll(artist1Albums.slice(2..2))
+  }
+
+  private fun givenAfterHoursAlbum(): List<AlbumTrack> {
+    val albumTracks = listOf(
+      AlbumTrack("M_1", "T_1", "Dreamin'", Duration.parse("PT3M28S")),
+      AlbumTrack("M_1", "T_2", "what you do to me", Duration.parse("PT3M24S")),
+      AlbumTrack("M_1", "T_3", "too slow", Duration.parse("PT2M27S"))
+    )
+    for (albumTrack in albumTracks) {
+      musicDb.albums.tracks.save(albumTrack)
+    }
+    return albumTracks
   }
 }
