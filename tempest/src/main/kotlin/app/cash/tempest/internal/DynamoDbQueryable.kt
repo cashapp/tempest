@@ -24,6 +24,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.ComparisonOperator.BETWEEN
 import com.amazonaws.services.dynamodbv2.model.Condition
+import com.amazonaws.services.dynamodbv2.model.ReturnConsumedCapacity
 import com.amazonaws.services.dynamodbv2.model.Select.SPECIFIC_ATTRIBUTES
 
 internal class DynamoDbQueryable<K : Any, I : Any>(
@@ -40,6 +41,7 @@ internal class DynamoDbQueryable<K : Any, I : Any>(
     consistentRead: Boolean,
     asc: Boolean,
     pageSize: Int,
+    returnConsumedCapacity: ReturnConsumedCapacity,
     initialOffset: Offset<K>?
   ): Page<K, I> {
     requireNotNull(
@@ -74,7 +76,7 @@ internal class DynamoDbQueryable<K : Any, I : Any>(
     val page = dynamoDbMapper.queryPage(rawItemType.type.java, query)
     val contents = page.results.map { itemType.codec.toApp(it) }
     val offset = page.lastEvaluatedKey?.decodeOffset<K>()
-    return Page(contents, offset) as Page<K, I>
+    return Page(contents, offset, page.scannedCount, page.consumedCapacity) as Page<K, I>
   }
 
   private fun <K : Any> Offset<K>.encodeOffset(): Map<String, AttributeValue> {

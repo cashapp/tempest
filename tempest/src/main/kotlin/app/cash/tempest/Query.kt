@@ -16,6 +16,9 @@
 
 package app.cash.tempest
 
+import com.amazonaws.services.dynamodbv2.model.ReturnConsumedCapacity
+import com.amazonaws.services.dynamodbv2.model.ReturnConsumedCapacity.NONE
+
 interface Queryable<K : Any, I : Any> {
   /** Reads up to the [pageSize] items or a maximum of 1 MB of data. */
   fun query(
@@ -24,6 +27,7 @@ interface Queryable<K : Any, I : Any> {
     consistentRead: Boolean = false,
     asc: Boolean = true,
     pageSize: Int = 100,
+    returnConsumedCapacity: ReturnConsumedCapacity = NONE,
     initialOffset: Offset<K>? = null
   ): Page<K, I>
 }

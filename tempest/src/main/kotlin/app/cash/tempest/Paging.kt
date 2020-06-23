@@ -16,9 +16,21 @@
 
 package app.cash.tempest
 
+import com.amazonaws.services.dynamodbv2.model.ConsumedCapacity
+
 data class Page<K, T>(
   val contents: List<T>,
-  val offset: Offset<K>?
+  val offset: Offset<K>?,
+  /**
+   * The number of items evaluated, before any filter is applied.
+   */
+  val scannedCount: Int,
+  /**
+   * The data returned includes the total provisioned throughput consumed, along with statistics for
+   * the table and any indexes involved in the operation. This is only returned if the
+   * ReturnConsumedCapacity parameter was specified.
+   */
+  val consumedCapacity: ConsumedCapacity?
 ) {
   val hasMorePages: Boolean
     get() = offset != null
