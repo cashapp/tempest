@@ -63,6 +63,15 @@ subprojects { subProject ->
     }
   }
 
+  afterEvaluate { project ->
+    if (project.tasks.findByName('dokka')) {
+      project.tasks.dokka {
+        outputDirectory = "$rootDir/docs/0.x/"
+        outputFormat = 'gfm'
+      }
+    }
+  }
+
   // SLF4J uses the classpath to decide which logger to use! Banish the Log4J to prevent this:
   // org.apache.logging.slf4j.Log4jLogger cannot be cast to class ch.qos.logback.classic.Logger
   configurations.all {

@@ -1,0 +1,39 @@
+site_name: Tempest
+site_url: https://cashapp.github.io/tempest/
+repo_name: tempest
+repo_url: https://github.com/cashapp/tempest
+site_description: "Tempest - Typesafe DynamoDB in Kotlin"
+site_author: Square, Inc.
+copyright: 'Copyright &copy; 2020 Square, Inc.'
+remote_branch: gh-pages
+
+
+theme:
+  name: 'material'
+  favicon: img/favicon.ico
+  logo: img/cashapp.png
+  palette:
+    primary: 'white'
+    accent: 'green'
+  feature:
+    tabs: true
+
+extra_css:
+  - 'css/app.css'
+
+markdown_extensions:
+  - codehilite:
+      guess_lang: false
+
+plugins:
+  - search
+  - macros
+
+nav:
+  - 'Overview': index.md
+  - 'Getting Started': tutorial/getting_started.md
+  - '0.x API': 0.x/tempest/app.cash.tempest/index.md
+  - 'Changelog': changelog.md
+  - 'Contributing': contributing.md
+  - 'Code of Conduct': code_of_conduct.md
+  - 'Releasing': releasing.md
