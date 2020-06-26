@@ -67,6 +67,35 @@ internal class LogicalDbFactory(
     return proxyFactory.create(dbType, methodHandlers.toMap(), logicalDb)
   }
 
+  private fun <K : Any, I : Any> queryable(
+    rawItemType: RawItemType,
+    itemType: ItemType,
+    keyType: KeyType
+  ): Queryable<K, I> {
+    val (hashKeyName, rangeKeyName) =
+      if (keyType.secondaryIndexName != null) {
+        val index = requireNotNull(itemType.secondaryIndexes[keyType.secondaryIndexName]) {
+          "Could not find secondary index ${keyType.secondaryIndexName} in ${itemType.rawItemType}"
+        }
+        index.hashKeyName to index.rangeKeyName
+      } else {
+        val index = itemType.primaryIndex
+        if (index.rangeKeyName == null) {
+          return UnsupportedQueryable(rawItemType.type)
+        }
+        index.hashKeyName to index.rangeKeyName
+      }
+    return DynamoDbQueryable(
+      hashKeyName,
+      rangeKeyName,
+      itemType.attributeNames,
+      keyType.codec as Codec<K, Any>,
+      itemType.codec as Codec<I, Any>,
+      rawItemType.type,
+      rawItemType.tableModel,
+      dynamoDbMapper)
+  }
+
   inner class LogicalTableFactory : LogicalTable.Factory {
 
     override fun <T : LogicalTable<RI>, RI : Any> logicalTable(tableType: KClass<T>): T {
@@ -118,11 +147,10 @@ internal class LogicalDbFactory(
           key.codec as Codec<K, Any>,
           item.codec as Codec<I, Any>,
           dynamoDbMapper)
-      val queryable = DynamoDbQueryable<K, I>(
-          key,
-          item,
+      val queryable = queryable<K, I>(
           rawItemType,
-          dynamoDbMapper)
+          item,
+          key)
       return object : InlineView<K, I>, View<K, I> by view, Queryable<K, I> by queryable {}
     }
   }
@@ -137,11 +165,10 @@ internal class LogicalDbFactory(
     ): SecondaryIndex<K, I> {
       val item = schema.addItem(itemType, rawItemType.type)
       val key = schema.addKey(keyType, itemType)
-      val queryable = DynamoDbQueryable<K, I>(
-          key,
-          item,
-          rawItemType,
-          dynamoDbMapper)
+      val queryable = queryable<K, I>(
+        rawItemType,
+        item,
+        key)
       return object : SecondaryIndex<K, I>, Queryable<K, I> by queryable {}
     }
   }

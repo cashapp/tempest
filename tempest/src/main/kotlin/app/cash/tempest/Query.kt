@@ -20,10 +20,10 @@ import com.amazonaws.services.dynamodbv2.model.ReturnConsumedCapacity
 import com.amazonaws.services.dynamodbv2.model.ReturnConsumedCapacity.NONE
 
 interface Queryable<K : Any, I : Any> {
+
   /** Reads up to the [pageSize] items or a maximum of 1 MB of data. */
   fun query(
-    startInclusive: K,
-    endExclusive: K,
+    keyCondition: KeyCondition<K>,
     consistentRead: Boolean = false,
     asc: Boolean = true,
     pageSize: Int = 100,
@@ -31,3 +31,17 @@ interface Queryable<K : Any, I : Any> {
     initialOffset: Offset<K>? = null
   ): Page<K, I>
 }
+
+/**
+ * Used to query a table or an index.
+ */
+sealed class KeyCondition<K : Any>
+
+data class BeginsWith<K : Any>(
+  val prefix: K
+) : KeyCondition<K>()
+
+data class Between<K : Any>(
+  val startInclusive: K,
+  val endInclusive: K
+) : KeyCondition<K>()
