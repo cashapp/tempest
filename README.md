@@ -3,46 +3,41 @@ Typesafe DynamoDB in Kotlin
 
 See the [project website](https://cashapp.github.io/tempest) for documentation and APIs.
 
-## DynamoDB
+## Efficient DynamoDB
 
-A well-designed DynamoDB application maximizes data locality of the most common queries.
+DynamoDB applications perform best (and cost the least to operate!) when data is organized for locality:
+* **Multiple types per table**: The application can store different entity types in a single table. DynamoDB schemas are flexible.
+* **Related entities are stored together**: Entities that are accessed together should be stored together. This makes it possible to answer common queries in as few requests as possible, [ideally one](https://www.alexdebrie.com/posts/dynamodb-single-table/#the-solution-pre-join-your-data-into-item-collections).
 
-This typically means:
+### Example
 
-* The application stores all logical entity types in the same table. This is possible because DynamoDB schema is flexible.
-* The application keeps related logical entities together in one place to answer the common queries with as few requests to DynamoDB as possible, [ideally one](https://www.alexdebrie.com/posts/dynamodb-single-table/#the-solution-pre-join-your-data-into-item-collections).
+Let's build a music library with the following features:
 
-### Access Pattern
+* Fetching multiple albums, each of which contains multiple tracks.
+* Fetching individual tracks.
 
-Let's say we are building a music library with the following features:
-
-* Browsing lots of albums, each of which contains multiple tracks.
-* Browsing individual tracks.
-
-This access pattern could be expressed in the following service interface.
-```proto
-service MusicLibrary {
-  rpc GetAlbum(AlbumKey) returns (Album) {}
-  rpc GetTrack(TrackKey) returns (Track) {}
+We express it like this in Kotlin:
+```kotlin
+interface MusicLibrary {
+  fun getAlbum(key: AlbumKey): Album
+  fun getTrack(key: TrackKey): Track
 }
 
-message Album {
-  string album_title = 1;
-  string album_artist = 2;
-  string release_date = 3;
-  string genre = 4;
-  repeated Track tracks = 5;
-}
+data class Album(
+  val album_title: String,
+  val album_artist: String,
+  val release_date: String,
+  val genre: String,
+  val tracks: List<Track>
+)
 
-message Track {
-  string track_title = 1;
-  string run_length = 2;
-}
+data class Track(
+  val track_title: String,
+  val run_length: String
+)
 ```
 
-### Table Schema
-
-The following table schema makes these queries fast and inexpensive.
+We optimize for this access pattern by putting albums and tracks in the same table:
 
 <table>
   <tbody>
@@ -111,27 +106,51 @@ The following table schema makes these queries fast and inexpensive.
       <td>&nbsp;</td>
     </tr>
     <tr>
-      <td>ALBUM_1</td>
-      <td colspan=5>// More tracks ...</td>
+      <td colspan=6>...</td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_2</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">INFO</td>
+      <td><strong>album_title</strong></td>
+      <td><strong>album_artiest</strong></td>
+      <td><strong>release_date</strong></td>
+      <td><strong>genre</strong></td>
+    </tr>
+    <tr>
+      <td>The Wall</td>
+      <td>Pink Floyd</td>
+      <td>1979-11-30</td>
+      <td>Progressive rock</td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_2</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">TRACK_1</td>
+      <td><strong>track_title</strong></td>
+      <td><strong>run_length</strong></td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td>In the Flesh?</td>
+      <td>PT3M20S</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan=6>...</td>
     </tr>
   </tbody>
 </table>
 
-Note that
+This table uses a [composite primary key](https://aws.amazon.com/blogs/database/choosing-the-right-dynamodb-partition-key/), `(parition_key, sort_key)`, to identify each item.
+* The key `("ALBUM_1", "INFO")` identifies `ALBUM_1`'s metadata.
+* The key `("ALBUM_1", "TRACK_1")` identifies `ALBUM_1`'s first track.
 
-* This table is heterogeneous.
-    * it contains two logical types: `AlbumInfo` and `AlbumTrack`.
-* This table uses a [composite primary key](https://aws.amazon.com/blogs/database/choosing-the-right-dynamodb-partition-key/), `(parition_key, sort_key)`, to identify each item.
-    * The key `("ALBUM_1", "INFO")` identifies `ALBUM_1`'s metadata.
-    * The key `("ALBUM_1", "TRACK_1")` identifies `ALBUM_1`'s first track.
-
-### Data Locality
-
-This table stores tracks belonging to the same album together and sorts them by the track number. To render an album, the application only needs to send one request to DynamoDB to get the album info and all the tracks.
+This table stores tracks belonging to the same album together and sorts them by the track number. The application needs only one request to DynamoDB to get the album and its tracks.
 
 ```
 aws dynamodb query \
-    --table-name music_library \
+    --table-name music_library_items \
     --key-conditions '{ 
         "PK": { 
             "ComparisonOperator": "EQ",
@@ -142,14 +161,15 @@ aws dynamodb query \
 
 ## Why Tempest?
 
-For locality, we smashed together several logical types in the same table. This improves performance but harms code maintainability.
+For locality, we smashed together several entity types in the same table. This improves performance! But it breaks type safety in DynamoDBMapper.
 
 ### DynamoDBMapper API
 
 [`DynamoDBMapper`](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.html), the official Java API, forces you to write weakly-typed code that models the actual persistence type.
 
 ```kotlin
-@DynamoDBTable(tableName = "music_library")
+// NOTE: This is not Tempest! It is an example used for comparison.
+@DynamoDBTable(tableName = "music_library_items")
 class MusicLibraryItem {
   // All Items.
   @DynamoDBHashKey
@@ -175,7 +195,7 @@ class MusicLibraryItem {
 }
 ```
 
-Note that `MusicLibraryItem` is a union type of all the logical types: `AlbumInfo` and `AlbumTrack`. Because all of its attributes are nullable and mutable, code that interacts with it is brittle and error prone.
+Note that `MusicLibraryItem` is a union type of all the entity types: `AlbumInfo` and `AlbumTrack`. Because all of its attributes are nullable and mutable, code that interacts with it is brittle and error prone.
 
 ### Tempest API
 
@@ -211,7 +231,7 @@ data class AlbumTrack(
 )
 ```
 
-You get to build business logic with logical types. Tempest handles mapping them to the underlying persistence type.
+You build business logic with logical types. Tempest handles mapping them to the underlying persistence type.
 
 ```kotlin
 interface MusicLibraryTable : LogicalTable<MusicLibraryItem> {
@@ -256,8 +276,8 @@ With Gradle:
 implementation "app.cash.tempest:tempest:0.1.0"
 ```
 
-## Limitation
-Tempest depends on the Kotlin reflection API. At the moment, it only supports logical types declared in Kotlin.
+## Kotlin-only
+Tempest builds upon Kotlin’s reflection API and requires types to be declared in Kotlin.
 
 ## License
 
