@@ -6,6 +6,7 @@ See the [project website](https://cashapp.github.io/tempest) for documentation a
 ## Efficient DynamoDB
 
 DynamoDB applications perform best (and cost the least to operate!) when data is organized for locality:
+
 * **Multiple types per table**: The application can store different entity types in a single table. DynamoDB schemas are flexible.
 * **Related entities are stored together**: Entities that are accessed together should be stored together. This makes it possible to answer common queries in as few requests as possible, [ideally one](https://www.alexdebrie.com/posts/dynamodb-single-table/#the-solution-pre-join-your-data-into-item-collections).
 
@@ -50,6 +51,9 @@ We optimize for this access pattern by putting albums and tracks in the same tab
       <td><strong>sort_key</strong></td>
     </tr>
     <tr>
+      <!-- Note: It is important to declare both vertical-align and valign here. 
+           vertical-align only works in the project website 
+           while valign only works in Github's formatting for README.md. -->
       <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_1</td>
       <td rowspan=2 style="vertical-align:bottom;" valign="bottom">INFO</td>
       <td><strong>album_title</strong></td>
@@ -143,6 +147,7 @@ We optimize for this access pattern by putting albums and tracks in the same tab
 </table>
 
 This table uses a [composite primary key](https://aws.amazon.com/blogs/database/choosing-the-right-dynamodb-partition-key/), `(parition_key, sort_key)`, to identify each item.
+
 * The key `("ALBUM_1", "INFO")` identifies `ALBUM_1`'s metadata.
 * The key `("ALBUM_1", "TRACK_1")` identifies `ALBUM_1`'s first track.
 
@@ -202,10 +207,6 @@ Note that `MusicLibraryItem` is a union type of all the entity types: `AlbumInfo
 Tempest restores maintainability without losing locality. It lets you declare strongly-typed key and item classes for each logical type in the domain layer.
 
 ```kotlin
-data class AlbumInfoKey(
-  val album_token: String
-)
-
 data class AlbumInfo(
   @Attribute(name = "partition_key")
   val album_token: String,
@@ -214,12 +215,13 @@ data class AlbumInfo(
 ) {
   @Attribute(prefix = "INFO_")
   val sort_key: String = ""
-}
 
-data class AlbumTrackKey(
-  val album_token: String,
-  val track_token: String
-)
+  data class Key(
+    val album_token: String
+  ) {
+    val sort_key: String = ""
+  }
+}
 
 data class AlbumTrack(
   @Attribute(name = "partition_key")
@@ -228,32 +230,37 @@ data class AlbumTrack(
   val track_token: String,
   val track_title: String,
   val run_length: String
-)
+) {
+  data class Key(
+    val album_token: String,
+    val track_token: String
+  )
+}
 ```
 
 You build business logic with logical types. Tempest handles mapping them to the underlying persistence type.
 
 ```kotlin
 interface MusicLibraryTable : LogicalTable<MusicLibraryItem> {
-  val albumInfo: InlineView<AlbumInfoKey, AlbumInfo>
-  val albumTracks: InlineView<AlbumTrackKey, AlbumTrack>
+  val albumInfo: InlineView<AlbumInfo.Key, AlbumInfo>
+  val albumTracks: InlineView<AlbumTrack.Key, AlbumTrack>
 }
 
 val musicLibrary: MusicLibraryTable
 
 // Load.
 fun getAlbumTitle(albumToken: String): String {
-  val key = AlbumInfoKey(albumToken)
+  val key = AlbumInfo.Key(albumToken)
   val info = musicLibrary.albumInfo.load(key)
   return info.album_title
 }
 
 // Update.
 fun addAlbumTrack(
-    albumToken: String, 
-    track_token: String, 
-    track_title: String, 
-    run_length: String
+  albumToken: String, 
+  track_token: String, 
+  track_title: String, 
+  run_length: String
 ) {
   val newAlbumTrack = AlbumTrack(albumToken, track_token, track_title, run_length)
   musicLibrary.albumTracks.save(newAlbumTrack)
@@ -262,7 +269,7 @@ fun addAlbumTrack(
 // Query.
 fun getAlbumTrackTitles(albumToken: String): List<String> {
   val albumTracks = musicLibrary.albumTracks.query(
-    keyCondition = BeginsWith(AlbumTrackKey(albumToken))
+    keyCondition = BeginsWith(AlbumTrack.Key(albumToken))
   )
   return albumTracks.map { it.track_title }
 }
@@ -276,7 +283,8 @@ With Gradle:
 implementation "app.cash.tempest:tempest:0.1.0"
 ```
 
-## Kotlin-only
+## Requirements
+
 Tempest builds upon Kotlin’s reflection API and requires types to be declared in Kotlin.
 
 ## License

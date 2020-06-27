@@ -81,7 +81,7 @@ Cutting a Release
       "s/VERSION_NAME=.*/VERSION_NAME=$RELEASE_VERSION/g" \
       gradle.properties
     sed -i "" \
-      "s/\"app.cash.barber:\([^\:]*\):[^\"]*\"/\"app.cash.barber:\1:$RELEASE_VERSION\"/g" \
+      "s/\"app.cash.tempest:\([^\:]*\):[^\"]*\"/\"app.cash.tempest:\1:$RELEASE_VERSION\"/g" \
       `find . -name "README.md"`
     ./gradlew clean uploadArchives
     ```
@@ -93,7 +93,7 @@ Cutting a Release
 
     ```
     git commit -am "Prepare for release $RELEASE_VERSION."
-    git tag -a barber-$RELEASE_VERSION -m "Version $RELEASE_VERSION"
+    git tag -a tempest-$RELEASE_VERSION -m "Version $RELEASE_VERSION"
     sed -i "" \
       "s/VERSION_NAME=.*/VERSION_NAME=$NEXT_VERSION/g" \
       gradle.properties

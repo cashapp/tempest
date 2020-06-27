@@ -68,6 +68,9 @@ subprojects { subProject ->
       project.tasks.dokka {
         outputDirectory = "$rootDir/docs/0.x/"
         outputFormat = 'gfm'
+        externalDocumentationLink {
+          url = new URL("https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/")
+        }
       }
     }
   }

@@ -1,12 +1,11 @@
 site_name: Tempest
 site_url: https://cashapp.github.io/tempest/
-repo_name: tempest
+repo_name: cashapp/tempest
 repo_url: https://github.com/cashapp/tempest
 site_description: "Tempest - Typesafe DynamoDB in Kotlin"
 site_author: Square, Inc.
 copyright: 'Copyright &copy; 2020 Square, Inc.'
 remote_branch: gh-pages
-
 
 theme:
   name: 'material'
@@ -15,24 +14,62 @@ theme:
   palette:
     primary: 'white'
     accent: 'green'
-  feature:
+  features:
     tabs: true
 
 extra_css:
   - 'css/app.css'
 
+extra_javascript:
+  - 'script/mermaid.min.js'
+
 markdown_extensions:
+  - admonition
+  - smarty
   - codehilite:
       guess_lang: false
+  - footnotes
+  - meta
+  - toc:
+      permalink: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_div_format
+  - tables
 
 plugins:
   - search
   - macros
 
+extra:
+  versions:
+    tempest: '0.1.0'
+
 nav:
   - 'Overview': index.md
-  - 'Getting Started': tutorial/getting_started.md
-  - '0.x API': 0.x/tempest/app.cash.tempest/index.md
+
+  - 'Guides':
+      - 'Getting Started': guide/getting_started.md
+      - 'Data Modeling': guide/data_modeling.md
+      - 'CRUD': guide/crud.md
+      - 'Optimistic Locking': guide/optimistic_locking.md
+      - 'Batch Read & Write': guide/batch_read_write.md
+      - 'Query & Scan': guide/query_scan.md
+      - 'Transaction': guide/transaction.md
+      - 'Testing': guide/testing.md
+      - 'DynamoDB Resources': guide/dynamodb_resources.md
+
+  - 'Reference':
+      - '0.x API': 0.x/tempest/app.cash.tempest/index.md
+
   - 'Changelog': changelog.md
   - 'Contributing': contributing.md
   - 'Code of Conduct': code_of_conduct.md
