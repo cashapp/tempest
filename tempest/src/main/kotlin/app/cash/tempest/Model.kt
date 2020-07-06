@@ -76,7 +76,9 @@ data class BatchWriteSet(
  */
 data class BatchWriteResult(
   val failedBatches: List<DynamoDBMapper.FailedBatch>
-)
+) {
+  val isSuccessful = failedBatches.isEmpty()
+}
 
 data class TransactionWriteSet(
   val itemsToSave: ItemSet,

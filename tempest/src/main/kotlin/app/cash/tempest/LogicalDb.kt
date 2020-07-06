@@ -20,8 +20,12 @@ import app.cash.tempest.internal.LogicalDbFactory
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.BatchLoadRetryStrategy
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.BatchWriteRetryStrategy
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.ConsistentReads
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.ConsistentReads.EVENTUAL
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.DefaultBatchLoadRetryStrategy
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.DefaultBatchWriteRetryStrategy
 import javax.annotation.CheckReturnValue
 import kotlin.reflect.KClass
 
@@ -34,17 +38,34 @@ interface LogicalDb : LogicalTable.Factory {
 
   /**
    * Retrieves multiple items from multiple tables using their primary keys.
+   *
+   * This method performs one or more calls to the [AmazonDynamoDB.batchGetItem] API.
+   *
+   * A single operation can retrieve up to 16 MB of data, which can contain as many as 100 items.
+   * BatchGetItem returns a partial result if the response size limit is exceeded, the table's
+   * provisioned throughput is exceeded, or an internal processing failure occurs. If a partial
+   * result is returned, this method backs off and retries the `UnprocessedKeys` in the next API
+   * call.
    */
   fun batchLoad(
     keys: KeySet,
-    consistentReads: ConsistentReads = EVENTUAL
+    consistentReads: ConsistentReads = EVENTUAL,
+    retryStrategy: BatchLoadRetryStrategy = DefaultBatchLoadRetryStrategy()
   ): ItemSet
 
-  fun batchLoad(keys: Iterable<Any>, consistentReads: ConsistentReads = EVENTUAL): ItemSet {
+  fun batchLoad(
+    keys: Iterable<Any>,
+    consistentReads: ConsistentReads = EVENTUAL,
+    retryStrategy: BatchLoadRetryStrategy = DefaultBatchLoadRetryStrategy()
+  ): ItemSet {
     return batchLoad(KeySet(keys), consistentReads)
   }
 
-  fun batchLoad(vararg keys: Any, consistentReads: ConsistentReads = EVENTUAL): ItemSet {
+  fun batchLoad(
+    vararg keys: Any,
+    consistentReads: ConsistentReads = EVENTUAL,
+    retryStrategy: BatchLoadRetryStrategy = DefaultBatchLoadRetryStrategy()
+  ): ItemSet {
     return batchLoad(keys.toList(), consistentReads)
   }
 
@@ -66,7 +87,10 @@ interface LogicalDb : LogicalTable.Factory {
    * items in the response.
    */
   @CheckReturnValue
-  fun batchWrite(writeSet: BatchWriteSet): BatchWriteResult
+  fun batchWrite(
+    writeSet: BatchWriteSet,
+    retryStrategy: BatchWriteRetryStrategy = DefaultBatchWriteRetryStrategy()
+  ): BatchWriteResult
 
   /**
    * Transactionally loads objects specified by transactionLoadRequest by calling
@@ -124,7 +148,6 @@ interface LogicalDb : LogicalTable.Factory {
  * using strongly typed data classes.
  */
 interface LogicalTable<RI : Any> :
-  Scannable<RI, RI>,
   View<RI, RI>,
   InlineView.Factory,
   SecondaryIndex.Factory {
@@ -137,7 +160,7 @@ interface LogicalTable<RI : Any> :
   }
 }
 
-interface InlineView<K : Any, I : Any> : View<K, I>, Queryable<K, I> {
+interface InlineView<K : Any, I : Any> : View<K, I>, Scannable<K, I>, Queryable<K, I> {
 
   interface Factory {
     fun <K : Any, I : Any> inlineView(

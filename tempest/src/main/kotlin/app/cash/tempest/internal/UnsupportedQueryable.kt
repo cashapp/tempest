@@ -16,6 +16,7 @@
 
 package app.cash.tempest.internal
 
+import app.cash.tempest.FilterExpression
 import app.cash.tempest.KeyCondition
 import app.cash.tempest.Offset
 import app.cash.tempest.Page
@@ -27,13 +28,13 @@ import kotlin.reflect.KClass
 internal class UnsupportedQueryable<K : Any, I : Any>(
   private val rawType: KClass<*>
 ) : Queryable<K, I> {
-
   override fun query(
     keyCondition: KeyCondition<K>,
     consistentRead: Boolean,
     asc: Boolean,
     pageSize: Int,
     returnConsumedCapacity: ReturnConsumedCapacity,
+    filterExpression: FilterExpression?,
     initialOffset: Offset<K>?
   ): Page<K, I> {
     throw UnsupportedOperationException("Require $rawType to have a range key. You can query a table or an index only if it has a composite primary key (partition key and sort key)")

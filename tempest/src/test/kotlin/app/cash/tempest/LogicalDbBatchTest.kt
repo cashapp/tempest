@@ -17,13 +17,9 @@
 package app.cash.tempest
 
 import app.cash.tempest.example.AlbumTrack
-import app.cash.tempest.example.AlbumTrackKey
-import app.cash.tempest.example.MusicDb
 import app.cash.tempest.example.MusicDbTestModule
-import app.cash.tempest.example.PlaylistEntry
-import app.cash.tempest.example.PlaylistEntryKey
 import app.cash.tempest.example.PlaylistInfo
-import app.cash.tempest.example.PlaylistInfoKey
+import app.cash.tempest.example.TestDb
 import java.time.Duration
 import javax.inject.Inject
 import misk.aws.dynamodb.testing.DockerDynamoDb
@@ -37,87 +33,94 @@ import org.junit.jupiter.api.Test
 class LogicalDbBatchTest {
   @MiskTestModule
   val module = MusicDbTestModule()
+
   @MiskExternalDependency
   val dockerDynamoDb = DockerDynamoDb
 
-  @Inject lateinit var musicDb: MusicDb
+  @Inject lateinit var testDb: TestDb
+
+  private val musicTable get() = testDb.music
 
   @Test
   fun batchLoad() {
     val albumTracks = listOf(
-        AlbumTrack("M_1", "T_1", "Dreamin'", Duration.parse("PT3M28S")),
-        AlbumTrack("M_1", "T_2", "what you do to me", Duration.parse("PT3M24S")),
-        AlbumTrack("M_1", "T_3", "too slow", Duration.parse("PT2M27S"))
+      AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S")),
+      AlbumTrack("ALBUM_1", 2, "what you do to me", Duration.parse("PT3M24S")),
+      AlbumTrack("ALBUM_1", 3, "too slow", Duration.parse("PT2M27S"))
     )
     for (albumTrack in albumTracks) {
-      musicDb.albums.tracks.save(albumTrack)
+      musicTable.albumTracks.save(albumTrack)
     }
+    val playlistInfo = PlaylistInfo("PLAYLIST_1", "WFH Music", listOf(AlbumTrack.Key("ALBUM_1", 1)))
+    musicTable.playlistInfo.save(playlistInfo)
 
-    val items = musicDb.batchLoad(
-        AlbumTrackKey("M_1", "T_1"),
-        AlbumTrackKey("M_1", "T_2"),
-        AlbumTrackKey("M_1", "T_3"))
-    assertThat(items).containsAll(albumTracks)
+    val loadedItems = testDb.batchLoad(
+      PlaylistInfo.Key("PLAYLIST_1"),
+      AlbumTrack.Key("ALBUM_1", track_number = 1),
+      AlbumTrack.Key("ALBUM_1", track_number = 2),
+      AlbumTrack.Key("ALBUM_1", track_number = 3)
+    )
+    assertThat(loadedItems.getItems<AlbumTrack>()).containsAll(albumTracks)
+    assertThat(loadedItems.getItems<PlaylistInfo>()).containsExactly(playlistInfo)
   }
 
   @Test
   fun batchLoadMultipleTables() {
     val albumTracks = listOf(
-        AlbumTrack("M_1", "T_1", "Dreamin'", Duration.parse("PT3M28S")),
-        AlbumTrack("M_1", "T_2", "what you do to me", Duration.parse("PT3M24S")),
-        AlbumTrack("M_1", "T_3", "too slow", Duration.parse("PT2M27S"))
+      AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S")),
+      AlbumTrack("ALBUM_1", 2, "what you do to me", Duration.parse("PT3M24S")),
+      AlbumTrack("ALBUM_1", 3, "too slow", Duration.parse("PT2M27S"))
     )
     for (albumTrack in albumTracks) {
-      musicDb.albums.tracks.save(albumTrack)
+      musicTable.albumTracks.save(albumTrack)
     }
-    val playlistInfo = PlaylistInfo("L_1", "WFH Music", 1)
-    musicDb.playlists.info.save(playlistInfo)
-    val playlistEntry = PlaylistEntry("L_1", "M_1:T_1")
-    musicDb.playlists.entries.save(playlistEntry)
-    val playlistEntry2 = PlaylistEntry("L_1", "M_3:T_2")
-    musicDb.playlists.entries.save(playlistEntry2)
+    val playlistInfo = PlaylistInfo("PLAYLIST_1", "WFH Music", listOf(AlbumTrack.Key("ALBUM_1", 1)))
+    musicTable.playlistInfo.save(playlistInfo)
 
-    val items = musicDb.batchLoad(
-        AlbumTrackKey("M_1", "T_1"),
-        AlbumTrackKey("M_1", "T_2"),
-        AlbumTrackKey("M_1", "T_3"),
-        PlaylistInfoKey("L_1"),
-        PlaylistEntryKey("L_1", "M_1:T_1"),
-        PlaylistEntryKey("L_1", "M_3:T_2"))
+    val items = testDb.batchLoad(
+      AlbumTrack.Key("ALBUM_1", track_number = 1),
+      AlbumTrack.Key("ALBUM_1", track_number = 2),
+      AlbumTrack.Key("ALBUM_1", track_number = 3),
+      PlaylistInfo.Key("PLAYLIST_1")
+    )
     assertThat(items.getItems<AlbumTrack>()).containsAll(albumTracks)
-    assertThat(items.getItems<PlaylistInfo>()).contains(playlistInfo)
-    assertThat(items.getItems<PlaylistEntry>()).contains(playlistEntry, playlistEntry2)
+    assertThat(items.getItems<PlaylistInfo>()).containsExactly(playlistInfo)
   }
 
   @Test
   fun batchLoadAfterBatchWrite() {
     val albumTracks = listOf(
-        AlbumTrack("M_1", "T_1", "Dreamin'", Duration.parse("PT3M28S")),
-        AlbumTrack("M_1", "T_2", "what you do to me", Duration.parse("PT3M24S")),
-        AlbumTrack("M_1", "T_3", "too slow", Duration.parse("PT2M27S"))
+      AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S")),
+      AlbumTrack("ALBUM_1", 2, "what you do to me", Duration.parse("PT3M24S")),
+      AlbumTrack("ALBUM_1", 3, "too slow", Duration.parse("PT2M27S"))
     )
-    musicDb.batchWrite(BatchWriteSet.Builder().clobber(albumTracks).build())
+    val result = testDb.batchWrite(BatchWriteSet.Builder().clobber(albumTracks).build())
+    assertThat(result.isSuccessful).isTrue()
 
-    val items = musicDb.batchLoad(
-        AlbumTrackKey("M_1", "T_1"),
-        AlbumTrackKey("M_1", "T_2"),
-        AlbumTrackKey("M_1", "T_3"))
+    val items = testDb.batchLoad(
+      AlbumTrack.Key("ALBUM_1", track_number = 1),
+      AlbumTrack.Key("ALBUM_1", track_number = 2),
+      AlbumTrack.Key("ALBUM_1", track_number = 3)
+    )
     assertThat(items).containsAll(albumTracks)
   }
 
   @Test
   fun batchLoadAfterBatchDelete() {
-    val t1 = AlbumTrack("M_1", "T_1", "Dreamin'", Duration.parse("PT3M28S"))
-    val t2 = AlbumTrack("M_1", "T_2", "what you do to me", Duration.parse("PT3M24S"))
-    val t3 = AlbumTrack("M_1", "T_3", "too slow", Duration.parse("PT2M27S"))
-    musicDb.batchWrite(BatchWriteSet.Builder().clobber(t1, t2, t3).build())
+    val t1 = AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S"))
+    val t2 = AlbumTrack("ALBUM_1", 2, "what you do to me", Duration.parse("PT3M24S"))
+    val t3 = AlbumTrack("ALBUM_1", 3, "too slow", Duration.parse("PT2M27S"))
 
-    musicDb.batchWrite(BatchWriteSet.Builder().delete(AlbumTrackKey("M_1", "T_2")).build())
+    val result1 = testDb.batchWrite(BatchWriteSet.Builder().clobber(t1, t2, t3).build())
+    assertThat(result1.isSuccessful).isTrue()
+    val result2 = testDb.batchWrite(BatchWriteSet.Builder().delete(AlbumTrack.Key("ALBUM_1", 2)).build())
+    assertThat(result2.isSuccessful).isTrue()
 
-    val items = musicDb.batchLoad(
-        AlbumTrackKey("M_1", "T_1"),
-        AlbumTrackKey("M_1", "T_2"),
-        AlbumTrackKey("M_1", "T_3"))
-    assertThat(items).contains(t1, t3)
+    val items = testDb.batchLoad(
+      AlbumTrack.Key("ALBUM_1", track_number = 1),
+      AlbumTrack.Key("ALBUM_1", track_number = 2),
+      AlbumTrack.Key("ALBUM_1", track_number = 3)
+    )
+    assertThat(items).containsExactly(t3, t1)
   }
 }

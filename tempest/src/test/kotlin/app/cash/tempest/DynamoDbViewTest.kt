@@ -16,15 +16,12 @@
 
 package app.cash.tempest
 
-import app.cash.tempest.example.AlbumArtist
-import app.cash.tempest.example.AlbumArtistKey
 import app.cash.tempest.example.AlbumInfo
-import app.cash.tempest.example.AlbumInfoKey
-import app.cash.tempest.example.Artist
-import app.cash.tempest.example.MusicDb
+import app.cash.tempest.example.AlbumTrack
 import app.cash.tempest.example.MusicDbTestModule
 import app.cash.tempest.example.PlaylistInfo
-import app.cash.tempest.example.PlaylistInfoKey
+import app.cash.tempest.example.TestDb
+import app.cash.tempest.example.key
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBSaveExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.ComparisonOperator
@@ -44,98 +41,113 @@ import org.junit.jupiter.api.Test
 class DynamoDbViewTest {
   @MiskTestModule
   val module = MusicDbTestModule()
+
   @MiskExternalDependency
   val dockerDynamoDb = DockerDynamoDb
 
-  @Inject lateinit var musicDb: MusicDb
+  @Inject lateinit var testDb: TestDb
+
+  private val musicTable get() = testDb.music
 
   @Test
   fun loadAfterSave() {
-    val albumInfo =
-        AlbumInfo("M_1", "after hours - EP", LocalDate.of(2020, 2, 21), "Contemporary R&B")
-    musicDb.albums.info.save(albumInfo)
-    val artist = Artist("ARTIST_1", "53 Thieves")
-    musicDb.artists.artists.save(artist)
-    val albumArtist = AlbumArtist("M_1", "ARTIST_1")
-    musicDb.albums.artists.save(albumArtist)
+    val albumInfo = AlbumInfo(
+      "ALBUM_1",
+      "after hours - EP",
+      "53 Thieves",
+      LocalDate.of(2020, 2, 21),
+      "Contemporary R&B"
+    )
+    musicTable.albumInfo.save(albumInfo)
 
     // Query the movies created.
-    val loadedAlbumInfo = musicDb.albums.info.load(AlbumInfoKey("M_1"))!!
+    val loadedAlbumInfo = musicTable.albumInfo.load(albumInfo.key)!!
+
     assertThat(loadedAlbumInfo.album_token).isEqualTo(albumInfo.album_token)
-    assertThat(loadedAlbumInfo.album_name).isEqualTo(albumInfo.album_name)
+    assertThat(loadedAlbumInfo.artist_name).isEqualTo(albumInfo.artist_name)
     assertThat(loadedAlbumInfo.release_date).isEqualTo(albumInfo.release_date)
     assertThat(loadedAlbumInfo.genre_name).isEqualTo(albumInfo.genre_name)
-
-    val loadedAlbumArtist = musicDb.albums.artists.load(
-        AlbumArtistKey("M_1", "ARTIST_1"))!!
-    assertThat(loadedAlbumArtist.album_token).isEqualTo(albumArtist.album_token)
-    assertThat(loadedAlbumArtist.artist_token).isEqualTo(albumArtist.artist_token)
   }
 
   @Test
   fun saveIfNotExist() {
-    val albumInfo =
-        AlbumInfo("M_1", "after hours - EP", LocalDate.of(2020, 2, 21), "Contemporary R&B")
-    musicDb.albums.info.save(albumInfo,
-        DynamoDBSaveExpression()
-            .withExpectedEntry("album_token", ExpectedAttributeValue().withExists(false)))
+    val albumInfo = AlbumInfo(
+      "ALBUM_1",
+      "after hours - EP",
+      "53 Thieves",
+      LocalDate.of(2020, 2, 21),
+      "Contemporary R&B"
+    )
+    musicTable.albumInfo.save(albumInfo, ifNotExist())
 
     // This fails because the album info already exists.
     assertThatExceptionOfType(ConditionalCheckFailedException::class.java)
-        .isThrownBy {
-          musicDb.albums.info.save(albumInfo,
-              DynamoDBSaveExpression()
-                  .withExpectedEntry("album_token", ExpectedAttributeValue().withExists(false)))
-        }
+      .isThrownBy {
+        musicTable.albumInfo.save(albumInfo, ifNotExist())
+      }
   }
 
   @Test
   fun optimisticLocking() {
-    val previousPlaylistInfo = PlaylistInfo("L_1", "WFH Music", 0)
-    musicDb.playlists.info.save(previousPlaylistInfo)
-
-    // Update PlaylistInfo only if playlist_size is 0.
-    val playlistInfo = previousPlaylistInfo.copy(
-        playlist_size = 1
+    val playlistInfoV1 = PlaylistInfo(
+      "PLAYLIST_1",
+      "WFH Music",
+      listOf(AlbumTrack.Key("ALBUM_1", 1), AlbumTrack.Key("ALBUM_3", 2))
     )
-    musicDb.playlists.info.save(playlistInfo, DynamoDBSaveExpression()
-        .withExpectedEntry("playlist_size",
-            ExpectedAttributeValue()
-                .withComparisonOperator(ComparisonOperator.EQ)
-                .withAttributeValueList(AttributeValue().withN("${previousPlaylistInfo.playlist_size}"))))
+    musicTable.playlistInfo.save(playlistInfoV1)
 
-    val loadedPlaylistInfo = musicDb.playlists.info.load(PlaylistInfoKey("L_1"))!!
-    assertThat(loadedPlaylistInfo.playlist_token).isEqualTo(playlistInfo.playlist_token)
-    assertThat(loadedPlaylistInfo.playlist_size).isEqualTo(playlistInfo.playlist_size)
+    // Update PlaylistInfo only if playlist_version is 0.
+    val playlistInfoV2 = playlistInfoV1.copy(
+      playlist_name = "WFH Forever Music",
+      playlist_version = 2
+    )
+    musicTable.playlistInfo.save(
+      playlistInfoV2,
+      ifPlaylistVersionIs(playlistInfoV1.playlist_version)
+    )
+
+    val actualPlaylistInfoV2 = musicTable.playlistInfo.load(PlaylistInfo.Key("PLAYLIST_1"))!!
+    assertThat(actualPlaylistInfoV2).isEqualTo(playlistInfoV2)
 
     // This fails because playlist_size is already 1.
     assertThatExceptionOfType(ConditionalCheckFailedException::class.java)
-        .isThrownBy {
-          musicDb.playlists.info.save(playlistInfo, DynamoDBSaveExpression()
-              .withExpectedEntry("playlist_size",
-                  ExpectedAttributeValue()
-                      .withComparisonOperator(ComparisonOperator.EQ)
-                      .withAttributeValueList(AttributeValue().withN("${previousPlaylistInfo.playlist_size}"))))
-        }
+      .isThrownBy {
+        musicTable.playlistInfo.save(
+          playlistInfoV2,
+          ifPlaylistVersionIs(playlistInfoV1.playlist_version)
+        )
+      }
   }
 
   @Test
   fun delete() {
-    val albumInfo =
-        AlbumInfo("M_1", "after hours - EP", LocalDate.of(2020, 2, 21), "Contemporary R&B")
-    musicDb.albums.info.save(albumInfo)
-    val artist = Artist("ARTIST_1", "53 Thieves")
-    musicDb.artists.artists.save(artist)
-    val albumArtist = AlbumArtist("M_1", "ARTIST_1")
-    musicDb.albums.artists.save(albumArtist)
+    val albumInfo = AlbumInfo(
+      "ALBUM_1",
+      "after hours - EP",
+      "53 Thieves",
+      LocalDate.of(2020, 2, 21),
+      "Contemporary R&B"
+    )
+    musicTable.albumInfo.save(albumInfo)
 
-    musicDb.albums.info.deleteKey(AlbumInfoKey("M_1"))
-    musicDb.albums.artists.delete(albumArtist)
+    musicTable.albumInfo.deleteKey(albumInfo.key)
 
-    val loadedAlbumInfo = musicDb.albums.info.load(AlbumInfoKey("M_1"))
+    val loadedAlbumInfo = musicTable.albumInfo.load(albumInfo.key)
     assertThat(loadedAlbumInfo).isNull()
-    val loadedAlbumArtist = musicDb.albums.artists.load(
-        AlbumArtistKey("M_1", "ARTIST_1"))
-    assertThat(loadedAlbumArtist).isNull()
+  }
+
+  private fun ifNotExist(): DynamoDBSaveExpression {
+    return DynamoDBSaveExpression()
+      .withExpectedEntry("partition_key", ExpectedAttributeValue().withExists(false))
+  }
+
+  private fun ifPlaylistVersionIs(playlist_version: Long): DynamoDBSaveExpression {
+    return DynamoDBSaveExpression()
+      .withExpectedEntry(
+        "playlist_version",
+        ExpectedAttributeValue()
+          .withComparisonOperator(ComparisonOperator.EQ)
+          .withAttributeValueList(AttributeValue().withN("$playlist_version"))
+      )
   }
 }

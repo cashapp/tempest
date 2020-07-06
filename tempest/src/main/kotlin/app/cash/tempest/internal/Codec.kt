@@ -25,6 +25,7 @@ import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.full.withNullability
 
 internal interface Codec<A : Any, D : Any> {
   fun toDb(appItem: A): D
@@ -95,6 +96,11 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
         val propertyName = property.name
         val mappedProperties = requireNotNull(itemAttributes[propertyName]).names
             .map { requireNotNull(rawItemProperties[it]) }
+        val mappedPropertyTypes = mappedProperties.map { it.returnType }.distinct()
+        require(mappedPropertyTypes.size == 1) { "Expect mapped properties of $propertyName to have the same type: ${mappedProperties.map { it.name }}" }
+        val expectedReturnType = requireNotNull(mappedPropertyTypes.single()).withNullability(false)
+        val actualReturnType = property.returnType.withNullability(false)
+        require(actualReturnType == expectedReturnType) { "Expect the return type of $itemType.${property.name} to be $expectedReturnType but was $actualReturnType" }
         if (itemConstructorParameters.contains(propertyName)) {
           constructorParameters.add(
               ConstructorParameterBinding(

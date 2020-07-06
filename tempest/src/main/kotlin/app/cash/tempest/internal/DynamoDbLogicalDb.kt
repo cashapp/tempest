@@ -24,6 +24,9 @@ import app.cash.tempest.LogicalDb
 import app.cash.tempest.LogicalTable
 import app.cash.tempest.TransactionWriteSet
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.BatchLoadRetryStrategy
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.BatchWriteRetryStrategy
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.ConsistentReads
 import com.amazonaws.services.dynamodbv2.datamodeling.TransactionLoadRequest
 import com.amazonaws.services.dynamodbv2.datamodeling.TransactionWriteRequest
@@ -35,7 +38,11 @@ internal class DynamoDbLogicalDb(
   logicalTableFactory: LogicalTable.Factory
 ) : LogicalDb, LogicalTable.Factory by logicalTableFactory {
 
-  override fun batchLoad(keys: KeySet, consistentReads: ConsistentReads): ItemSet {
+  override fun batchLoad(
+    keys: KeySet,
+    consistentReads: ConsistentReads,
+    retryStrategy: BatchLoadRetryStrategy
+  ): ItemSet {
     val keysToLoad = mutableListOf<Any>()
     val itemTypes = mutableMapOf<RawItemType.RawItemKey, ItemType>()
     val rawItemTypes = mutableMapOf<String, RawItemType>()
@@ -46,11 +53,15 @@ internal class DynamoDbLogicalDb(
       itemTypes[rawItemType.key(keyRawItem)] = key.expectedItemType()
       rawItemTypes[rawItemType.tableName] = rawItemType
     }
-    val loadedRawItems = dynamoDbMapper.batchLoad(keysToLoad, consistentReads.config())
+    val config = DynamoDBMapperConfig.builder()
+      .withConsistentReads(consistentReads)
+      .withBatchLoadRetryStrategy(retryStrategy)
+      .build()
+    val loadedRawItems = dynamoDbMapper.batchLoad(keysToLoad, config)
     val results = mutableSetOf<Any>()
     for ((tableName, rawItems) in loadedRawItems) {
       val rawItemType =
-          requireNotNull(rawItemTypes[tableName]) { "Unexpected table name $tableName" }
+        requireNotNull(rawItemTypes[tableName]) { "Unexpected table name $tableName" }
       for (rawItem in rawItems) {
         if (rawItem == null) continue
         val itemType = itemTypes[rawItemType.key(rawItem)]!!
@@ -61,10 +72,18 @@ internal class DynamoDbLogicalDb(
     return ItemSet(results)
   }
 
-  override fun batchWrite(writeSet: BatchWriteSet): BatchWriteResult {
+  override fun batchWrite(
+    writeSet: BatchWriteSet,
+    retryStrategy: BatchWriteRetryStrategy
+  ): BatchWriteResult {
+    val config = DynamoDBMapperConfig.builder()
+      .withBatchWriteRetryStrategy(retryStrategy)
+      .build()
     val failedBatches = dynamoDbMapper.batchWrite(
-        writeSet.itemsToClobber.encodeAsItems(),
-        writeSet.keysToDelete.encodeAsKeys())
+      writeSet.itemsToClobber.encodeAsItems(),
+      writeSet.keysToDelete.encodeAsKeys(),
+      config
+    )
     return BatchWriteResult(failedBatches)
   }
 

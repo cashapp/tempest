@@ -68,7 +68,7 @@ class WritingPager<T>(
     }
 
     if (appliedUpdates.isEmpty()) {
-      return 0 // Not updating any sync entities. Discard the transaction.
+      return 0 // Not updating any items. Discard the transaction.
     }
 
     handler.finishPage(writeSet)

@@ -17,13 +17,9 @@
 package app.cash.tempest
 
 import app.cash.tempest.example.AlbumTrack
-import app.cash.tempest.example.AlbumTrackKey
-import app.cash.tempest.example.MusicDb
 import app.cash.tempest.example.MusicDbTestModule
-import app.cash.tempest.example.PlaylistEntry
-import app.cash.tempest.example.PlaylistEntryKey
 import app.cash.tempest.example.PlaylistInfo
-import app.cash.tempest.example.PlaylistInfoKey
+import app.cash.tempest.example.TestDb
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTransactionWriteExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.TransactionCanceledException
@@ -42,181 +38,191 @@ class LogicalDbTransactionTest {
 
   @MiskTestModule
   val module = MusicDbTestModule()
+
   @MiskExternalDependency
   val dockerDynamoDb = DockerDynamoDb
 
-  @Inject lateinit var musicDb: MusicDb
+  @Inject lateinit var testDb: TestDb
+
+  private val musicTable get() = testDb.music
 
   @Test
-  fun transactionLoadAfterSave() {
-    val previousPlaylistInfo = PlaylistInfo("L_1", "WFH Music", 0)
-    musicDb.playlists.info.save(previousPlaylistInfo)
-    val albumTrack = AlbumTrack("M_1", "T_1", "dreamin'", Duration.parse("PT3M28S"))
-    musicDb.albums.tracks.save(albumTrack)
-    val playlistEntry = PlaylistEntry("L_1", "M_1:T_1")
-    musicDb.playlists.entries.save(playlistEntry)
-    // Update Playlist Info to reflect updated entry.
-    val playlistInfo = previousPlaylistInfo.copy(
-        playlist_size = 1
+  fun transactionLoad() {
+    val albumTracks = listOf(
+      AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S")),
+      AlbumTrack("ALBUM_1", 2, "what you do to me", Duration.parse("PT3M24S")),
+      AlbumTrack("ALBUM_1", 3, "too slow", Duration.parse("PT2M27S"))
     )
-    musicDb.playlists.info.save(playlistInfo)
+    for (albumTrack in albumTracks) {
+      musicTable.albumTracks.save(albumTrack)
+    }
+    val playlistInfo = PlaylistInfo("PLAYLIST_1", "WFH Music", listOf(AlbumTrack.Key("ALBUM_1", 1)))
+    musicTable.playlistInfo.save(playlistInfo)
 
-    val loadedItems =
-        musicDb.transactionLoad(PlaylistInfoKey("L_1"), PlaylistEntryKey("L_1", "M_1:T_1"))
-    val loadedPlaylistInfo = loadedItems.getItems<PlaylistInfo>().single()
-    assertThat(loadedPlaylistInfo.playlist_token).isEqualTo(playlistInfo.playlist_token)
-    assertThat(loadedPlaylistInfo.playlist_size).isEqualTo(playlistInfo.playlist_size)
-    val loadedPlaylistEntry = loadedItems.getItems<PlaylistEntry>().single()
-    assertThat(loadedPlaylistEntry.playlist_token).isEqualTo(playlistEntry.playlist_token)
-    assertThat(loadedPlaylistEntry.album_track_token).isEqualTo(playlistEntry.album_track_token)
+    val loadedItems = testDb.transactionLoad(
+      PlaylistInfo.Key("PLAYLIST_1"),
+      AlbumTrack.Key("ALBUM_1", 1),
+      AlbumTrack.Key("ALBUM_1", 2),
+      AlbumTrack.Key("ALBUM_1", 3)
+    )
+    assertThat(loadedItems.getItems<AlbumTrack>()).containsAll(albumTracks)
+    assertThat(loadedItems.getItems<PlaylistInfo>()).contains(playlistInfo)
   }
 
   @Test
   fun transactionLoadAfterTransactionWrite() {
-    val previousPlaylistInfo = PlaylistInfo("L_1", "WFH Music", 0)
-    musicDb.playlists.info.save(previousPlaylistInfo)
-    val albumTrack = AlbumTrack("M_1", "T_1", "dreamin'", Duration.parse("PT3M28S"))
-    musicDb.albums.tracks.save(albumTrack)
-    val playlistEntry = PlaylistEntry("L_1", "M_1:T_1")
-    // Add a PlaylistEntry and update PlaylistInfo, in an ACID manner using transactionWrite.
-    val playlistInfo = previousPlaylistInfo.copy(
-        playlist_size = 1
+    val albumTracks = listOf(
+      AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S")),
+      AlbumTrack("ALBUM_1", 2, "what you do to me", Duration.parse("PT3M24S")),
+      AlbumTrack("ALBUM_1", 3, "too slow", Duration.parse("PT2M27S"))
     )
+    val playlistInfo = PlaylistInfo("PLAYLIST_1", "WFH Music", listOf())
+
     val writeTransaction = TransactionWriteSet.Builder()
-        .save(playlistInfo)
-        .save(playlistEntry)
-        .build()
-    musicDb.transactionWrite(writeTransaction)
+      .save(albumTracks[0])
+      .save(albumTracks[1])
+      .save(albumTracks[2])
+      .save(playlistInfo)
+      .build()
+    testDb.transactionWrite(writeTransaction)
 
     // Read items at the same time in a serializable manner.
-    val loadedItems =
-        musicDb.transactionLoad(PlaylistInfoKey("L_1"), PlaylistEntryKey("L_1", "M_1:T_1"))
-    val loadedPlaylistInfo = loadedItems.getItems<PlaylistInfo>().single()
-    assertThat(loadedPlaylistInfo.playlist_token).isEqualTo(playlistInfo.playlist_token)
-    assertThat(loadedPlaylistInfo.playlist_size).isEqualTo(playlistInfo.playlist_size)
-    val loadedPlaylistEntry = loadedItems.getItems<PlaylistEntry>().single()
-    assertThat(loadedPlaylistEntry.playlist_token).isEqualTo(playlistEntry.playlist_token)
-    assertThat(loadedPlaylistEntry.album_track_token).isEqualTo(playlistEntry.album_track_token)
+    val loadedItems = testDb.transactionLoad(
+      PlaylistInfo.Key("PLAYLIST_1"),
+      AlbumTrack.Key("ALBUM_1", 1),
+      AlbumTrack.Key("ALBUM_1", 2),
+      AlbumTrack.Key("ALBUM_1", 3)
+    )
+    assertThat(loadedItems.getItems<AlbumTrack>()).containsAll(albumTracks)
+    assertThat(loadedItems.getItems<PlaylistInfo>()).containsExactly(playlistInfo)
   }
 
   @Test
   fun conditionalUpdateInTransactionWrite() {
-    val previousPlaylistInfo = PlaylistInfo("L_1", "WFH Music", 0)
-    musicDb.playlists.info.save(previousPlaylistInfo)
-    val albumTrack = AlbumTrack("M_1", "T_1", "dreamin'", Duration.parse("PT3M28S"))
-    musicDb.albums.tracks.save(albumTrack)
+    val playlistInfoV1 = PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
+    musicTable.playlistInfo.save(playlistInfoV1)
+    val albumTrack = AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S"))
+    musicTable.albumTracks.save(albumTrack)
 
-    val playlistEntry = PlaylistEntry("L_1", "M_1:T_1")
     // Add a PlaylistEntry and update PlaylistInfo, in an ACID manner using transactionWrite.
-    val playlistInfo = previousPlaylistInfo.copy(
-        playlist_size = 1
+    val playlistInfoV2 = playlistInfoV1.copy(
+      playlist_name = "WFH Forever Music",
+      playlist_version = playlistInfoV1.playlist_version + 1
     )
     val writeTransaction = TransactionWriteSet.Builder()
-        .save(playlistInfo, DynamoDBTransactionWriteExpression()
-            .withConditionExpression("playlist_size = :playlist_size")
-            .withExpressionAttributeValues(mapOf(
-                ":playlist_size" to AttributeValue().withN("${previousPlaylistInfo.playlist_size}")
-            )))
-        .save(playlistEntry)
-        .build()
-    musicDb.transactionWrite(writeTransaction)
+      .save(
+        playlistInfoV2,
+        ifPlaylistVersionIs(playlistInfoV1.playlist_version)
+      )
+      .delete(AlbumTrack.Key("ALBUM_1", 1))
+      .build()
+    testDb.transactionWrite(writeTransaction)
 
-    val loadedItems =
-        musicDb.transactionLoad(PlaylistInfoKey("L_1"), PlaylistEntryKey("L_1", "M_1:T_1"))
-    val loadedPlaylistInfo = loadedItems.getItems<PlaylistInfo>().single()
-    assertThat(loadedPlaylistInfo.playlist_token).isEqualTo(playlistInfo.playlist_token)
-    assertThat(loadedPlaylistInfo.playlist_size).isEqualTo(playlistInfo.playlist_size)
-    val loadedPlaylistEntry = loadedItems.getItems<PlaylistEntry>().single()
-    assertThat(loadedPlaylistEntry.playlist_token).isEqualTo(playlistEntry.playlist_token)
-    assertThat(loadedPlaylistEntry.album_track_token).isEqualTo(playlistEntry.album_track_token)
+    val loadedItems = testDb.transactionLoad(
+      PlaylistInfo.Key("PLAYLIST_1"),
+      AlbumTrack.Key("ALBUM_1", 1)
+    )
+    assertThat(loadedItems.getItems<PlaylistInfo>()).containsExactly(playlistInfoV2)
+    assertThat(loadedItems.getItems<AlbumTrack>()).isEmpty()
   }
 
   @Test
   fun conditionalUpdateFailureInTransactionWrite() {
-    val previousPlaylistInfo = PlaylistInfo("L_1", "WFH Music", 0)
-    musicDb.playlists.info.save(previousPlaylistInfo)
-    val albumTrack = AlbumTrack("M_1", "T_1", "dreamin'", Duration.parse("PT3M28S"))
-    musicDb.albums.tracks.save(albumTrack)
+    val playlistInfoV1 = PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
+    musicTable.playlistInfo.save(playlistInfoV1)
+    val albumTrack = AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S"))
+    musicTable.albumTracks.save(albumTrack)
 
-    val playlistEntry = PlaylistEntry("L_1", "M_1:T_1")
     // Add a PlaylistEntry and update PlaylistInfo, in an ACID manner using transactionWrite.
-    val playlistInfo = previousPlaylistInfo.copy(playlist_size = 1)
+    val playlistInfoV2 = playlistInfoV1.copy(
+      playlist_version = playlistInfoV1.playlist_version + 1
+    )
+
     val writeTransaction = TransactionWriteSet.Builder()
-        .save(playlistInfo, DynamoDBTransactionWriteExpression()
-            .withConditionExpression("playlist_size = :playlist_size")
-            .withExpressionAttributeValues(mapOf(
-                ":playlist_size" to AttributeValue().withN("${previousPlaylistInfo.playlist_size}")
-            )))
-        .save(playlistEntry)
-        .build()
+      .save(
+        playlistInfoV2,
+        ifPlaylistVersionIs(playlistInfoV1.playlist_version)
+      )
+      .delete(AlbumTrack.Key("ALBUM_1", 1))
+      .build()
     // Introduce a race condition.
-    val racingPlaylistInfo = previousPlaylistInfo.copy(playlist_size = 1)
-    musicDb.playlists.info.save(racingPlaylistInfo)
+    musicTable.playlistInfo.save(playlistInfoV2)
 
     assertThatIllegalStateException()
-        .isThrownBy {
-          musicDb.transactionWrite(writeTransaction)
-        }
-        .withCauseExactlyInstanceOf(TransactionCanceledException::class.java)
+      .isThrownBy {
+        testDb.transactionWrite(writeTransaction)
+      }
+      .withCauseExactlyInstanceOf(TransactionCanceledException::class.java)
   }
 
   @Test
   fun conditionCheckInTransactionWrite() {
-    val previousPlaylistInfo = PlaylistInfo("L_1", "WFH Music", 0)
-    musicDb.playlists.info.save(previousPlaylistInfo)
-    val albumTrack = AlbumTrack("M_1", "T_1", "dreamin'", Duration.parse("PT3M28S"))
-    musicDb.albums.tracks.save(albumTrack)
+    val playlistInfoV1 = PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
+    musicTable.playlistInfo.save(playlistInfoV1)
+    val albumTrack = AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S"))
+    musicTable.albumTracks.save(albumTrack)
 
-    val albumTrackKey = AlbumTrackKey("M_1", "T_1")
-    val playlistEntry = PlaylistEntry("L_1", "M_1:T_1")
-    val playlistInfo = previousPlaylistInfo.copy(playlist_size = 1)
+    val playlistInfoV2 = playlistInfoV1.copy(
+      playlist_tracks = playlistInfoV1.playlist_tracks + AlbumTrack.Key("ALBUM_1", 1),
+      playlist_version = playlistInfoV1.playlist_version + 1
+    )
     val writeTransaction = TransactionWriteSet.Builder()
-        .save(playlistInfo, DynamoDBTransactionWriteExpression()
-            .withConditionExpression("playlist_size = :playlist_size")
-            .withExpressionAttributeValues(mapOf(
-                ":playlist_size" to AttributeValue().withN("${previousPlaylistInfo.playlist_size}")
-            )))
-        .save(playlistEntry)
-        // Add a PlaylistEntry only if the AlbumTrack exists.
-        .checkCondition(albumTrackKey, DynamoDBTransactionWriteExpression()
-            .withConditionExpression("attribute_exists(track_name)"))
-        .build()
-    musicDb.transactionWrite(writeTransaction)
+      .save(
+        playlistInfoV2,
+        ifPlaylistVersionIs(playlistInfoV1.playlist_version)
+      )
+      // Add a PlaylistEntry only if the AlbumTrack exists.
+      .checkCondition(
+        AlbumTrack.Key("ALBUM_1", 1),
+        trackExists()
+      )
+      .build()
+    testDb.transactionWrite(writeTransaction)
 
-    val loadedItems =
-        musicDb.transactionLoad(PlaylistInfoKey("L_1"), PlaylistEntryKey("L_1", "M_1:T_1"))
-    val loadedPlaylistInfo = loadedItems.getItems<PlaylistInfo>().single()
-    assertThat(loadedPlaylistInfo.playlist_token).isEqualTo(playlistInfo.playlist_token)
-    assertThat(loadedPlaylistInfo.playlist_size).isEqualTo(playlistInfo.playlist_size)
-    val loadedPlaylistEntry = loadedItems.getItems<PlaylistEntry>().single()
-    assertThat(loadedPlaylistEntry.playlist_token).isEqualTo(playlistEntry.playlist_token)
-    assertThat(loadedPlaylistEntry.album_track_token).isEqualTo(playlistEntry.album_track_token)
+    val loadedItems = testDb.transactionLoad(PlaylistInfo.Key("PLAYLIST_1"))
+    assertThat(loadedItems.getItems<PlaylistInfo>()).containsExactly(playlistInfoV2)
   }
 
   @Test
   fun conditionCheckFailureInTransactionWrite() {
-    val previousPlaylistInfo = PlaylistInfo("L_1", "WFH Music", 0)
-    musicDb.playlists.info.save(previousPlaylistInfo)
+    val playlistInfoV1 = PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
+    musicTable.playlistInfo.save(playlistInfoV1)
 
-    val albumTrackKey = AlbumTrackKey("M_1", "T_1")
-    val playlistEntry = PlaylistEntry("L_1", "M_1:T_1")
-    val playlistInfo = previousPlaylistInfo.copy(playlist_size = 1)
+    val playlistInfoV2 = playlistInfoV1.copy(
+      playlist_tracks = playlistInfoV1.playlist_tracks + AlbumTrack.Key("ALBUM_1", 1),
+      playlist_version = playlistInfoV1.playlist_version + 1
+    )
     val writeTransaction = TransactionWriteSet.Builder()
-        .save(playlistInfo, DynamoDBTransactionWriteExpression()
-            .withConditionExpression("playlist_size = :playlist_size")
-            .withExpressionAttributeValues(mapOf(
-                ":playlist_size" to AttributeValue().withN("${previousPlaylistInfo.playlist_size}")
-            )))
-        .save(playlistEntry)
-        // Add a PlaylistEntry only if the AlbumTrack exists.
-        .checkCondition(albumTrackKey, DynamoDBTransactionWriteExpression()
-            .withConditionExpression("attribute_exists(track_name)"))
-        .build()
+      .save(
+        playlistInfoV2,
+        ifPlaylistVersionIs(playlistInfoV1.playlist_version)
+      )
+      // Add a playlist entry only if the AlbumTrack exists.
+      .checkCondition(
+        AlbumTrack.Key("ALBUM_1", 1),
+        trackExists()
+      )
+      .build()
 
     assertThatIllegalStateException()
-        .isThrownBy {
-          musicDb.transactionWrite(writeTransaction)
-        }
-        .withCauseExactlyInstanceOf(TransactionCanceledException::class.java)
+      .isThrownBy {
+        testDb.transactionWrite(writeTransaction)
+      }
+      .withCauseExactlyInstanceOf(TransactionCanceledException::class.java)
+  }
+
+  private fun ifPlaylistVersionIs(playlist_version: Long): DynamoDBTransactionWriteExpression {
+    return DynamoDBTransactionWriteExpression()
+      .withConditionExpression("playlist_version = :playlist_version")
+      .withExpressionAttributeValues(
+        mapOf(
+          ":playlist_version" to AttributeValue().withN("$playlist_version")
+        )
+      )
+  }
+
+  private fun trackExists(): DynamoDBTransactionWriteExpression {
+    return DynamoDBTransactionWriteExpression()
+      .withConditionExpression("attribute_exists(track_title)")
   }
 }

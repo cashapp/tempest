@@ -18,6 +18,7 @@ package app.cash.tempest.internal
 
 import app.cash.tempest.BeginsWith
 import app.cash.tempest.Between
+import app.cash.tempest.FilterExpression
 import app.cash.tempest.KeyCondition
 import app.cash.tempest.Offset
 import app.cash.tempest.Page
@@ -36,7 +37,8 @@ import kotlin.reflect.KClass
 internal class DynamoDbQueryable<K : Any, I : Any>(
   private val hashKeyName: String,
   private val rangeKeyName: String,
-  private val attributeNames: Set<String>,
+  private val secondaryIndexName: String?,
+  private val specificAttributeNames: Set<String>,
   private val keyCodec: Codec<K, Any>,
   private val itemCodec: Codec<I, Any>,
   private val rawType: KClass<Any>,
@@ -50,6 +52,7 @@ internal class DynamoDbQueryable<K : Any, I : Any>(
     asc: Boolean,
     pageSize: Int,
     returnConsumedCapacity: ReturnConsumedCapacity,
+    filterExpression: FilterExpression?,
     initialOffset: Offset<K>?
   ): Page<K, I> {
     val query = DynamoDBQueryExpression<Any>()
@@ -57,8 +60,18 @@ internal class DynamoDbQueryable<K : Any, I : Any>(
     query.isScanIndexForward = asc
     query.isConsistentRead = consistentRead
     query.limit = pageSize
-    query.withSelect(SPECIFIC_ATTRIBUTES)
-    query.projectionExpression = attributeNames.joinToString(", ")
+    if (secondaryIndexName != null) {
+      query.withIndexName(secondaryIndexName)
+    }
+    if (specificAttributeNames.isNotEmpty()) {
+      query.withSelect(SPECIFIC_ATTRIBUTES)
+      query.projectionExpression = specificAttributeNames.joinToString(", ")
+    }
+    query.withReturnConsumedCapacity(returnConsumedCapacity)
+    if (filterExpression != null) {
+      query.filterExpression = filterExpression.expression
+      query.expressionAttributeValues = filterExpression.attributeValues
+    }
     if (initialOffset != null) {
       query.exclusiveStartKey = initialOffset.encodeOffset()
     }
@@ -75,11 +88,16 @@ internal class DynamoDbQueryable<K : Any, I : Any>(
         val valueAttributes = tableModel.convert(value)
         val hashKeyValue = tableModel.unconvert(mapOf(hashKeyName to valueAttributes[hashKeyName]))
         withHashKeyValues(hashKeyValue)
-          .withRangeKeyCondition(
+
+        val rangeKeyValue = valueAttributes[rangeKeyName]
+        if (rangeKeyValue != null && rangeKeyValue.isNULL != true) {
+          withRangeKeyCondition(
             rangeKeyName,
             Condition()
               .withComparisonOperator(BEGINS_WITH)
-              .withAttributeValueList(valueAttributes[rangeKeyName]))
+              .withAttributeValueList(rangeKeyValue)
+          )
+        }
       }
       is Between -> {
         val start = keyCodec.toDb(keyCondition.startInclusive)
@@ -93,7 +111,8 @@ internal class DynamoDbQueryable<K : Any, I : Any>(
             rangeKeyName,
             Condition()
               .withComparisonOperator(BETWEEN)
-              .withAttributeValueList(startAttributes[rangeKeyName], endAttributes[rangeKeyName]))
+              .withAttributeValueList(startAttributes[rangeKeyName], endAttributes[rangeKeyName])
+          )
       }
     }
   }

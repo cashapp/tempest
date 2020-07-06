@@ -16,7 +16,6 @@
 
 package app.cash.tempest.internal
 
-import app.cash.tempest.LogicalDb
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -50,7 +49,7 @@ internal class ProxyFactory {
             val result = handler.invoke(args ?: arrayOf())
             if (result == this) proxy else result
           }
-          method.declaringClass == LogicalDb::class.java || method.declaringClass == Any::class.java -> {
+          method.declaringClass.isAssignableFrom(instance.javaClass) || method.declaringClass == Any::class.java -> {
             try {
               val result = method.invoke(instance, *(args ?: arrayOf()))
               if (result == this) proxy else result

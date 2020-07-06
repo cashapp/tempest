@@ -20,6 +20,7 @@ import app.cash.tempest.InlineView
 import app.cash.tempest.LogicalDb
 import app.cash.tempest.LogicalTable
 import app.cash.tempest.Queryable
+import app.cash.tempest.Scannable
 import app.cash.tempest.SecondaryIndex
 import app.cash.tempest.View
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
@@ -43,9 +44,9 @@ internal class LogicalDbFactory(
   init {
     val reflectionCodecFactory = ReflectionCodec.Factory()
     schema = Schema(
-        KeyType.Factory(reflectionCodecFactory),
-        ItemType.Factory(reflectionCodecFactory),
-        RawItemType.Factory(dynamoDbMapper, config)
+      KeyType.Factory(reflectionCodecFactory),
+      ItemType.Factory(reflectionCodecFactory),
+      RawItemType.Factory(dynamoDbMapper, config)
     )
   }
 
@@ -60,9 +61,9 @@ internal class LogicalDbFactory(
       methodHandlers[property.javaGetter!!] = GetterMethodHandler(table)
     }
     val logicalDb = DynamoDbLogicalDb(
-        dynamoDbMapper,
-        schema,
-        logicalTableFactory
+      dynamoDbMapper,
+      schema,
+      logicalTableFactory
     )
     return proxyFactory.create(dbType, methodHandlers.toMap(), logicalDb)
   }
@@ -72,28 +73,36 @@ internal class LogicalDbFactory(
     itemType: ItemType,
     keyType: KeyType
   ): Queryable<K, I> {
-    val (hashKeyName, rangeKeyName) =
-      if (keyType.secondaryIndexName != null) {
-        val index = requireNotNull(itemType.secondaryIndexes[keyType.secondaryIndexName]) {
-          "Could not find secondary index ${keyType.secondaryIndexName} in ${itemType.rawItemType}"
-        }
-        index.hashKeyName to index.rangeKeyName
-      } else {
-        val index = itemType.primaryIndex
-        if (index.rangeKeyName == null) {
-          return UnsupportedQueryable(rawItemType.type)
-        }
-        index.hashKeyName to index.rangeKeyName
-      }
+    if (keyType.rangeKeyName == null) {
+      return UnsupportedQueryable(rawItemType.type)
+    }
     return DynamoDbQueryable(
-      hashKeyName,
-      rangeKeyName,
+      keyType.hashKeyName,
+      keyType.rangeKeyName,
+      keyType.secondaryIndexName,
       itemType.attributeNames,
       keyType.codec as Codec<K, Any>,
       itemType.codec as Codec<I, Any>,
       rawItemType.type,
       rawItemType.tableModel,
-      dynamoDbMapper)
+      dynamoDbMapper
+    )
+  }
+
+  private fun <K : Any, I : Any> scannable(
+    rawItemType: RawItemType,
+    itemType: ItemType,
+    keyType: KeyType
+  ): Scannable<K, I> {
+    return DynamoDBScannable(
+      keyType.secondaryIndexName,
+      itemType.attributeNames,
+      keyType.codec as Codec<K, Any>,
+      itemType.codec as Codec<I, Any>,
+      rawItemType.type,
+      rawItemType.tableModel,
+      dynamoDbMapper
+    )
   }
 
   inner class LogicalTableFactory : LogicalTable.Factory {
@@ -102,16 +111,17 @@ internal class LogicalDbFactory(
       val rawItemType = schema.addRawItem(tableType.rawItemType)
       val codec = rawItemType.codec as Codec<RI, Any>
       val view = DynamoDbView(
-          codec,
-          codec,
-          dynamoDbMapper)
+        codec,
+        codec,
+        dynamoDbMapper
+      )
       val inlineViewFactory = InlineViewFactory(rawItemType)
       val secondaryIndexFactory = SecondaryIndexFactory(rawItemType)
       val logicalTable =
-          object : LogicalTable<RI>,
-              View<RI, RI> by view,
-              InlineView.Factory by inlineViewFactory,
-              SecondaryIndex.Factory by secondaryIndexFactory {}
+        object : LogicalTable<RI>,
+          View<RI, RI> by view,
+          InlineView.Factory by inlineViewFactory,
+          SecondaryIndex.Factory by secondaryIndexFactory {}
       val methodHandlers = mutableMapOf<Method, MethodHandler>()
       for (property in tableType.declaredMemberProperties) {
         val component = when (property.returnType.jvmErasure) {
@@ -144,14 +154,22 @@ internal class LogicalDbFactory(
       val item = schema.addItem(itemType, rawItemType.type)
       val key = schema.addKey(keyType, itemType)
       val view = DynamoDbView(
-          key.codec as Codec<K, Any>,
-          item.codec as Codec<I, Any>,
-          dynamoDbMapper)
+        key.codec as Codec<K, Any>,
+        item.codec as Codec<I, Any>,
+        dynamoDbMapper
+      )
       val queryable = queryable<K, I>(
-          rawItemType,
-          item,
-          key)
-      return object : InlineView<K, I>, View<K, I> by view, Queryable<K, I> by queryable {}
+        rawItemType,
+        item,
+        key
+      )
+      val scannable = scannable<K, I>(
+        rawItemType,
+        item,
+        key
+      )
+      return object : InlineView<K, I>, View<K, I> by view, Queryable<K, I> by queryable,
+        Scannable<K, I> by scannable {}
     }
   }
 
@@ -168,8 +186,15 @@ internal class LogicalDbFactory(
       val queryable = queryable<K, I>(
         rawItemType,
         item,
-        key)
-      return object : SecondaryIndex<K, I>, Queryable<K, I> by queryable {}
+        key
+      )
+      val scannable = scannable<K, I>(
+        rawItemType,
+        item,
+        key
+      )
+      return object : SecondaryIndex<K, I>, Queryable<K, I> by queryable,
+        Scannable<K, I> by scannable {}
     }
   }
 

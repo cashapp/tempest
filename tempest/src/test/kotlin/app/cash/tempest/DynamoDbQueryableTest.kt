@@ -16,13 +16,19 @@
 
 package app.cash.tempest
 
-import app.cash.tempest.example.AlbumArtist
-import app.cash.tempest.example.AlbumArtistByArtistOffset
+import app.cash.tempest.example.AFTER_HOURS_EP
+import app.cash.tempest.example.AlbumInfo
 import app.cash.tempest.example.AlbumTrack
-import app.cash.tempest.example.AlbumTrackByNameOffset
-import app.cash.tempest.example.AlbumTrackKey
-import app.cash.tempest.example.MusicDb
+import app.cash.tempest.example.LOCKDOWN_SINGLE
 import app.cash.tempest.example.MusicDbTestModule
+import app.cash.tempest.example.THE_DARK_SIDE_OF_THE_MOON
+import app.cash.tempest.example.THE_WALL
+import app.cash.tempest.example.TestDb
+import app.cash.tempest.example.WHAT_YOU_DO_TO_ME_SINGLE
+import app.cash.tempest.example.albumTitles
+import app.cash.tempest.example.givenAlbums
+import app.cash.tempest.example.trackTitles
+import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import java.time.Duration
 import javax.inject.Inject
 import misk.aws.dynamodb.testing.DockerDynamoDb
@@ -36,205 +42,254 @@ import org.junit.jupiter.api.Test
 class DynamoDbQueryableTest {
   @MiskTestModule
   val module = MusicDbTestModule()
+
   @MiskExternalDependency
   val dockerDynamoDb = DockerDynamoDb
 
-  @Inject lateinit var musicDb: MusicDb
+  @Inject lateinit var testDb: TestDb
+
+  private val musicTable get() = testDb.music
 
   @Test
   fun primaryIndexBetween() {
-    val albumTracks = givenAfterHoursAlbum()
+    musicTable.givenAlbums(AFTER_HOURS_EP)
 
-    val page1 = musicDb.albums.tracks.query(
-        keyCondition = Between(AlbumTrackKey("M_1", "T_1"), AlbumTrackKey("M_1", "T_1"))
+    val page1 = musicTable.albumTracks.query(
+      keyCondition = Between(
+        AlbumTrack.Key(AFTER_HOURS_EP.album_token, 1),
+        AlbumTrack.Key(AFTER_HOURS_EP.album_token, 1)
+      )
     )
-    assertThat(page1.offset).isNull()
-    assertThat(page1.contents).containsAll(albumTracks.slice(0..0))
+    assertThat(page1.hasMorePages).isFalse()
+    assertThat(page1.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(0..0))
 
-    val page2 = musicDb.albums.tracks.query(
-      keyCondition = Between(AlbumTrackKey("M_1", "T_2"), AlbumTrackKey("M_1", "T_3"))
+    val page2 = musicTable.albumTracks.query(
+      keyCondition = Between(
+        AlbumTrack.Key(AFTER_HOURS_EP.album_token, 2),
+        AlbumTrack.Key(AFTER_HOURS_EP.album_token, 3)
+      )
     )
-    assertThat(page2.offset).isNull()
-    assertThat(page2.contents).containsAll(albumTracks.slice(1..2))
+    assertThat(page2.hasMorePages).isFalse()
+    assertThat(page2.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(1..2))
 
-    val page3 = musicDb.albums.tracks.query(
-      keyCondition = Between(AlbumTrackKey("M_1", "T_1"), AlbumTrackKey("M_1", "T_3"))
+    val page3 = musicTable.albumTracks.query(
+      keyCondition = Between(
+        AlbumTrack.Key(AFTER_HOURS_EP.album_token, 1),
+        AlbumTrack.Key(AFTER_HOURS_EP.album_token, 3)
+      )
     )
-    assertThat(page3.offset).isNull()
-    assertThat(page3.contents).containsAll(albumTracks)
+    assertThat(page3.hasMorePages).isFalse()
+    assertThat(page3.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(0..2))
   }
 
   @Test
   fun primaryIndexBeginsWith() {
-    val albumTracks = givenAfterHoursAlbum()
+    musicTable.givenAlbums(AFTER_HOURS_EP)
 
-    val page1 = musicDb.albums.tracks.query(
-      keyCondition = BeginsWith(AlbumTrackKey("M_1", ""))
+    val page1 = musicTable.albumTracks.query(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token))
     )
-    assertThat(page1.offset).isNull()
-    assertThat(page1.contents).containsAll(albumTracks)
+    assertThat(page1.hasMorePages).isFalse()
+    assertThat(page1.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles)
 
-    val page2 = musicDb.albums.tracks.query(
-      keyCondition = BeginsWith(AlbumTrackKey("M_1", "T_"))
+    val page2 = musicTable.albumTracks.query(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, 3))
     )
-    assertThat(page2.offset).isNull()
-    assertThat(page2.contents).containsAll(albumTracks)
+    assertThat(page2.hasMorePages).isFalse()
+    assertThat(page2.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(2..2))
+  }
 
-    val page3 = musicDb.albums.tracks.query(
-      keyCondition = BeginsWith(AlbumTrackKey("M_1", "T_3"))
+  @Test
+  fun primaryIndexFilter() {
+    musicTable.givenAlbums(AFTER_HOURS_EP)
+
+    val page1 = musicTable.albumTracks.query(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token)),
+      filterExpression = runLengthLongerThan(Duration.ofMinutes(3))
     )
-    assertThat(page3.offset).isNull()
-    assertThat(page3.contents).containsAll(albumTracks.slice(2..2))
+    assertThat(page1.hasMorePages).isFalse()
+    assertThat(page1.trackTitles).containsExactly(
+      AFTER_HOURS_EP.trackTitles[0],
+      AFTER_HOURS_EP.trackTitles[1],
+      AFTER_HOURS_EP.trackTitles[4]
+    )
   }
 
   @Test
   fun primaryIndexPagination() {
-    val albumTracks = givenAfterHoursAlbum()
+    musicTable.givenAlbums(AFTER_HOURS_EP)
 
-    val page1 = musicDb.albums.tracks.query(
-        keyCondition = BeginsWith(AlbumTrackKey("M_1", "")),
-        pageSize = 2)
-    assertThat(page1.offset).isNotNull()
-    assertThat(page1.contents).containsAll(albumTracks.slice(0..1))
-    val page2 = musicDb.albums.tracks.query(
-        keyCondition = BeginsWith(AlbumTrackKey("M_1", "")),
-        pageSize = 2,
-        initialOffset = page1.offset)
-    assertThat(page2.offset).isNull()
-    assertThat(page2.contents).containsAll(albumTracks.slice(2..2))
+    val page1 = musicTable.albumTracks.query(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
+      pageSize = 2
+    )
+    assertThat(page1.hasMorePages).isTrue()
+    assertThat(page1.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(0..1))
+
+    val page2 = musicTable.albumTracks.query(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
+      pageSize = 2,
+      initialOffset = page1.offset
+    )
+    assertThat(page2.hasMorePages).isTrue()
+    assertThat(page2.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(2..3))
+
+    val page3 = musicTable.albumTracks.query(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
+      pageSize = 2,
+      initialOffset = page2.offset
+    )
+    assertThat(page3.hasMorePages).isFalse()
+    assertThat(page3.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(4..4))
   }
 
   @Test
   fun primaryIndexDesc() {
-    val albumTracks = givenAfterHoursAlbum()
+    musicTable.givenAlbums(AFTER_HOURS_EP)
 
-    val page = musicDb.albums.tracks.query(
-        keyCondition = BeginsWith(AlbumTrackKey("M_1", "")),
-        asc = false)
-    assertThat(page.offset).isNull()
-    assertThat(page.contents).containsAll(albumTracks.reversed())
+    val page = musicTable.albumTracks.query(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
+      asc = false
+    )
+    assertThat(page.hasMorePages).isFalse()
+    assertThat(page.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.reversed())
   }
 
   @Test
   fun primaryIndexDescPagination() {
-    val albumTracks = givenAfterHoursAlbum()
+    musicTable.givenAlbums(AFTER_HOURS_EP)
 
-    val page1 = musicDb.albums.tracks.query(
-        keyCondition = BeginsWith(AlbumTrackKey("M_1", "")),
-        asc = false,
-        pageSize = 2)
-    assertThat(page1.offset).isNotNull()
-    assertThat(page1.contents).containsAll(albumTracks.reversed().slice(0..1))
-    val page2 = musicDb.albums.tracks.query(
-        keyCondition = BeginsWith(AlbumTrackKey("M_1", "")),
-        asc = false,
-        pageSize = 2,
-        initialOffset = page1.offset)
-    assertThat(page2.offset).isNull()
-    assertThat(page2.contents).containsAll(albumTracks.reversed().slice(2..2))
+    val page1 = musicTable.albumTracks.query(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
+      asc = false,
+      pageSize = 2
+    )
+    assertThat(page1.hasMorePages).isTrue()
+    assertThat(page1.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.reversed().slice(0..1))
+
+    val page2 = musicTable.albumTracks.query(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
+      asc = false,
+      pageSize = 2,
+      initialOffset = page1.offset
+    )
+    assertThat(page2.hasMorePages).isTrue()
+    assertThat(page2.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.reversed().slice(2..3))
+
+    val page3 = musicTable.albumTracks.query(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
+      asc = false,
+      pageSize = 2,
+      initialOffset = page2.offset
+    )
+    assertThat(page3.hasMorePages).isFalse()
+    assertThat(page3.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.reversed().slice(4..4))
   }
 
   @Test
   fun localSecondaryIndex() {
-    val albumTracks = givenAfterHoursAlbum()
+    musicTable.givenAlbums(AFTER_HOURS_EP)
+    val expectedTrackTitles = AFTER_HOURS_EP.trackTitles.sorted()
 
-    val page = musicDb.albums.tracksByName.query(
-        keyCondition = Between(AlbumTrackByNameOffset("M_1", "e"), AlbumTrackByNameOffset("M_1", "z")))
-    assertThat(page.offset).isNull()
-    assertThat(page.contents).contains(albumTracks[1], albumTracks[2])
+    val page = musicTable.albumTracksByTitle.query(
+      keyCondition = BeginsWith(AlbumTrack.TitleIndexOffset(AFTER_HOURS_EP.album_token, ""))
+    )
+    assertThat(page.hasMorePages).isFalse()
+    assertThat(page.trackTitles).containsAll(expectedTrackTitles)
   }
 
   @Test
   fun localSecondaryIndexPagination() {
-    val albumTracks = givenAfterHoursAlbum().sortedBy { it.track_name }
+    musicTable.givenAlbums(AFTER_HOURS_EP)
+    val expectedTrackTitles = AFTER_HOURS_EP.trackTitles.sorted()
 
-    val page1 = musicDb.albums.tracksByName.query(
-        keyCondition = Between(AlbumTrackByNameOffset("M_1", " "), AlbumTrackByNameOffset("M_1", "~")),
-        pageSize = 2)
-    assertThat(page1.offset).isNotNull()
-    assertThat(page1.contents).containsAll(albumTracks.slice(0..1))
-    val page2 = musicDb.albums.tracksByName.query(
-        keyCondition = Between(AlbumTrackByNameOffset("M_1", " "), AlbumTrackByNameOffset("M_1", "~")),
-        pageSize = 2,
-        initialOffset = page1.offset)
-    assertThat(page2.offset).isNull()
-    assertThat(page2.contents).containsAll(albumTracks.slice(2..2))
+    val page1 = musicTable.albumTracksByTitle.query(
+      keyCondition = BeginsWith(AlbumTrack.TitleIndexOffset(AFTER_HOURS_EP.album_token, "")),
+      pageSize = 2
+    )
+    assertThat(page1.hasMorePages).isTrue()
+    assertThat(page1.trackTitles).containsAll(expectedTrackTitles.slice(0..1))
+
+    val page2 = musicTable.albumTracksByTitle.query(
+      keyCondition = BeginsWith(AlbumTrack.TitleIndexOffset(AFTER_HOURS_EP.album_token, "")),
+      pageSize = 2,
+      initialOffset = page1.offset
+    )
+    assertThat(page2.hasMorePages).isTrue()
+    assertThat(page2.trackTitles).containsAll(expectedTrackTitles.slice(2..3))
+
+    val page3 = musicTable.albumTracksByTitle.query(
+      keyCondition = BeginsWith(AlbumTrack.TitleIndexOffset(AFTER_HOURS_EP.album_token, "")),
+      pageSize = 2,
+      initialOffset = page2.offset
+    )
+    assertThat(page3.hasMorePages).isFalse()
+    assertThat(page3.trackTitles).containsAll(expectedTrackTitles.slice(4..4))
   }
 
   @Test
   fun globalSecondaryIndex() {
-    val artist1Albums = listOf(
-        AlbumArtist("M_1", "ARTIST_1"),
-        AlbumArtist("M_2", "ARTIST_1"),
-        AlbumArtist("M_3", "ARTIST_1")
+    musicTable.givenAlbums(
+      THE_DARK_SIDE_OF_THE_MOON,
+      THE_WALL,
+      WHAT_YOU_DO_TO_ME_SINGLE,
+      AFTER_HOURS_EP,
+      LOCKDOWN_SINGLE
     )
-    val artist2Albums = listOf(
-        AlbumArtist("M_1", "ARTIST_2"),
-        AlbumArtist("M_5", "ARTIST_2"),
-        AlbumArtist("M_6", "ARTIST_2"),
-        AlbumArtist("M_8", "ARTIST_2"),
-        AlbumArtist("M_9", "ARTIST_2")
+    val artist1Page = musicTable.albumInfoByArtist.query(
+      BeginsWith(AlbumInfo.ArtistIndexOffset("Pink Floyd", ""))
     )
-    val artist3Albums = listOf(
-        AlbumArtist("M_3", "ARTIST_3")
+    assertThat(artist1Page.hasMorePages).isFalse()
+    assertThat(artist1Page.albumTitles).containsExactly(
+      THE_DARK_SIDE_OF_THE_MOON.album_title,
+      THE_WALL.album_title
     )
-    for (albumArtist in artist1Albums + artist2Albums + artist3Albums) {
-      musicDb.albums.artists.save(albumArtist)
-    }
 
-    val artist1Page = musicDb.albums.albumArtistByArtist.query(
-        BeginsWith(AlbumArtistByArtistOffset("ARTIST_1", "M_")))
-    assertThat(artist1Page.offset).isNull()
-    assertThat(artist1Page.contents).containsAll(artist1Albums)
-    val artist2Page = musicDb.albums.albumArtistByArtist.query(
-      BeginsWith(AlbumArtistByArtistOffset("ARTIST_2", "M_")))
-    assertThat(artist2Page.offset).isNull()
-    assertThat(artist2Page.contents).containsAll(artist2Albums)
+    val artist2Page = musicTable.albumInfoByArtist.query(
+      BeginsWith(AlbumInfo.ArtistIndexOffset("53 Theives", ""))
+    )
+    assertThat(artist2Page.hasMorePages).isFalse()
+    assertThat(artist2Page.albumTitles).containsExactly(
+      AFTER_HOURS_EP.album_title,
+      WHAT_YOU_DO_TO_ME_SINGLE.album_title,
+      LOCKDOWN_SINGLE.album_title
+    )
   }
 
   @Test
   fun globalSecondaryIndexPagination() {
-    val artist1Albums = listOf(
-        AlbumArtist("M_1", "ARTIST_1"),
-        AlbumArtist("M_2", "ARTIST_1"),
-        AlbumArtist("M_3", "ARTIST_1")
+    musicTable.givenAlbums(
+      WHAT_YOU_DO_TO_ME_SINGLE,
+      AFTER_HOURS_EP,
+      LOCKDOWN_SINGLE
     )
-    val artist2Albums = listOf(
-        AlbumArtist("M_1", "ARTIST_2"),
-        AlbumArtist("M_5", "ARTIST_2"),
-        AlbumArtist("M_6", "ARTIST_2"),
-        AlbumArtist("M_8", "ARTIST_2"),
-        AlbumArtist("M_9", "ARTIST_2")
+    val page1 = musicTable.albumInfoByArtist.query(
+      BeginsWith(AlbumInfo.ArtistIndexOffset("53 Theives", "")),
+      pageSize = 2
     )
-    val artist3Albums = listOf(
-        AlbumArtist("M_3", "ARTIST_3")
+    assertThat(page1.hasMorePages).isTrue()
+    assertThat(page1.albumTitles).containsExactly(
+      AFTER_HOURS_EP.album_title,
+      WHAT_YOU_DO_TO_ME_SINGLE.album_title
     )
-    for (albumArtist in artist1Albums + artist2Albums + artist3Albums) {
-      musicDb.albums.artists.save(albumArtist)
-    }
 
-    val page1 = musicDb.albums.albumArtistByArtist.query(
-        keyCondition = Between(AlbumArtistByArtistOffset("ARTIST_1", "M_"), AlbumArtistByArtistOffset("ARTIST_1", "M`")),
-        pageSize = 2)
-    assertThat(page1.offset).isNotNull()
-    assertThat(page1.contents).containsAll(artist1Albums.slice(0..1))
-    val page2 = musicDb.albums.albumArtistByArtist.query(
-        keyCondition = Between(AlbumArtistByArtistOffset("ARTIST_1", "M_"), AlbumArtistByArtistOffset("ARTIST_1", "M`")),
-        pageSize = 2,
-        initialOffset = page1.offset)
-    assertThat(page2.offset).isNull()
-    assertThat(page2.contents).containsAll(artist1Albums.slice(2..2))
+    val page2 = musicTable.albumInfoByArtist.query(
+      BeginsWith(AlbumInfo.ArtistIndexOffset("53 Theives", "")),
+      pageSize = 2,
+      initialOffset = page1.offset
+    )
+    assertThat(page2.hasMorePages).isFalse()
+    assertThat(page2.albumTitles).containsExactly(
+      LOCKDOWN_SINGLE.album_title
+    )
   }
 
-  private fun givenAfterHoursAlbum(): List<AlbumTrack> {
-    val albumTracks = listOf(
-      AlbumTrack("M_1", "T_1", "Dreamin'", Duration.parse("PT3M28S")),
-      AlbumTrack("M_1", "T_2", "what you do to me", Duration.parse("PT3M24S")),
-      AlbumTrack("M_1", "T_3", "too slow", Duration.parse("PT2M27S"))
+  private fun runLengthLongerThan(duration: Duration): FilterExpression {
+    return FilterExpression(
+      "run_length > :duration",
+      mapOf(
+        ":duration" to AttributeValue().withS(duration.toString())
+      )
     )
-    for (albumTrack in albumTracks) {
-      musicDb.albums.tracks.save(albumTrack)
-    }
-    return albumTracks
   }
 }

@@ -106,12 +106,17 @@ internal data class KeyType(
   val type: KClass<*>,
   val itemType: KClass<*>,
   val attributeNames: Set<String>,
+  val hashKeyName: String,
+  val rangeKeyName: String?,
   val secondaryIndexName: String?
 ) : LogicalType() {
   class Factory(
     private val codecFactory: ReflectionCodec.Factory
   ) {
     fun create(keyType: KClass<*>, itemType: ItemType, rawItemType: RawItemType): KeyType {
+      val constructor = requireNotNull(
+        keyType.primaryConstructor) { "$keyType must have a primary constructor" }
+      val constructorParameters = constructor.parameters.associateBy { requireNotNull(it.name) }
       val attributeNames = mutableSetOf<String>()
       for (property in keyType.memberProperties) {
         val attribute = requireNotNull(
@@ -119,34 +124,34 @@ internal data class KeyType(
         val expectedReturnType =
             requireNotNull(itemType.attributes[property.name]?.returnType).withNullability(false)
         val actualReturnType = property.returnType.withNullability(false)
-        require(
-            actualReturnType == expectedReturnType) { "Expect the return type of $keyType.${property.name} to be $expectedReturnType but was $actualReturnType" }
-        require(
-            property.findAnnotation<AttributeAnnotation>() == null) { "Please move Attribute annotation from $keyType.${property.name} to ${itemType.type}.${property.name}" }
+        require(actualReturnType == expectedReturnType) { "Expect the return type of $keyType.${property.name} to be $expectedReturnType but was $actualReturnType" }
+        val attributeAnnotation: AttributeAnnotation? = property.findAnnotation()
+          ?: constructorParameters[property.name]?.findAnnotation()
+        require(attributeAnnotation == null) { "Please move Attribute annotation from $keyType.${property.name} to ${itemType.type}.${property.name}" }
         attributeNames.addAll(attribute.names)
       }
-      for ((attributeName, _) in itemType.attributePrefixes) {
-        attributeNames.add(attributeName)
-      }
       val primaryIndex = itemType.primaryIndex
-      require(attributeNames.contains(primaryIndex.hashKeyName))
+      require(attributeNames.contains(primaryIndex.hashKeyName)) { "Expect $keyType to have property ${primaryIndex.hashKeyName}" }
       if (primaryIndex.rangeKeyName != null) {
-        require(attributeNames.contains(
-            primaryIndex.rangeKeyName)) { "Expect $keyType to have property ${primaryIndex.rangeKeyName}" }
+        require(attributeNames.contains(primaryIndex.rangeKeyName)) { "Expect $keyType to have property ${primaryIndex.rangeKeyName}" }
       }
       val secondaryIndexName = keyType.findAnnotation<ForIndex>()?.name
-      if (secondaryIndexName != null) {
-        val secondaryIndex = requireNotNull(itemType.secondaryIndexes[secondaryIndexName])
-        require(attributeNames.contains(
-            secondaryIndex.hashKeyName)) { "Expect $keyType to have property ${secondaryIndex.hashKeyName}" }
-        require(attributeNames.contains(
-            secondaryIndex.rangeKeyName)) { "Expect $keyType to have property ${secondaryIndex.rangeKeyName}" }
+      val (hashKeyName, rangeKeyName) = if (secondaryIndexName != null) {
+        val secondaryIndex =
+          requireNotNull(itemType.secondaryIndexes[secondaryIndexName]) { "Expect to $itemType have secondary index $secondaryIndexName" }
+        require(attributeNames.contains(secondaryIndex.hashKeyName)) { "Expect $keyType to have property ${secondaryIndex.hashKeyName}" }
+        require(attributeNames.contains(secondaryIndex.rangeKeyName)) { "Expect $keyType to have property ${secondaryIndex.rangeKeyName}" }
+        secondaryIndex.hashKeyName to secondaryIndex.rangeKeyName
+      } else {
+        primaryIndex.hashKeyName to primaryIndex.rangeKeyName
       }
       return KeyType(
           codecFactory.create(keyType, itemType.attributes, rawItemType),
           keyType,
           itemType.type,
           attributeNames.toSet(),
+          hashKeyName,
+          rangeKeyName,
           secondaryIndexName)
     }
   }
@@ -163,12 +168,6 @@ internal data class ItemType(
 
   val attributeNames: Set<String>
     get() = attributes.values.flatMap { it.names }.toSet()
-
-  val attributePrefixes: Map<String, String>
-    get() = attributes.values
-        .filter { attribute -> attribute.prefix.isNotEmpty() }
-        .flatMap { attribute -> attribute.names.map { it to attribute.prefix } }
-        .toMap()
 
   data class Attribute(
     val names: Set<String>,
@@ -224,10 +223,11 @@ internal data class ItemType(
         "Expect $itemType to map to ${rawItemType.type}'s hash key ${primaryIndex.hashKeyName}"
       }
       if (primaryIndex.rangeKeyName != null) {
-        require(attributesByName.contains(primaryIndex.rangeKeyName)) {
+        val rangeKeyAttribute = attributesByName[primaryIndex.rangeKeyName]
+        requireNotNull(rangeKeyAttribute) {
           "Expect $itemType to map to ${rawItemType.type}'s range key ${primaryIndex.rangeKeyName}"
         }
-        require(attributesByName[primaryIndex.rangeKeyName]!!.prefix.isNotEmpty()) {
+        require(rangeKeyAttribute.prefix.isNotEmpty()) {
           "Expect $itemType.${primaryIndex.rangeKeyName} to be annotated with a prefix"
         }
       }
@@ -266,7 +266,7 @@ internal data class ItemType(
     private val AttributeAnnotation.annotatedNames: Set<String>?
       get() = when {
         names.isNotEmpty() -> {
-          check(name.isEmpty()) { "Attribute annotation is ambiguous. name: $name, names: $names" }
+          require(name.isEmpty()) { "Attribute annotation is ambiguous. name: $name, names: $names" }
           names.toSet()
         }
         name.isNotEmpty() -> {

@@ -21,13 +21,17 @@ import com.amazonaws.services.dynamodbv2.model.ReturnConsumedCapacity.NONE
 
 interface Queryable<K : Any, I : Any> {
 
-  /** Reads up to the [pageSize] items or a maximum of 1 MB of data. */
+  /**
+   * Reads up to the [pageSize] items or a maximum of 1 MB of data. This limit applies before the
+   * filter expression is evaluated.
+   */
   fun query(
     keyCondition: KeyCondition<K>,
     consistentRead: Boolean = false,
     asc: Boolean = true,
     pageSize: Int = 100,
     returnConsumedCapacity: ReturnConsumedCapacity = NONE,
+    filterExpression: FilterExpression? = null,
     initialOffset: Offset<K>? = null
   ): Page<K, I>
 }
@@ -37,10 +41,18 @@ interface Queryable<K : Any, I : Any> {
  */
 sealed class KeyCondition<K : Any>
 
+/**
+ * Applies equality condition on the hash key and the following condition on the range key
+ * - begins_with (a, substr)— true if the value of attribute a begins with a particular substring.
+ */
 data class BeginsWith<K : Any>(
   val prefix: K
 ) : KeyCondition<K>()
 
+/**
+ * Applies equality condition on the hash key and the following condition on the range key
+ * - a BETWEEN b AND c — true if a is greater than or equal to b, and less than or equal to c.
+ */
 data class Between<K : Any>(
   val startInclusive: K,
   val endInclusive: K
