@@ -14,7 +14,7 @@ ext.dep = [
   "kotlinStdLib": "org.jetbrains.kotlin:kotlin-stdlib:1.3.71",
   "kotlinxCoroutines": "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.5",
   "ktlintVersion": "0.34.2",
-  "mavenPublishGradlePlugin": "com.vanniktech:gradle-maven-publish-plugin:0.8.0",
+  "mavenPublishGradlePlugin": "com.vanniktech:gradle-maven-publish-plugin:0.11.1",
   "misk": "com.squareup.misk:misk:2020.06.05-1591392752-85ab2268",
   "miskAws": "com.squareup.misk:misk-aws:2020.06.05-1591392752-85ab2268",
   "miskAwsDynamodbTesting": "com.squareup.misk:misk-aws-dynamodb-testing:2020.06.05-1591392752-85ab2268",
