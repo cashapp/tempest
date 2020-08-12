@@ -11,7 +11,7 @@ env:
 
 jobs:
   build:
-    runs-on: "macOS-latest"
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout the repo
@@ -23,7 +23,7 @@ jobs:
       - name: Configure JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 1.8
+          java-version: 14
 
       - name: Test
-        run: ./gradlew build --stacktrace
+        run: ./gradlew build --full-stacktrace --info
