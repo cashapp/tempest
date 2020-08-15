@@ -69,7 +69,7 @@ class SchemaTest {
 
     assertThatIllegalArgumentException().isThrownBy {
       testDb.music.secondaryIndex(BadIndexOffset7::class, AlbumInfo::class)
-    }.withMessageContaining("primary constructor")
+    }.withMessageContaining("constructor")
   }
 
   @Test
@@ -100,7 +100,7 @@ class SchemaTest {
 
     assertThatIllegalArgumentException().isThrownBy {
       testDb.music.inlineView(Any::class, BadItem7::class)
-    }.withMessageContaining("primary constructor")
+    }.withMessageContaining("constructor")
 
     assertThatIllegalArgumentException().isThrownBy {
       testDb.music.inlineView(Any::class, BadItem8::class)

@@ -19,13 +19,15 @@ package app.cash.tempest.internal
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
-import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KParameter
+import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.full.withNullability
+import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.jvm.javaField
 
 internal interface Codec<A : Any, D : Any> {
   fun toDb(appItem: A): D
@@ -43,8 +45,10 @@ internal object IdentityCodec : Codec<Any, Any> {
  * the db item can only have vars.
  */
 internal class ReflectionCodec<A : Any, D : Any> private constructor(
-  private val appItemConstructor: KFunction<A>,
-  private val dbItemConstructor: KFunction<D>,
+  private val appItemConstructor: KFunction<A>?,
+  private val appItemClassFactory: ClassFactory<A>,
+  private val dbItemConstructor: KFunction<D>?,
+  private val dbItemClassFactory: ClassFactory<D>,
   private val constructorParameters: List<ConstructorParameterBinding<A, D, Any?>>,
   private val varBindings: List<VarBinding<A, D, Any?>>,
   private val valBindings: List<ValBinding<A, D, Any?>>,
@@ -52,7 +56,7 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
 ) : Codec<A, D> {
 
   override fun toDb(appItem: A): D {
-    val dbItem = dbItemConstructor.call()
+    val dbItem = dbItemConstructor?.call() ?: dbItemClassFactory.newInstance()
     for (binding in constructorParameters) {
       binding.setDb(dbItem, binding.getApp(appItem))
     }
@@ -70,11 +74,12 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
     val constructorArgs = constructorParameters
         .map { it.parameter to it.getDb(dbItem) }
         .toMap()
-    val item = appItemConstructor.callBy(constructorArgs)
+    val appItem =
+      appItemConstructor?.callBy(constructorArgs) ?: appItemClassFactory.newInstance()
     for (binding in varBindings) {
-      binding.setApp(item, binding.getDb(dbItem))
+      binding.setApp(appItem, binding.getDb(dbItem))
     }
-    return item
+    return appItem
   }
 
   internal class Factory {
@@ -84,45 +89,45 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
       itemAttributes: Map<String, ItemType.Attribute>,
       rawItemType: RawItemType
     ): Codec<Any, Any> {
-      val appItemConstructor = requireNotNull(itemType.primaryConstructor)
-      val dbItemConstructor = requireNotNull(rawItemType.type.primaryConstructor)
-      val itemConstructorParameters = appItemConstructor
-          .parameters.associateBy { requireNotNull(it.name) }
+      val dbItemConstructor = requireNotNull(rawItemType.type.primaryConstructor ?: rawItemType.type.constructors.singleOrNull())
+      require(dbItemConstructor.parameters.isEmpty()) { "Expect ${rawItemType.type} to have a zero argument constructor" }
+      val appItemConstructorParameters = itemType.primaryConstructorParameters
       val rawItemProperties = rawItemType.type.memberProperties.associateBy { it.name }
-      val constructorParameters = mutableListOf<ConstructorParameterBinding<Any, Any, Any?>>()
-      val mutableProperties = mutableListOf<VarBinding<Any, Any, Any?>>()
-      val otherProperties = mutableListOf<ValBinding<Any, Any, Any?>>()
+      val constructorParameterBindings = mutableListOf<ConstructorParameterBinding<Any, Any, Any?>>()
+      val varBindings = mutableListOf<VarBinding<Any, Any, Any?>>()
+      val valBindings = mutableListOf<ValBinding<Any, Any, Any?>>()
       for (property in itemType.memberProperties) {
         val propertyName = property.name
-        val mappedProperties = requireNotNull(itemAttributes[propertyName]).names
-            .map { requireNotNull(rawItemProperties[it]) }
+        val itemAttribute = itemAttributes[propertyName] ?: continue
+        val mappedProperties = itemAttribute.names
+            .map { requireNotNull(rawItemProperties[it]) { "Expect ${rawItemType.type} to have property $propertyName" } }
         val mappedPropertyTypes = mappedProperties.map { it.returnType }.distinct()
         require(mappedPropertyTypes.size == 1) { "Expect mapped properties of $propertyName to have the same type: ${mappedProperties.map { it.name }}" }
         val expectedReturnType = requireNotNull(mappedPropertyTypes.single()).withNullability(false)
         val actualReturnType = property.returnType.withNullability(false)
         require(actualReturnType == expectedReturnType) { "Expect the return type of $itemType.${property.name} to be $expectedReturnType but was $actualReturnType" }
-        if (itemConstructorParameters.contains(propertyName)) {
-          constructorParameters.add(
+        if (appItemConstructorParameters.contains(propertyName)) {
+          constructorParameterBindings.add(
               ConstructorParameterBinding(
                   property as KProperty1<Any, Any?>,
-                  itemConstructorParameters[propertyName]!!,
+                  appItemConstructorParameters[propertyName]!!,
                   mappedProperties))
-        } else if (property is KMutableProperty<*>) {
-          mutableProperties.add(
-              VarBinding(
-                  property as KMutableProperty1<Any, Any?>,
-                  mappedProperties))
+        } else if (property.isVar) {
+          varBindings.add(
+              VarBinding(property as KProperty1<Any, Any?>, mappedProperties))
         } else {
-          otherProperties.add(ValBinding(property as KProperty1<Any, Any?>, mappedProperties))
+          valBindings.add(ValBinding(property as KProperty1<Any, Any?>, mappedProperties))
         }
       }
       val prefixer = Prefixer<Any>(itemAttributes, rawItemType)
       return ReflectionCodec(
-          appItemConstructor,
+          itemType.primaryConstructor,
+          ClassFactory.create(itemType.java),
           dbItemConstructor,
-          constructorParameters,
-          mutableProperties,
-          otherProperties,
+          ClassFactory.create(rawItemType.type.java),
+          constructorParameterBindings,
+          varBindings,
+          valBindings,
           prefixer
       )
     }
@@ -185,6 +190,9 @@ private sealed class Binding<A, D, P> {
 
   fun setDb(result: D, value: P) {
     for (rawProperty in dbProperties) {
+      if (!rawProperty.isAccessible) {
+        rawProperty.javaField?.trySetAccessible()
+      }
       (rawProperty as KMutableProperty1<D, P>).set(result, value)
     }
   }
@@ -202,11 +210,25 @@ private class ValBinding<A, D, P>(
 ) : Binding<A, D, P>()
 
 private class VarBinding<A, D, P>(
-  override val appProperty: KMutableProperty1<A, P>,
+  override val appProperty: KProperty1<A, P>,
   override val dbProperties: List<KProperty1<D, P>>
 ) : Binding<A, D, P>() {
 
   fun setApp(result: A, value: P) {
-    appProperty.set(result, value)
+    appProperty.forceSet(result, value)
   }
+}
+
+val KProperty<*>.isVar: Boolean
+  get() = javaField != null
+
+fun <T, R> KProperty1<T, R>.forceSet(receiver: T, value: R) {
+  if (!isAccessible) {
+    javaField!!.trySetAccessible()
+  }
+  if (this is KMutableProperty1<T, R>) {
+    set(receiver, value)
+    return
+  }
+  javaField!!.set(receiver, value)
 }
