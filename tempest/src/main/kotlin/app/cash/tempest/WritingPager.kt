@@ -19,11 +19,11 @@ package app.cash.tempest
 /**
  * A control flow abstraction for paging transactional writes.
  */
-class WritingPager<T>(
+class WritingPager<T> @JvmOverloads constructor(
   private val db: LogicalDb,
-  private val maxTransactionItems: Int,
-  private val handler: Handler<T>,
-  private val updates: List<T>
+  private val updates: List<T>,
+  private val maxTransactionItems: Int = 25,
+  private val handler: Handler<T>
 ) {
   /** The number of updates successfully applied. */
   var updatedCount = 0
@@ -92,7 +92,7 @@ class WritingPager<T>(
      *     entities.
      * @return the number of updates that fits in the current page.
      */
-    fun beforePage(remainingUpdates: List<T>, maxTransactionItems: Int): Int
+    fun beforePage(remainingUpdates: List<@JvmSuppressWildcards T>, maxTransactionItems: Int): Int
 
     /**
      * Invoked to update each item.

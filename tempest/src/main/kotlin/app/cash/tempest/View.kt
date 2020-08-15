@@ -70,4 +70,50 @@ interface View<K : Any, I : Any> {
     deleteExpression: DynamoDBDeleteExpression? = null,
     ignoreVersionConstraints: Boolean = false
   )
+
+  // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
+
+  fun load(key: K) = load(key, ConsistentReads.EVENTUAL)
+
+  fun save(
+    item: I
+  ) = save(item, saveExpression = null, ignoreVersionConstraints = false)
+
+  fun save(
+    item: I,
+    ignoreVersionConstraints: Boolean
+  ) = save(item, saveExpression = null, ignoreVersionConstraints = ignoreVersionConstraints)
+
+  fun save(
+    item: I,
+    saveExpression: DynamoDBSaveExpression
+  ) = save(item, saveExpression = saveExpression, ignoreVersionConstraints = false)
+
+  fun deleteKey(
+    key: K
+  ) = deleteKey(key, deleteExpression = null, ignoreVersionConstraints = false)
+
+  fun deleteKey(
+    key: K,
+    deleteExpression: DynamoDBDeleteExpression
+  ) = deleteKey(key, deleteExpression = deleteExpression, ignoreVersionConstraints = false)
+
+  fun deleteKey(
+    key: K,
+    ignoreVersionConstraints: Boolean
+  ) = deleteKey(key, deleteExpression = null, ignoreVersionConstraints = ignoreVersionConstraints)
+
+  fun delete(
+    item: I
+  ) = delete(item, deleteExpression = null, ignoreVersionConstraints = false)
+
+  fun delete(
+    item: I,
+    deleteExpression: DynamoDBDeleteExpression
+  ) = delete(item, deleteExpression = deleteExpression, ignoreVersionConstraints = false)
+
+  fun delete(
+    item: I,
+    ignoreVersionConstraints: Boolean
+  ) = delete(item, deleteExpression = null, ignoreVersionConstraints = ignoreVersionConstraints)
 }

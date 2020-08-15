@@ -18,7 +18,7 @@ package app.cash.tempest
 
 import com.amazonaws.services.dynamodbv2.model.ConsumedCapacity
 
-data class Page<K, T>(
+data class Page<K, T> internal constructor(
   val contents: List<T>,
   val offset: Offset<K>?,
   /**
@@ -36,6 +36,6 @@ data class Page<K, T>(
     get() = offset != null
 }
 
-data class Offset<K>(
+data class Offset<K> internal constructor(
   val key: K
 )

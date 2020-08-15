@@ -30,9 +30,9 @@ internal class UnsupportedQueryable<K : Any, I : Any>(
 ) : Queryable<K, I> {
   override fun query(
     keyCondition: KeyCondition<K>,
-    consistentRead: Boolean,
     asc: Boolean,
     pageSize: Int,
+    consistentRead: Boolean,
     returnConsumedCapacity: ReturnConsumedCapacity,
     filterExpression: FilterExpression?,
     initialOffset: Offset<K>?
