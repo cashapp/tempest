@@ -16,7 +16,9 @@
 
 package app.cash.tempest.interop
 
-import app.cash.tempest.InlineView
+import app.cash.tempest.urlshortener.java.Alias
+import app.cash.tempest.urlshortener.java.AliasDb
+import app.cash.tempest.urlshortener.java.AliasTable
 import javax.inject.Inject
 import misk.aws.dynamodb.testing.DockerDynamoDb
 import misk.testing.MiskExternalDependency
@@ -34,51 +36,18 @@ class JavaInteropTest {
   @MiskExternalDependency
   val dockerDynamoDb = DockerDynamoDb
 
-  @Inject lateinit var jAliasDb: JAliasDb
-  @Inject lateinit var kAliasDb: KAliasDb
+  @Inject lateinit var aliasDb: AliasDb
+  val aliasTable: AliasTable get() = aliasDb.aliasTable()
 
   @Test
   fun javaLogicalTypeJavaItemType() {
-    jAliasDb.aliasTable().jAliases().loadAfterSave(JALIAS)
-  }
-
-  @Test
-  fun javaLogicalTypeKotlinItemType() {
-    jAliasDb.aliasTable().kAliases().loadAfterSave(KALIAS)
-  }
-
-  @Test
-  fun kotlinLogicalTypeKotlinItemType() {
-    kAliasDb.aliasTable.kAliases.loadAfterSave(KALIAS)
-  }
-
-  @Test
-  fun kotlinLogicalTypeJavaItemType() {
-    kAliasDb.aliasTable.jAliases.loadAfterSave(JALIAS)
-  }
-
-  private fun InlineView<JAlias.Key, JAlias>.loadAfterSave(alias: JAlias) {
-    save(alias)
-    val loadedAlias = load(alias.key())!!
-    assertThat(loadedAlias.short_url).isEqualTo(alias.short_url)
-    assertThat(loadedAlias.destination_url).isEqualTo(alias.destination_url)
-  }
-
-  private fun InlineView<KAlias.Key, KAlias>.loadAfterSave(alias: KAlias) {
-    save(alias)
-    val loadedAlias = load(alias.key)!!
-    assertThat(loadedAlias.short_url).isEqualTo(alias.short_url)
-    assertThat(loadedAlias.destination_url).isEqualTo(alias.destination_url)
-  }
-
-  companion object {
-    val JALIAS = JAlias(
+    val alias = Alias(
       "SquareCLA",
       "https://docs.google.com/forms/d/e/1FAIpQLSeRVQ35-gq2vdSxD1kdh7CJwRdjmUA0EZ9gRXaWYoUeKPZEQQ/viewform?formkey=dDViT2xzUHAwRkI3X3k5Z0lQM091OGc6MQ&ndplr=1"
     )
-    val KALIAS = KAlias(
-      "SquareCLA",
-      "https://docs.google.com/forms/d/e/1FAIpQLSeRVQ35-gq2vdSxD1kdh7CJwRdjmUA0EZ9gRXaWYoUeKPZEQQ/viewform?formkey=dDViT2xzUHAwRkI3X3k5Z0lQM091OGc6MQ&ndplr=1"
-    )
+    aliasTable.aliases().save(alias)
+    val loadedAlias = aliasTable.aliases().load(alias.key())!!
+    assertThat(loadedAlias.short_url).isEqualTo(alias.short_url)
+    assertThat(loadedAlias.destination_url).isEqualTo(alias.destination_url)
   }
 }

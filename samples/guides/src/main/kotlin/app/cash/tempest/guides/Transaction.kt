@@ -14,63 +14,66 @@
  * limitations under the License.
  */
 
-package app.cash.tempest
+package app.cash.tempest.guides
 
+import app.cash.tempest.TransactionWriteSet
+import app.cash.tempest.WritingPager
 import app.cash.tempest.musiclibrary.AlbumTrack
 import app.cash.tempest.musiclibrary.MusicDb
-import app.cash.tempest.musiclibrary.MusicDbTestModule
 import app.cash.tempest.musiclibrary.MusicTable
 import app.cash.tempest.musiclibrary.PlaylistInfo
-import app.cash.tempest.musiclibrary.THE_WALL
-import app.cash.tempest.musiclibrary.givenAlbums
+import app.cash.tempest.transactionWritingPager
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTransactionWriteExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
-import javax.inject.Inject
-import misk.aws.dynamodb.testing.DockerDynamoDb
-import misk.testing.MiskExternalDependency
-import misk.testing.MiskTest
-import misk.testing.MiskTestModule
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Test
 
-@MiskTest(startService = true)
-class WritingPagerTest {
+class Transaction(
+  private val db: MusicDb
+) {
+  private val table: MusicTable = db.music
 
-  @MiskTestModule
-  val module = MusicDbTestModule()
-
-  @MiskExternalDependency
-  val dockerDynamoDb = DockerDynamoDb
-
-  @Inject lateinit var musicDb: MusicDb
-
-  private val musicTable get() = musicDb.music
-
-  @Test
-  fun write() {
-    musicTable.givenAlbums(THE_WALL)
-    val tracks = (1..25L).map { AlbumTrack.Key(THE_WALL.album_token, it) }
-    val playlistV1 = PlaylistInfo(
-      "PLAYLIST_1",
-      "Pink Floyd Anthology",
-      emptyList()
+  fun loadPlaylistTracks(playlist: PlaylistInfo): List<AlbumTrack> {
+    val results = db.transactionLoad(
+      playlist.playlist_tracks // [ AlbumTrack.Key("ALBUM_1", track_number = 1), AlbumTrack.Key("ALBUM_354", 12), AlbumTrack.Key("ALBUM_23", 9) ]
     )
-    musicTable.playlistInfo.save(playlistV1)
+    return results.getItems<AlbumTrack>()
+  }
 
-    musicDb.transactionWritingPager(
-      tracks,
-      maxTransactionItems = 10,
-      handler = AlbumTrackWritingPagerHandler(playlistV1.playlist_token, musicTable)
+  fun addTrackToPlaylist(
+    playlistToken: String,
+    albumTrack: AlbumTrack.Key
+  ) {
+    // Read.
+    val existing = checkNotNull(
+      table.playlistInfo.load(PlaylistInfo.Key(playlistToken))
+    ) { "Playlist does not exist: $playlistToken" }
+    // Modify.
+    val newPlaylist = existing.copy(
+      playlist_tracks = existing.playlist_tracks + albumTrack,
+      playlist_version = existing.playlist_version + 1
+    )
+    // Write.
+    val writeSet = TransactionWriteSet.Builder()
+      .save(newPlaylist, ifPlaylistVersionIs(existing.playlist_version))
+      // Add a playlist entry only if the album track exists.
+      .checkCondition(albumTrack, trackExists())
+      .build()
+    db.transactionWrite(writeSet)
+  }
+
+  fun addTracksToPlaylist(
+    playlistToken: String,
+    albumTracks: List<AlbumTrack.Key>
+  ) {
+    db.transactionWritingPager(
+      albumTracks,
+      maxTransactionItems = 25,
+      handler = AlbumTrackWritingPagerHandler(playlistToken, table)
     ).execute()
-
-    val playlistInfo = musicTable.playlistInfo.load(PlaylistInfo.Key(playlistV1.playlist_token))!!
-    assertThat(playlistInfo.playlist_tracks).containsExactlyElementsOf(tracks)
-    assertThat(playlistInfo.playlist_version).isEqualTo(4)
   }
 
   class AlbumTrackWritingPagerHandler(
     private val playlistToken: String,
-    private val musicTable: MusicTable
+    private val table: MusicTable
   ) : WritingPager.Handler<AlbumTrack.Key> {
     private lateinit var currentPagePlaylistInfo: PlaylistInfo
     private lateinit var currentPageTracks: List<AlbumTrack.Key>
@@ -85,7 +88,7 @@ class WritingPagerTest {
     ): Int {
       // Reserve 1 for the playlist info at the end.
       currentPageTracks = remainingUpdates.take((maxTransactionItems - 1))
-      currentPagePlaylistInfo = musicTable.playlistInfo.load(PlaylistInfo.Key(playlistToken))!!
+      currentPagePlaylistInfo = table.playlistInfo.load(PlaylistInfo.Key(playlistToken))!!
       return currentPageTracks.size
     }
 
@@ -94,13 +97,12 @@ class WritingPagerTest {
     }
 
     override fun finishPage(builder: TransactionWriteSet.Builder) {
-      val playlistInfo = currentPagePlaylistInfo
-      builder.save(
-        playlistInfo.copy(
-          playlist_tracks = playlistInfo.playlist_tracks + currentPageTracks,
-          playlist_version = playlistInfo.playlist_version + 1
-        ),
-        ifPlaylistVersionIs(playlistInfo.playlist_version))
+      val existing = currentPagePlaylistInfo
+      val newPlaylist = existing.copy(
+        playlist_tracks = existing.playlist_tracks + currentPageTracks,
+        playlist_version = existing.playlist_version + 1
+      )
+      builder.save(newPlaylist, ifPlaylistVersionIs(existing.playlist_version))
     }
   }
 }

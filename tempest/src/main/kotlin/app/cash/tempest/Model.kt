@@ -187,15 +187,15 @@ class KeySet private constructor(
 
   fun <K : Any> getKeys(
     keyType: KClass<K>
-  ): Set<K> = getKeys(keyType.java)
+  ): List<K> = getKeys(keyType.java)
 
   fun <K : Any> getKeys(
     keyType: Class<K>
-  ): Set<K> {
-    return contents.filterIsInstance(keyType).toSet()
+  ): List<K> {
+    return contents.filterIsInstance(keyType)
   }
 
-  inline fun <reified K : Any> getKeys(): Collection<K> {
+  inline fun <reified K : Any> getKeys(): List<K> {
     return getKeys(K::class)
   }
 }
@@ -211,15 +211,15 @@ class ItemSet private constructor(
 
   fun <I : Any> getItems(
     itemType: KClass<I>
-  ): Set<I> = getItems(itemType.java)
+  ): List<I> = getItems(itemType.java)
 
   fun <I : Any> getItems(
     itemType: Class<I>
-  ): Set<I> {
-    return contents.filterIsInstance(itemType).toSet()
+  ): List<I> {
+    return contents.filterIsInstance(itemType)
   }
 
-  inline fun <reified I : Any> getItems(): Collection<I> {
+  inline fun <reified I : Any> getItems(): List<I> {
     return getItems(I::class)
   }
 }

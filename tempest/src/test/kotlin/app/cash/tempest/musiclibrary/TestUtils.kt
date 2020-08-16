@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package app.cash.tempest.example
+package app.cash.tempest.musiclibrary
 
 import app.cash.tempest.Page
 import java.time.Duration

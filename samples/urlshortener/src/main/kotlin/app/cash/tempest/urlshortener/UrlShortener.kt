@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package app.cash.tempest.interop
+package app.cash.tempest.urlshortener
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable
+interface UrlShortener {
+  /**
+   * Creates a custom alias from [shortUrl] to [destinationUrl].
+   * @return false if [shortUrl] is taken.
+   */
+  fun shorten(shortUrl: String, destinationUrl: String): Boolean
 
-@DynamoDBTable(tableName = "k_alias_items")
-class KAliasItem {
-  @DynamoDBHashKey(attributeName = "short_url")
-  var short_url: String? = null
-  @DynamoDBAttribute(attributeName = "destination_url")
-  var destination_url: String? = null
+  /**
+   * Redirects [shortUrl] to its destination.
+   * @return null if not found.
+   */
+  fun redirect(shortUrl: String): String?
 }

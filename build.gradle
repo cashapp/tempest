@@ -21,7 +21,6 @@ subprojects { subProject ->
   apply plugin: 'kotlin'
   apply plugin: 'com.diffplug.gradle.spotless'
   apply plugin: 'org.jetbrains.dokka'
-  apply plugin: 'com.vanniktech.maven.publish'
 
   compileKotlin {
     kotlinOptions {

@@ -21,7 +21,7 @@ package app.cash.tempest
  *
  * If this mapped to a primary range key, it must have a prefix.
  */
-@Target(AnnotationTarget.PROPERTY)
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Attribute(
   val name: String = "",
@@ -32,7 +32,7 @@ annotation class Attribute(
 /**
  * Indicates that the item class property should be ignored.
  */
-@Target(AnnotationTarget.PROPERTY)
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Ignore
 

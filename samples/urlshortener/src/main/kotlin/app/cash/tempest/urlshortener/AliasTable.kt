@@ -14,17 +14,25 @@
  * limitations under the License.
  */
 
-package app.cash.tempest.interop
+package app.cash.tempest.urlshortener
 
+import app.cash.tempest.Ignore
 import app.cash.tempest.InlineView
-import app.cash.tempest.LogicalDb
 import app.cash.tempest.LogicalTable
 
-interface KAliasDb : LogicalDb {
-  val aliasTable: KAliasTable
+interface AliasTable : LogicalTable<AliasItem> {
+  val aliases: InlineView<Alias.Key, Alias>
 }
 
-interface KAliasTable : LogicalTable<KAliasItem> {
-  val jAliases: InlineView<JAlias.Key, JAlias>
-  val kAliases: InlineView<KAlias.Key, KAlias>
+data class Alias(
+  val short_url: String,
+  val destination_url: String
+) {
+  @Ignore
+  val key: Key
+    get() = Key(short_url)
+
+  data class Key(
+    val short_url: String
+  )
 }

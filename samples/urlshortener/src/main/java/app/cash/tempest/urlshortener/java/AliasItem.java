@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package app.cash.tempest.interop;
+package app.cash.tempest.urlshortener.java;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 
 @DynamoDBTable(tableName = "j_alias_items")
-public class JAliasItem {
+public class AliasItem {
   private String short_url;
   private String destination_url;
 

@@ -18,7 +18,6 @@ package app.cash.tempest.internal
 
 import app.cash.tempest.Attribute as AttributeAnnotation
 import app.cash.tempest.ForIndex
-import app.cash.tempest.Ignore
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperTableModel
@@ -119,9 +118,13 @@ internal data class KeyType(
       val constructorParameters = keyType.primaryConstructorParameters
       val attributeNames = mutableSetOf<String>()
       for (property in keyType.memberProperties) {
+        if (property.shouldIgnore) {
+          continue
+        }
         val attribute = requireNotNull(
           itemType.attributes[property.name]
-        ) { "Expect ${property.name}, required by $keyType, to be declared in ${itemType.type}" }
+        ) { "Expect ${property.name}, required by $keyType, to be declared in ${itemType.type}." +
+            " Use @Ignore to exclude it." }
         val expectedReturnType =
           requireNotNull(itemType.attributes[property.name]?.returnType).withNullability(false)
         val actualReturnType = property.returnType.withNullability(false)
@@ -243,7 +246,8 @@ internal data class ItemType(
       val rawItemPropertyNames = (annotation?.annotatedNames ?: setOf(property.name))
       for (rawItemPropertyName in rawItemPropertyNames) {
         require(rawItemType.hasProperty(rawItemPropertyName)) {
-          "Expect $rawItemPropertyName, required by $itemType, to be declared in ${rawItemType.type}"
+          "Expect $rawItemPropertyName, required by $itemType, to be declared in " +
+              "${rawItemType.type}. Use @Ignore to exclude it."
         }
       }
       val prefix = annotation?.prefix ?: ""
@@ -278,9 +282,6 @@ internal data class ItemType(
       }
       return secondaryIndexes.toMap()
     }
-
-    private val KProperty<*>.shouldIgnore: Boolean
-      get() = findAnnotation<Ignore>() != null || findAnnotation<Transient>() != null
 
     private val AttributeAnnotation.annotatedNames: Set<String>?
       get() = when {

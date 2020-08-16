@@ -14,22 +14,18 @@
  * limitations under the License.
  */
 
-package app.cash.tempest.example
+package app.cash.tempest.musiclibrary
 
 import app.cash.tempest.Attribute
 import app.cash.tempest.ForIndex
+import app.cash.tempest.Ignore
 import app.cash.tempest.InlineView
 import app.cash.tempest.LogicalTable
 import app.cash.tempest.SecondaryIndex
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBIndexHashKey
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBIndexRangeKey
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTypeConverted
 import java.time.Duration
 import java.time.LocalDate
+import kotlin.text.format
+import kotlin.text.toLong
 
 interface MusicTable : LogicalTable<MusicItem> {
   val albumInfo: InlineView<AlbumInfo.Key, AlbumInfo>
@@ -56,6 +52,10 @@ data class AlbumInfo(
   @Attribute(prefix = "INFO_")
   val sort_key: String = ""
 
+  @Ignore
+  val key: Key
+    get() = Key(album_token)
+
   data class Key(
     val album_token: String
   ) {
@@ -79,9 +79,6 @@ data class AlbumInfo(
   )
 }
 
-val AlbumInfo.key: AlbumInfo.Key
-  get() = AlbumInfo.Key(album_token)
-
 data class AlbumTrack(
   @Attribute(name = "partition_key")
   val album_token: String,
@@ -97,11 +94,23 @@ data class AlbumTrack(
     run_length: Duration
   ) : this(album_token, "%016x".format(track_number), track_title, run_length)
 
+  @Ignore
+  val key: Key
+    get() = Key(album_token, album_token)
+
+  @Ignore
+  val track_number: Long
+    get() = track_token.toLong(radix = 16)
+
   data class Key(
     val album_token: String,
     val track_token: String = ""
   ) {
     constructor(album_token: String, track_number: Long) : this(album_token, "%016x".format(track_number))
+
+    @Ignore
+    val track_number: Long
+      get() = track_token.toLong(radix = 16)
   }
 
   @ForIndex("album_track_title_index")
@@ -113,17 +122,8 @@ data class AlbumTrack(
   )
 }
 
-val AlbumTrack.Key.track_number: Long
-  get() = track_token.toLong(radix = 16)
-
-val AlbumTrack.key: AlbumTrack.Key
-  get() = AlbumTrack.Key(album_token, album_token)
-
-val AlbumTrack.track_number: Long
-  get() = track_token.toLong(radix = 16)
-
 data class PlaylistInfo(
-  @Attribute(name = "partition_key") // TODO prefix?
+  @Attribute(name = "partition_key")
   val playlist_token: String,
   val playlist_name: String,
   val playlist_tracks: List<AlbumTrack.Key>,
@@ -137,50 +137,4 @@ data class PlaylistInfo(
   ) {
     val sort_key: String = ""
   }
-}
-
-@DynamoDBTable(tableName = "music_items")
-class MusicItem {
-  // All Items.
-  @DynamoDBHashKey
-  @DynamoDBIndexRangeKey(globalSecondaryIndexNames = ["genre_album_index", "artist_album_index"])
-  var partition_key: String? = null
-  @DynamoDBRangeKey
-  var sort_key: String? = null
-
-  // AlbumInfo.
-  @DynamoDBAttribute
-  var album_title: String? = null
-  @DynamoDBIndexHashKey(globalSecondaryIndexName = "artist_album_index")
-  @DynamoDBAttribute
-  var artist_name: String? = null
-  @DynamoDBAttribute
-  @DynamoDBTypeConverted(converter = LocalDateTypeConverter::class)
-  var release_date: LocalDate? = null
-  @DynamoDBAttribute
-  @DynamoDBIndexHashKey(globalSecondaryIndexName = "genre_album_index")
-  var genre_name: String? = null
-
-  // AlbumTrack.
-  @DynamoDBAttribute
-  @DynamoDBIndexRangeKey(localSecondaryIndexName = "album_track_title_index")
-  var track_title: String? = null
-  @DynamoDBAttribute
-  @DynamoDBTypeConverted(converter = DurationTypeConverter::class)
-  var run_length: Duration? = null
-
-  // PlaylistInfo.
-  @DynamoDBAttribute
-  var playlist_name: String? = null
-  @DynamoDBAttribute
-  var playlist_size: Int? = null
-  @DynamoDBAttribute
-  @DynamoDBTypeConverted(converter = AlbumTrackKeyListTypeConverter::class)
-  var playlist_tracks: List<AlbumTrack.Key>? = null
-  @DynamoDBAttribute
-  var playlist_version: Long? = null
-
-  // PlaylistEntry.
-  @DynamoDBAttribute
-  var track_token: String? = null
 }

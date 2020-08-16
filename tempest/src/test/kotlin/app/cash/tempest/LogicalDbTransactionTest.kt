@@ -16,10 +16,10 @@
 
 package app.cash.tempest
 
-import app.cash.tempest.example.AlbumTrack
-import app.cash.tempest.example.MusicDbTestModule
-import app.cash.tempest.example.PlaylistInfo
-import app.cash.tempest.example.TestDb
+import app.cash.tempest.musiclibrary.AlbumTrack
+import app.cash.tempest.musiclibrary.MusicDb
+import app.cash.tempest.musiclibrary.MusicDbTestModule
+import app.cash.tempest.musiclibrary.PlaylistInfo
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTransactionWriteExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.TransactionCanceledException
@@ -42,24 +42,43 @@ class LogicalDbTransactionTest {
   @MiskExternalDependency
   val dockerDynamoDb = DockerDynamoDb
 
-  @Inject lateinit var testDb: TestDb
+  @Inject lateinit var musicDb: MusicDb
 
-  private val musicTable get() = testDb.music
+  private val musicTable get() = musicDb.music
 
   @Test
   fun transactionLoad() {
     val albumTracks = listOf(
-      AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S")),
-      AlbumTrack("ALBUM_1", 2, "what you do to me", Duration.parse("PT3M24S")),
-      AlbumTrack("ALBUM_1", 3, "too slow", Duration.parse("PT2M27S"))
+      AlbumTrack(
+        "ALBUM_1",
+        1,
+        "dreamin'",
+        Duration.parse("PT3M28S")
+      ),
+      AlbumTrack(
+        "ALBUM_1",
+        2,
+        "what you do to me",
+        Duration.parse("PT3M24S")
+      ),
+      AlbumTrack(
+        "ALBUM_1",
+        3,
+        "too slow",
+        Duration.parse("PT2M27S")
+      )
     )
     for (albumTrack in albumTracks) {
       musicTable.albumTracks.save(albumTrack)
     }
-    val playlistInfo = PlaylistInfo("PLAYLIST_1", "WFH Music", listOf(AlbumTrack.Key("ALBUM_1", 1)))
+    val playlistInfo = PlaylistInfo(
+      "PLAYLIST_1",
+      "WFH Music",
+      listOf(AlbumTrack.Key("ALBUM_1", 1))
+    )
     musicTable.playlistInfo.save(playlistInfo)
 
-    val loadedItems = testDb.transactionLoad(
+    val loadedItems = musicDb.transactionLoad(
       PlaylistInfo.Key("PLAYLIST_1"),
       AlbumTrack.Key("ALBUM_1", 1),
       AlbumTrack.Key("ALBUM_1", 2),
@@ -72,11 +91,27 @@ class LogicalDbTransactionTest {
   @Test
   fun transactionLoadAfterTransactionWrite() {
     val albumTracks = listOf(
-      AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S")),
-      AlbumTrack("ALBUM_1", 2, "what you do to me", Duration.parse("PT3M24S")),
-      AlbumTrack("ALBUM_1", 3, "too slow", Duration.parse("PT2M27S"))
+      AlbumTrack(
+        "ALBUM_1",
+        1,
+        "dreamin'",
+        Duration.parse("PT3M28S")
+      ),
+      AlbumTrack(
+        "ALBUM_1",
+        2,
+        "what you do to me",
+        Duration.parse("PT3M24S")
+      ),
+      AlbumTrack(
+        "ALBUM_1",
+        3,
+        "too slow",
+        Duration.parse("PT2M27S")
+      )
     )
-    val playlistInfo = PlaylistInfo("PLAYLIST_1", "WFH Music", listOf())
+    val playlistInfo =
+      PlaylistInfo("PLAYLIST_1", "WFH Music", listOf())
 
     val writeTransaction = TransactionWriteSet.Builder()
       .save(albumTracks[0])
@@ -84,10 +119,10 @@ class LogicalDbTransactionTest {
       .save(albumTracks[2])
       .save(playlistInfo)
       .build()
-    testDb.transactionWrite(writeTransaction)
+    musicDb.transactionWrite(writeTransaction)
 
     // Read items at the same time in a serializable manner.
-    val loadedItems = testDb.transactionLoad(
+    val loadedItems = musicDb.transactionLoad(
       PlaylistInfo.Key("PLAYLIST_1"),
       AlbumTrack.Key("ALBUM_1", 1),
       AlbumTrack.Key("ALBUM_1", 2),
@@ -99,9 +134,15 @@ class LogicalDbTransactionTest {
 
   @Test
   fun conditionalUpdateInTransactionWrite() {
-    val playlistInfoV1 = PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
+    val playlistInfoV1 =
+      PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
     musicTable.playlistInfo.save(playlistInfoV1)
-    val albumTrack = AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S"))
+    val albumTrack = AlbumTrack(
+      "ALBUM_1",
+      1,
+      "dreamin'",
+      Duration.parse("PT3M28S")
+    )
     musicTable.albumTracks.save(albumTrack)
 
     // Add a PlaylistEntry and update PlaylistInfo, in an ACID manner using transactionWrite.
@@ -116,9 +157,9 @@ class LogicalDbTransactionTest {
       )
       .delete(AlbumTrack.Key("ALBUM_1", 1))
       .build()
-    testDb.transactionWrite(writeTransaction)
+    musicDb.transactionWrite(writeTransaction)
 
-    val loadedItems = testDb.transactionLoad(
+    val loadedItems = musicDb.transactionLoad(
       PlaylistInfo.Key("PLAYLIST_1"),
       AlbumTrack.Key("ALBUM_1", 1)
     )
@@ -128,9 +169,15 @@ class LogicalDbTransactionTest {
 
   @Test
   fun conditionalUpdateFailureInTransactionWrite() {
-    val playlistInfoV1 = PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
+    val playlistInfoV1 =
+      PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
     musicTable.playlistInfo.save(playlistInfoV1)
-    val albumTrack = AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S"))
+    val albumTrack = AlbumTrack(
+      "ALBUM_1",
+      1,
+      "dreamin'",
+      Duration.parse("PT3M28S")
+    )
     musicTable.albumTracks.save(albumTrack)
 
     // Add a PlaylistEntry and update PlaylistInfo, in an ACID manner using transactionWrite.
@@ -150,16 +197,22 @@ class LogicalDbTransactionTest {
 
     assertThatIllegalStateException()
       .isThrownBy {
-        testDb.transactionWrite(writeTransaction)
+        musicDb.transactionWrite(writeTransaction)
       }
       .withCauseExactlyInstanceOf(TransactionCanceledException::class.java)
   }
 
   @Test
   fun conditionCheckInTransactionWrite() {
-    val playlistInfoV1 = PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
+    val playlistInfoV1 =
+      PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
     musicTable.playlistInfo.save(playlistInfoV1)
-    val albumTrack = AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S"))
+    val albumTrack = AlbumTrack(
+      "ALBUM_1",
+      1,
+      "dreamin'",
+      Duration.parse("PT3M28S")
+    )
     musicTable.albumTracks.save(albumTrack)
 
     val playlistInfoV2 = playlistInfoV1.copy(
@@ -177,15 +230,16 @@ class LogicalDbTransactionTest {
         trackExists()
       )
       .build()
-    testDb.transactionWrite(writeTransaction)
+    musicDb.transactionWrite(writeTransaction)
 
-    val loadedItems = testDb.transactionLoad(PlaylistInfo.Key("PLAYLIST_1"))
+    val loadedItems = musicDb.transactionLoad(PlaylistInfo.Key("PLAYLIST_1"))
     assertThat(loadedItems.getItems<PlaylistInfo>()).containsExactly(playlistInfoV2)
   }
 
   @Test
   fun conditionCheckFailureInTransactionWrite() {
-    val playlistInfoV1 = PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
+    val playlistInfoV1 =
+      PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
     musicTable.playlistInfo.save(playlistInfoV1)
 
     val playlistInfoV2 = playlistInfoV1.copy(
@@ -206,7 +260,7 @@ class LogicalDbTransactionTest {
 
     assertThatIllegalStateException()
       .isThrownBy {
-        testDb.transactionWrite(writeTransaction)
+        musicDb.transactionWrite(writeTransaction)
       }
       .withCauseExactlyInstanceOf(TransactionCanceledException::class.java)
   }

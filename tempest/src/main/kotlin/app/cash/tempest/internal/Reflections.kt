@@ -16,12 +16,15 @@
 
 package app.cash.tempest.internal
 
+import app.cash.tempest.Ignore
 import java.lang.reflect.Method
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
+import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.javaGetter
 import kotlin.reflect.jvm.javaMethod
@@ -39,3 +42,6 @@ internal val KClass<*>.declaredMembers: List<ClassMember>
     return declaredMemberProperties.map { ClassMember(it.returnType, it.javaGetter!!) } +
         declaredMemberFunctions.map { ClassMember(it.returnType, it.javaMethod!!) }
   }
+
+internal val KProperty<*>.shouldIgnore: Boolean
+  get() = findAnnotation<Ignore>() != null || findAnnotation<Transient>() != null
