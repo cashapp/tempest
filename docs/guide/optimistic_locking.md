@@ -10,56 +10,139 @@ To avoid conflicts in your application, check out these tools:
 
 Let's add a playlist feature to our music library:
 
-```kotlin
-interface MusicTable : LogicalTable<MusicItem> {
-  val playlistInfo: InlineView<PlaylistInfo.Key, PlaylistInfo>
-}
+=== "Kotlin"
 
-data class PlaylistInfo(
-  @Attribute(name = "partition_key")
-  val playlist_token: String,
-  val playlist_name: String,
-  val playlist_version: Long,
-  val track_tokens: List<AlbumTrack.Key>
-) {
-  @Attribute(prefix = "INFO_")
-  val sort_key: String = ""
+    ```kotlin
+    interface MusicTable : LogicalTable<MusicItem> {
+      val playlistInfo: InlineView<PlaylistInfo.Key, PlaylistInfo>
+    }
+    
+    data class PlaylistInfo(
+      @Attribute(name = "partition_key")
+      val playlist_token: String,
+      val playlist_name: String,
+      val playlist_tracks: List<AlbumTrack.Key>,
+      val playlist_version: Long = 1
+    ) {
+      @Attribute(prefix = "INFO_")
+      val sort_key: String = ""
+    
+      data class Key(
+        val playlist_token: String
+      ) {
+        val sort_key: String = ""
+      }
+    }
+    ```
 
-  data class Key(
-    val playlist_token: String
-  ) {
-    val sort_key: String = ""
-  }
-}
-```
+=== "Java"
 
-To serialize writes to the same playlist, we can have all writers implement optimistic locking on the `playlist_version` attribute. 
+    ```java
+    public interface MusicTable extends LogicalTable<MusicItem> {
+      InlineView<PlaylistInfo.Key, PlaylistInfo> playlistInfo();
+    }
+    
+    public class PlaylistInfo {
+      @Attribute(name = "partition_key")
+      public final String playlist_token;
+      public final String playlist_name;
+      public final List<AlbumTrack.Key> playlist_tracks;
+      public final Long playlist_version;
+      @Attribute(prefix = "INFO_")
+      public final String sort_key = "";
+    
+      public PlaylistInfo(String playlist_token, String playlist_name,
+          List<AlbumTrack.Key> playlist_tracks) {
+        this(playlist_token, playlist_name, playlist_tracks, 1L);
+      }
+    
+      public PlaylistInfo(String playlist_token, String playlist_name,
+          List<AlbumTrack.Key> playlist_tracks, Long playlist_version) {
+        this.playlist_token = playlist_token;
+        this.playlist_name = playlist_name;
+        this.playlist_tracks = playlist_tracks;
+        this.playlist_version = playlist_version;
+      }
+    
+      public static class Key {
+        public final String playlist_token;
+        public final String sort_key = "";
+    
+        public Key(String playlist_token) {
+          this.playlist_token = playlist_token;
+        }
+      }
+    }
+    ```
+    
+To serialize writes to the same playlist, we can have writers implement optimistic locking on the `playlist_version` attribute. 
 
-```kotlin
-private val musicTable: MusicTable
+=== "Kotlin"
 
-fun changePlaylistName(playlistToken: String, newName: String) {
-  // Read.
-  val existing = musicTable.playlistInfo.load(PlaylistInfo.Key(playlistToken))
-  // Modify.
-  val newPlaylist = existing.copy(
-    playlist_name = newName,
-    playlist_version = existing.playlist_version + 1
-  )
-  // Write.
-  musicTable.playlistInfo.save(
-    newPlaylist,
-    ifPlaylistVersionIs(existing.playlist_version)
-  )
-}
+    ```kotlin
+    private val table: MusicTable
+    
+    fun changePlaylistName(playlistToken: String, newName: String) {
+      // Read.
+      val existing = checkNotNull(
+        table.playlistInfo.load(PlaylistInfo.Key(playlistToken))
+      ) { "Playlist does not exist: $playlistToken" }
+      // Modify.
+      val newPlaylist = existing.copy(
+        playlist_name = newName,
+        playlist_version = existing.playlist_version + 1
+      )
+      // Write.
+      table.playlistInfo.save(
+        newPlaylist,
+        ifPlaylistVersionIs(existing.playlist_version)
+      )
+    }
+  
+    private fun ifPlaylistVersionIs(playlist_version: Long): DynamoDBSaveExpression {
+      return DynamoDBSaveExpression()
+        .withExpectedEntry(
+          "playlist_version",
+          ExpectedAttributeValue()
+            .withComparisonOperator(ComparisonOperator.EQ)
+            .withAttributeValueList(AttributeValue().withN("$playlist_version"))
+        )
+    }
+    ```
 
-private fun ifPlaylistVersionIs(playlist_version: Long): DynamoDBSaveExpression {
-  return DynamoDBSaveExpression()
-    .withExpectedEntry(
-      "playlist_version",
-      ExpectedAttributeValue()
-        .withComparisonOperator(ComparisonOperator.EQ)
-        .withAttributeValueList(AttributeValue().withN("$playlist_version"))
-    )
-}
-```
+=== "Java"
+    
+    ```java
+    private val table: MusicTable
+
+    public void changePlaylistName(String playlistToken, String newName) {
+      // Read.
+      PlaylistInfo existing = table.playlistInfo().load(new PlaylistInfo.Key(playlistToken));
+      if (existing == null) {
+        throw new IllegalStateException("Playlist does not exist: " + playlistToken);
+      }
+      // Modify.
+      PlaylistInfo newPlaylist = new PlaylistInfo(
+          existing.playlist_token,
+          newName,
+          existing.playlist_tracks,
+          // playlist_version.
+          existing.playlist_version + 1
+      );
+      // Write.
+      table.playlistInfo().save(
+          newPlaylist,
+          ifPlaylistVersionIs(existing.playlist_version)
+      );
+    }
+    
+    private DynamoDBSaveExpression ifPlaylistVersionIs(Long playlist_version) {
+      return new DynamoDBSaveExpression()
+          .withExpectedEntry(
+              "playlist_version",
+              new ExpectedAttributeValue()
+                  .withComparisonOperator(ComparisonOperator.EQ)
+                  .withAttributeValueList(new AttributeValue().withN("" + playlist_version))
+          );
+    }
+    ```

@@ -10,107 +10,252 @@ To query an index, you must provide the name of the partition key attribute and 
 
 Let's continue with the music library example.
 
-```kotlin
-interface MusicTable : LogicalTable<MusicItem> {
-  val albumTracks: InlineView<AlbumTrack.Key, AlbumTrack>
-  val albumTracksByTitle: SecondaryIndex<AlbumTrack.TitleIndexOffset, AlbumTrack>
-}
+=== "Kotlin"
 
-data class AlbumTrack(
-  @Attribute(name = "partition_key")
-  val album_token: String,
-  @Attribute(name = "sort_key", prefix = "TRACK_")
-  val track_token: String,
-  val track_title: String,
-  val run_length: Duration
-) {
-  data class Key(
-    val album_token: String,
-    val track_token: String = ""
-  ) {
-    constructor(album_token: String, track_number: Long) : this(album_token, "%016x".format(track_number))
-  }
-  
-  @ForIndex("album_track_title_index")
-  data class TitleIndexOffset(
-    val album_token: String,
-    val track_title: String,
-    // To uniquely identify an item in pagination.
-    val track_token: String? = null
-  )
-}
-```
+    ```kotlin
+    interface MusicTable : LogicalTable<MusicItem> {
+      val albumTracks: InlineView<AlbumTrack.Key, AlbumTrack>
+      // Local Secondary Indexes.
+      val albumTracksByTitle: SecondaryIndex<AlbumTrack.TitleIndexOffset, AlbumTrack>
+    }
+    
+    data class AlbumTrack(
+      @Attribute(name = "partition_key")
+      val album_token: String,
+      @Attribute(name = "sort_key", prefix = "TRACK_")
+      val track_token: String,
+      val track_title: String,
+      val run_length: Duration
+    ) {
+      data class Key(
+        val album_token: String,
+        val track_token: String = ""
+      )
+      
+      @ForIndex("album_track_title_index")
+      data class TitleIndexOffset(
+        val album_token: String,
+        val track_title: String,
+        // To uniquely identify an item in pagination.
+        val track_token: String? = null
+      )
+    }
+    ```
 
+=== "Java"
+
+    ```java
+    public interface MusicTable extends LogicalTable<MusicItem> {
+      InlineView<AlbumTrack.Key, AlbumTrack> albumTracks();
+      // Local Secondary Indexes.
+      SecondaryIndex<AlbumTrack.TitleIndexOffset, AlbumTrack> albumTracksByTitle();
+    }
+
+    public class AlbumTrack {
+      @Attribute(name = "partition_key")
+      public final String album_token;
+      @Attribute(name = "sort_key", prefix = "TRACK_")
+      public final String track_token;
+      public final String track_title;
+      public final Duration run_length;
+
+      public AlbumTrack(
+          String album_token,
+          String track_token,
+          String track_title,
+          Duration run_length) {
+        this.album_token = album_token;
+        this.track_token = track_token;
+        this.track_title = track_title;
+        this.run_length = run_length;
+      }
+
+      public static class Key {
+        public final String album_token;
+        public final String track_token;
+    
+        public Key(String album_token, String track_token) {
+          this.album_token = album_token;
+          this.track_token = track_token;
+        }
+    
+        public Key(String album_token) {
+          this(album_token, "");
+        }
+      }
+    
+      @ForIndex(name = "album_track_title_index")
+      public static class TitleIndexOffset {
+        public final String album_token;
+        public final String track_title;
+        // To uniquely identify an item in pagination.
+        @Nullable
+        public final String track_token;
+    
+        public TitleIndexOffset(String album_token, String track_title) {
+          this(album_token, track_title, null);
+        }
+    
+        public TitleIndexOffset(String album_token, String track_title, String track_token) {
+          this.album_token = album_token;
+          this.track_title = track_title;
+          this.track_token = track_token;
+        }
+      }
+    }
+    ```
+    
 ### Key Condition
 
 #### Partition Key and Entity Type
 
 This uses the primary index to find all tracks in the given album, sorted by track number.
 
-```kotlin
-val musicTable: MusicTable
+=== "Kotlin"
 
-fun loadAlbumTracks(albumToken: String): List<AlbumTrack> {
-  val page = musicTable.albumTracks.query(
-    keyCondition = BeginsWith(
-      prefix = AlbumTrack.Key(albumToken)
-    )
-  )
-  return page.contents
-}
-```
+    ```kotlin
+    private val table: MusicTable
+    
+    fun loadAlbumTracks(albumToken: String): List<AlbumTrack> {
+      val page = table.albumTracks.query(
+        keyCondition = BeginsWith(
+          prefix = AlbumTrack.Key(albumToken)
+        )
+      )
+      return page.contents
+    }
+    ```
+
+=== "Java"
+
+    ```java
+    private final MusicTable table;
+
+    public List<AlbumTrack> loadAlbumTracks(String albumToken) {
+      Page<AlbumTrack.Key, AlbumTrack> page = table.albumTracks().query(
+          // keyCondition.
+          new BeginsWith<>(
+              // prefix.
+              new AlbumTrack.Key(albumToken)
+          )
+      );
+      return page.getContents();
+    }
+    ```
 
 #### Partition Key and Sort Key Prefix
 
 This uses the secondary index to find all tracks in the given album whose title starts with "I want ", sorted by title.
  
-```kotlin
-val musicTable: MusicTable
+=== "Kotlin"
+    
+    ```kotlin
+    private val table: MusicTable
+    
+    fun loadAlbumTracks(albumToken: String): List<AlbumTrack> {
+      val page = table.albumTracksByTitle.query(
+        keyCondition = BeginsWith(
+          prefix = AlbumTrack.TitleIndexOffset(albumToken, track_title = "I want ")
+        )
+      )
+      return page.contents
+    }
+    ```
+    
+=== "Java"
 
-fun loadAlbumTracks(albumToken: String): List<AlbumTrack> {
-  val page = musicTable.albumTracksByTitle.query(
-    keyCondition = BeginsWith(
-      prefix = AlbumTrack.TitleIndexOffset(albumToken, track_title = "I want ")
-    )
-  )
-  return page.contents
-}
-```
+    ```java
+    private final MusicTable table;
+    
+    public List<AlbumTrack> loadAlbumTracks(String albumToken) {
+      Page<AlbumTrack.TitleIndexOffset, AlbumTrack> page = table.albumTracksByTitle().query(
+          // keyCondition.
+          new BeginsWith<>(
+              // prefix.
+              new AlbumTrack.TitleIndexOffset(albumToken, "I want ")
+          )
+      );
+      return page.getContents();
+    }
+    ```
 
 #### Partition Key and Sort Key Range
 
 This uses the primary index to find track 5 through 9 in the given album, sorted by track number.
 
-```kotlin
-val musicTable: MusicTable
+=== "Kotlin"
+    
+    ```kotlin
+    private val table: MusicTable
+    
+    fun loadAlbumTracks(albumToken: String): List<AlbumTrack> {
+      val page = table.albumTracks.query(
+        keyCondition = Between(
+          startInclusive = AlbumTrack.Key(albumToken, track_number = 5), 
+          endInclusive = AlbumTrack.Key(albumToken, track_number = 9))
+      )
+      return page.contents
+    }
+    ```
 
-fun loadAlbumTracks(albumToken: String): List<AlbumTrack> {
-  val page = musicTable.albumTracks.query(
-    keyCondition = Between(
-      startInclusive = AlbumTrack.Key(albumToken, track_number = 5), 
-      endInclusive = AlbumTrack.Key(albumToken, track_number = 9))
-  )
-  return page.contents
-}
-```
+=== "Java"
+
+    ```java
+    private final MusicTable table;
+
+    public List<AlbumTrack> loadAlbumTracks(String albumToken) {
+      Page<AlbumTrack.Key, AlbumTrack> page = table.albumTracks().query(
+          // keyCondition.
+          new Between<>(
+              // startInclusive.
+              new AlbumTrack.Key(albumToken, /* track_number */ 5L),
+              // endInclusive.
+              new AlbumTrack.Key(albumToken, /* track_number */ 9L))
+      );
+      return page.getContents();
+    }
+    ```
 
 ### Descending Order
 
 By default, the sort order is ascending. To reverse the order, set the `asc` parameter to `false`.
 
-```kotlin
-val musicTable: MusicTable
+=== "Kotlin"
+    
+    ```kotlin
+    private val table: MusicTable
+    
+    fun loadAlbumTracks(albumToken: String): List<AlbumTrack> {
+      val page = table.albumTracks.query(
+        keyCondition = BeginsWith(
+          prefix = AlbumTrack.Key(albumToken)
+        ),
+        asc = false
+      )
+      return page.contents
+    }
+    ```
 
-fun loadAlbumTracks(albumToken: String): List<AlbumTrack> {
-  val page = musicTable.albumTracks.query(
-    keyCondition = BeginsWith(
-      prefix = AlbumTrack.Key(albumToken)
-    ),
-    asc = false
-  )
-  return page.contents
-}
-```
+=== "Java"
+
+    ```java
+    private final MusicTable table;
+    
+    public List<AlbumTrack> loadAlbumTracks(String albumToken) {
+      Page<AlbumTrack.Key, AlbumTrack> page = table.albumTracks().query(
+          // keyCondition.
+          new BeginsWith<>(
+              // prefix.
+              new AlbumTrack.Key(albumToken)
+          ),
+          // config.
+          new QueryConfig.Builder()
+              .asc(false)
+              .build()
+      );
+      return page.getContents();
+    }
+    ```
 
 ### Filter Expression
 
@@ -125,47 +270,103 @@ If you need to further refine the Query results, you can optionally provide a fi
 
 This find all tracks in the given album that last longer than 3 minutes, sorted by track number.
 
-```kotlin
-val musicTable: MusicTable
+=== "Kotlin"
+    
+    ```kotlin
+    private val table: MusicTable
+    
+    fun loadAlbumTracks(albumToken: String): List<AlbumTrack> {
+      val page = table.albumTracks.query(
+        keyCondition = BeginsWith(prefix = AlbumTrack.Key(albumToken)),
+        filterExpression = runLengthLongerThan(Duration.ofMinutes(3))
+      )
+      return page.contents
+    }
+    
+    private fun runLengthLongerThan(duration: Duration): FilterExpression {
+      return FilterExpression(
+        "run_length > :duration",
+        mapOf(
+          ":duration" to AttributeValue().withS(duration.toString())
+        )
+      )
+    }
+    ```
 
-fun loadAlbumTracks(albumToken: String): List<AlbumTrack> {
-  val page = musicTable.albumTracks.query(
-    keyCondition = BeginsWith(prefix = AlbumTrack.Key(albumToken)),
-    filterExpression = runLengthLongerThan(Duration.ofMinutes(3))
-  )
-  return page.contents
-}
+=== "Java"
 
-private fun runLengthLongerThan(duration: Duration): FilterExpression {
-  return FilterExpression(
-    "run_length > :duration",
-    mapOf(
-      ":duration" to AttributeValue().withS(duration.toString())
-    )
-  )
-}
-
-```
+    ```java
+    private final MusicTable table;
+    
+    public List<AlbumTrack> loadAlbumTracks(String albumToken) {
+      Page<AlbumTrack.Key, AlbumTrack> page = table.albumTracks().query(
+          // keyCondition.
+          new BeginsWith<>(
+              // prefix.
+              new AlbumTrack.Key(albumToken)
+          ),
+          // config.
+          new QueryConfig.Builder()
+              .filterExpression(runLengthLongerThan(Duration.ofMinutes(3)))
+              .build()
+      );
+      return page.getContents();
+    }
+  
+    private FilterExpression runLengthLongerThan(Duration duration) {
+      return new FilterExpression(
+          "run_length > :duration",
+          Map.of(":duration", new AttributeValue().withS(duration.toString()))
+      );
+    }
+    ```
 
 ### Pagination
 
-```kotlin
-val musicTable: MusicTable
+=== "Kotlin"
+    
+    ```kotlin
+    private val table: MusicTable
+    
+    fun loadAlbumTracks(albumToken: String): List<AlbumTrack> {
+      val tracks = mutableListOf<AlbumTrack>()
+      var page: Page<AlbumTrack.Key, AlbumTrack>? = null
+      do {
+        page = table.albumTracks.query(
+          keyCondition = BeginsWith(AlbumTrack.Key(albumToken)),
+          pageSize = 10,
+          initialOffset = page?.offset
+        )
+        tracks.addAll(page.contents)
+      } while(page?.hasMorePages == true)
+      return tracks.toList()
+    }
+    ```
 
-fun loadAlbumTracks(albumToken: String): List<AlbumTrack> {
-  val tracks = mutableListOf<AlbumTrack>()
-  var page: Page<AlbumTrack.Key, AlbumTrack>? = null
-  do {
-    page = musicTable.albumTracks.query(
-      keyCondition = BeginsWith(AlbumTrack.Key(albumToken)),
-      pageSize = 10,
-      initialOffset = page?.offset
-    )
-    tracks.addAll(page.contents)
-  } while(page?.hasMorePages == true)
-  return tracks.toList()
-}
-```
+=== "Java"
+
+    ```java
+    private final MusicTable table;
+
+    public List<AlbumTrack> loadAlbumTracks(String albumToken) {
+      List<AlbumTrack> tracks = new ArrayList<>();
+      Page<AlbumTrack.Key, AlbumTrack> page = null;
+      do {
+        page = table.albumTracks().query(
+            // keyCondition.
+            new BeginsWith<>(new AlbumTrack.Key(albumToken)),
+            // config.
+            new QueryConfig.Builder()
+                .pageSize(10)
+                .build(),
+            // initialOffset.
+            page != null ? page.getOffset() : null
+        );
+        tracks.addAll(page.getContents());
+      } while (page.getHasMorePages());
+      return tracks;
+    }
+    ```
 
 ## Scan
 
@@ -175,14 +376,27 @@ By default, the Scan operation processes data sequentially. Amazon DynamoDB retu
 application in 1 MB increments, and an application performs additional Scan operations to
 retrieve the next 1 MB of data.
 
-```kotlin
-val musicTable: MusicTable
+=== "Kotlin"
+    
+    ```kotlin
+    private val table: MusicTable
+    
+    fun loadAllAlbumTracks(): List<AlbumTrack> {
+      val page = table.albumTracks.scan()
+      return page.contents
+    }
+    ```
 
-fun loadAllAlbumTracks(): List<AlbumTrack> {
-  val page = musicTable.albumTracks.scan()
-  return page.contents
-}
-```
+=== "Java"
+
+    ```java
+    private final MusicTable table;
+
+    public List<AlbumTrack> loadAllAlbumTracks() {
+      Page<AlbumTrack.Key, AlbumTrack> page = table.albumTracks().scan();
+      return page.getContents();
+    }
+    ```
 
 ### Parallel Scan
 
@@ -198,22 +412,54 @@ worker can be a thread (in programming languages that support multithreading) or
 system process. To perform a parallel scan, each worker issues its own Scan request with an
 unique `WorkerId`.
 
-```kotlin
-val musicTable: MusicTable
+=== "Kotlin"
+    
+    ```kotlin
+    private val table: MusicTable
+    
+    fun loadAllAlbumTracks(): List<AlbumTrack> = runBlocking {
+      val segment1 = async { loadSegment(1) }
+      val segment2 = async { loadSegment(2) }
+      segment1.await() + segment2.await()
+    }
+  
+    private fun loadSegment(segment: Int): List<AlbumTrack> {
+      val page = table.albumTracks.scan(
+        workerId = WorkerId(segment, totalSegments = 2)
+      )
+      return page.contents
+    }
+    ```
 
-suspend fun loadAllAlbumTracks(): List<AlbumTrack> {
-  val segment1 = async { loadSegment(1) }
-  val segment2 = async { loadSegment(2) }
-  segment1.await() + segment2.await()
-}
+=== "Java"
 
-suspend fun loadSegment(segment: Int): List<AlbumTrack> { 
-  val page = musicTable.albumTracks.scan(
-    workerId = WorkerId(segment, totalSegments = 2)
-  )
-  return page.contents
-}
-```
+    ```java
+    private final MusicTable table;
+    private final ExecutorService executor;
+
+    public List<AlbumTrack> loadAllAlbumTracks() {
+      Future<List<AlbumTrack>> segment1 = executor.submit(() -> loadSegment(1));
+      Future<List<AlbumTrack>> segment2 = executor.submit(() -> loadSegment(2));
+      List<AlbumTrack> results = new ArrayList<>();
+      try {
+        results.addAll(segment1.get());
+        results.addAll(segment2.get());
+      } catch (InterruptedException | ExecutionException e) {
+        throw new IllegalStateException("Failed to load tracks", e);
+      }
+      return results;
+    }
+  
+    private List<AlbumTrack> loadSegment(int segment) {
+      Page<AlbumTrack.Key, AlbumTrack> page = table.albumTracks().scan(
+          new ScanConfig.Builder()
+              .workerId(new WorkerId(segment, /* totalSegments */ 2))
+              .build()
+      );
+      return page.getContents();
+    }
+    ```
+
 ### Filter Expression
 
 See query filter expression above.

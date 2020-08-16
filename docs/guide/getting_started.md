@@ -24,22 +24,44 @@ Let's build a URL shortener with the following features:
 * Creating custom aliases from a short URL to a destination URL.
 * Redirecting existing short URLs to destination URLs.  
 
-We express it like this in Kotlin.
-```kotlin
-interface UrlShortener {
-  /** 
-   * Creates a custom alias from [shortUrl] to [destinationUrl]. 
-   * @return false if [shortUrl] is taken. 
-   */
-  fun shorten(shortUrl: String, destinationUrl: String): Boolean
-  
-  /** 
-    * Redirects [shortUrl] to its destination. 
-    * @return null if not found. 
-    */
-  fun redirect(shortUrl: String): String?
-}
-```
+We express it like this in code.
+
+=== "Kotlin"
+
+    ```kotlin
+    interface UrlShortener {
+      /** 
+       * Creates a custom alias from [shortUrl] to [destinationUrl]. 
+       * @return false if [shortUrl] is taken. 
+       */
+      fun shorten(shortUrl: String, destinationUrl: String): Boolean
+      
+      /** 
+        * Redirects [shortUrl] to its destination. 
+        * @return null if not found. 
+        */
+      fun redirect(shortUrl: String): String?
+    }
+    ```
+
+=== "Java"
+
+    ```java
+    public interface UrlShortener {
+      /**
+       * Creates a custom alias from {@code shortUrl} to {@code destinationUrl}.
+       * @return false if {@code shortUrl} is taken.
+       */
+      boolean shorten(String shortUrl, String destinationUrl);
+    
+      /**
+       * Redirects {@code shortUrl} to its destination.
+       * @return null if not found.
+       */
+      @Nullable
+      String redirect(String shortUrl);
+    }
+    ```
 
 We will store URL aliases in the following table.
 
@@ -82,71 +104,190 @@ We will store URL aliases in the following table.
   </tbody>
 </table>
 
-To access this table in Kotlin, model it using [`DynamoDBMapper`](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.html).
+To access this table in code, model it using [`DynamoDBMapper`](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.html).
 
-```kotlin
-// Note: this POJO is not type-safe because its attributes are nullable and mutable.
-@DynamoDBTable(tableName = "alias_items")
-class AliasItem {
-  @DynamoDBHashKey
-  var short_url: String? = null
-  @DynamoDBAttribute
-  var destination_url: String? = null
-}
-```
+=== "Kotlin"
+
+    ```kotlin
+    // Note: this POJO is not type-safe because its attributes are nullable and mutable.
+    @DynamoDBTable(tableName = "alias_items")
+    class AliasItem {
+      @DynamoDBHashKey
+      var short_url: String? = null
+      @DynamoDBAttribute
+      var destination_url: String? = null
+    }
+    ```
+
+=== "Java"
+
+    ```java
+    // Note: this POJO is not type-safe because its attributes are nullable and mutable.
+    @DynamoDBTable(tableName = "alias_items")
+    public class AliasItem {
+      private String shortUrl;
+      private String destinationUrl;
+
+      @DynamoDBHashKey(attributeName = "short_url")
+      public String getShortUrl() {
+        return shortUrl;
+      }
+
+      public void setShortUrl(String short_url) {
+        this.shortUrl = short_url;
+      }
+
+      @DynamoDBAttribute(attributeName = "destination_url")
+      public String getDestinationUrl() {
+        return destinationUrl;
+      }
+
+      public void setDestinationUrl(String destination_url) {
+        this.destinationUrl = destination_url;
+      }
+    }
+    ```
 
 Tempest lets you interact with `AliasItem` using strongly typed data classes.
   
-```kotlin
-interface UrlShortenerDb: LogicalDb {
-  val aliasTable: AliasTable
-}
+=== "Kotlin"
 
-interface AliasTable : LogicalTable<AliasItem> {
-  val aliases: InlineView<Alias.Key, Alias>
-}
-
-data class Alias(
-  val short_url: String,
-  val destination_url: String
-) {
-  data class Key(
-    val short_url: String 
-  )
-}
-```
-
-Let's put everything together.
-          
-```kotlin
-class RealUrlShortener(
-  private val table: AliasTable
-): UrlShortener {
-
-  override fun shorten(shortUrl: String, destinationUrl: String): Boolean {
-    val item = Alias(shortUrl, destinationUrl)
-    val ifNotExist = DynamoDBSaveExpression()
-      .withExpectedEntry("short_url", ExpectedAttributeValue().withExists(false))
-    return try {
-      table.aliases.save(item, ifNotExist)
-      true
-    } catch (e: ConditionalCheckFailedException) {
-      println("Failed to shorten $shortUrl because it already exists!")
-      false
+    ```kotlin
+    interface AliasDb: LogicalDb {
+      val aliasTable: AliasTable
     }
-  }
-  
-  override fun redirect(shortUrl: String): String? {
-    val key = Alias.Key(shortUrl)
-    return table.aliases.load(key)?.destination_url
-  }
-}
+    
+    interface AliasTable : LogicalTable<AliasItem> {
+      val aliases: InlineView<Alias.Key, Alias>
+    }
+    
+    data class Alias(
+      val short_url: String,
+      val destination_url: String
+    ) {
+      data class Key(
+        val short_url: String 
+      )
+    }
+    ```
 
-fun main() {
-  val client: AmazonDynamoDB = AmazonDynamoDBClientBuilder.standard().build()
-  val mapper: DynamoDBMapper = DynamoDBMapper(client)
-  val db: UrlShortenerDb = LogicalDb(mapper)
-  val urlShortener = RealUrlShortener(db.aliasTable)
-  urlShortener.shorten("tempest", "https://cashapp.github.io/tempest")
-}
-```
+=== "Java"
+
+    ```java
+    public interface AliasDb extends LogicalDb {
+      AliasTable aliasTable();
+    }
+
+    public interface AliasTable extends LogicalTable<AliasItem> {
+      InlineView<Alias.Key, Alias> aliases();
+    }
+
+    public class Alias {
+    
+      public final String short_url;
+      public final String destination_url;
+    
+      public Alias(String short_url, String destination_url) {
+        this.short_url = short_url;
+        this.destination_url = destination_url;
+      }
+    
+      public Key key() {
+        return new Key(short_url);
+      }
+    
+      public static class Key {
+    
+        public final String short_url;
+    
+        public Key(String short_url) {
+          this.short_url = short_url;
+        }
+      }
+    }
+    ```
+Let's put everything together.
+
+=== "Kotlin"
+   
+    ```kotlin
+    class RealUrlShortener(
+      private val table: AliasTable
+    ) : UrlShortener {
+    
+      override fun shorten(shortUrl: String, destinationUrl: String): Boolean {
+        val item = Alias(shortUrl, destinationUrl)
+        val ifNotExist = DynamoDBSaveExpression()
+          .withExpectedEntry("short_url", ExpectedAttributeValue()
+            .withExists(false))
+        return try {
+          table.aliases.save(item, ifNotExist)
+          true
+        } catch (e: ConditionalCheckFailedException) {
+          println("Failed to shorten $shortUrl because it already exists!")
+          false
+        }
+      }
+    
+      override fun redirect(shortUrl: String): String? {
+        val key = Alias.Key(shortUrl)
+        return table.aliases.load(key)?.destination_url
+      }
+    }
+    
+    fun main(args: Array<String>) {
+      val client: AmazonDynamoDB = AmazonDynamoDBClientBuilder.standard().build()
+      val mapper: DynamoDBMapper = DynamoDBMapper(client)
+      val db: AliasDb = LogicalDb(mapper)
+      val urlShortener = RealUrlShortener(db.aliasTable)
+      urlShortener.shorten("tempest", "https://cashapp.github.io/tempest")
+    }
+    ```
+
+=== "Java"
+
+    ```java
+    public class RealUrlShortener implements UrlShortener {
+    
+      private final AliasTable table;
+    
+      public RealUrlShortener(AliasTable table) {
+        this.table = table;
+      }
+    
+      @Override
+      public boolean shorten(String shortUrl, String destinationUrl) {
+        Alias item = new Alias(shortUrl, destinationUrl);
+        DynamoDBSaveExpression ifNotExist = new DynamoDBSaveExpression()
+            .withExpectedEntry(
+                "short_url",
+                new ExpectedAttributeValue().withExists(false));
+        try {
+          table.aliases().save(item, ifNotExist);
+          return true;
+        } catch (ConditionalCheckFailedException e) {
+          System.out.println("Failed to shorten $shortUrl because it already exists!");
+          return false;
+        }
+      }
+    
+      @Override
+      @Nullable
+      public String redirect(String shortUrl) {
+        Alias.Key key = new Alias.Key(shortUrl);
+        Alias alias = table.aliases().load(key);
+        if (alias == null) {
+          return null;
+        }
+        return alias.destination_url;
+      }
+    }
+
+    public static void main(String[] args) {
+      AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
+      DynamoDBMapper mapper = new DynamoDBMapper(client);
+      AliasDb db = LogicalDb.create(AliasDb.class, mapper);
+      UrlShortener urlShortener = new RealUrlShortener(db.aliasTable());
+      urlShortener.shorten("tempest", "https://cashapp.github.io/tempest");
+    }
+    ```

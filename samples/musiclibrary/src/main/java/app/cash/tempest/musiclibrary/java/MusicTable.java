@@ -33,4 +33,3 @@ public interface MusicTable extends LogicalTable<MusicItem> {
   // Local Secondary Indexes.
   SecondaryIndex<AlbumTrack.TitleIndexOffset, AlbumTrack> albumTracksByTitle();
 }
-

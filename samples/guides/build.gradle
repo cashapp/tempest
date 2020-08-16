@@ -13,3 +13,20 @@ dependencies {
   testImplementation dep.junitApi
   testImplementation dep.junitEngine
 }
+
+compileKotlin {
+  kotlinOptions {
+    jvmTarget = JavaVersion.VERSION_11
+  }
+}
+
+compileTestKotlin {
+  kotlinOptions {
+    jvmTarget = JavaVersion.VERSION_11
+  }
+}
+
+compileJava {
+  sourceCompatibility = JavaVersion.VERSION_11
+  targetCompatibility = JavaVersion.VERSION_11
+}

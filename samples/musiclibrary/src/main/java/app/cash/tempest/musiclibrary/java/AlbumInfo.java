@@ -35,7 +35,10 @@ public class AlbumInfo {
   @Attribute(prefix = "INFO_")
   public final String sort_key = "";
 
-  public AlbumInfo(String album_token, String album_title, String artist_name,
+  public AlbumInfo(
+      String album_token,
+      String album_title,
+      String artist_name,
       LocalDate release_date,
       String genre_name) {
     this.album_token = album_token;

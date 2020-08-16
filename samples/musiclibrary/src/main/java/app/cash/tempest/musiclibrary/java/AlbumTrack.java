@@ -34,7 +34,10 @@ public class AlbumTrack {
   @Ignore
   public final Long track_number;
 
-  public AlbumTrack(String album_token, String track_token, String track_title,
+  public AlbumTrack(
+      String album_token,
+      String track_token,
+      String track_title,
       Duration run_length) {
     this.album_token = album_token;
     this.track_token = track_token;
@@ -44,7 +47,10 @@ public class AlbumTrack {
     track_number = Long.parseLong(track_token, 16);
   }
 
-  public AlbumTrack(String album_token, Long track_number, String track_title,
+  public AlbumTrack(
+      String album_token,
+      Long track_number,
+      String track_title,
       Duration run_length) {
     this(album_token, String.format("%016x", track_number), track_title, run_length);
   }
