@@ -18,6 +18,7 @@ package app.cash.tempest.guides
 
 import app.cash.tempest.musiclibrary.AlbumInfo
 import app.cash.tempest.musiclibrary.MusicTable
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDeleteExpression
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.ConsistentReads
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBSaveExpression
 import com.amazonaws.services.dynamodbv2.model.ExpectedAttributeValue
@@ -26,12 +27,14 @@ class Crud(
   private val table: MusicTable
 ) {
 
+  // Read.
   fun getAlbumTitle(albumToken: String): String? {
     val albumInfo = table.albumInfo.load(AlbumInfo.Key(albumToken)) ?: return null
     return albumInfo.album_title
   }
 
-  fun consistentlyGetAlbumTitle(albumToken: String): String? {
+  // Read - Strongly consistent.
+  fun getAlbumTitle2(albumToken: String): String? {
     val albumInfo = table.albumInfo.load(
       AlbumInfo.Key(albumToken),
       consistentReads = ConsistentReads.CONSISTENT
@@ -39,16 +42,33 @@ class Crud(
     return albumInfo.album_title
   }
 
+  // Update.
   fun addAlbum(albumInfo: AlbumInfo) {
     table.albumInfo.save(albumInfo)
   }
 
-  fun addAlbumIfNotExist(albumInfo: AlbumInfo) {
+  // Update - Conditional.
+  fun addAlbum2(albumInfo: AlbumInfo) {
     table.albumInfo.save(albumInfo, ifNotExist())
   }
 
   private fun ifNotExist(): DynamoDBSaveExpression {
     return DynamoDBSaveExpression()
       .withExpectedEntry("partition_key", ExpectedAttributeValue().withExists(false))
+  }
+
+  // Delete.
+  fun deleteAlbum(albumToken: String) {
+    table.albumInfo.deleteKey(AlbumInfo.Key(albumToken))
+  }
+
+  // Delete - Conditional.
+  fun deleteAlbum2(albumToken: String) {
+    table.albumInfo.deleteKey(AlbumInfo.Key(albumToken), ifExist())
+  }
+
+  private fun ifExist(): DynamoDBDeleteExpression {
+    return DynamoDBDeleteExpression()
+      .withExpectedEntry("partition_key", ExpectedAttributeValue().withExists(true))
   }
 }

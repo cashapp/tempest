@@ -29,9 +29,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 
 class QueryNScan(
-  val table: MusicTable
+  private val table: MusicTable
 ) {
 
+  // Query - Key Condition - Partition Key and Entity Type.
   fun loadAlbumTracks(albumToken: String): List<AlbumTrack> {
     val page = table.albumTracks.query(
       keyCondition = BeginsWith(
@@ -41,6 +42,7 @@ class QueryNScan(
     return page.contents
   }
 
+  // Query - Key Condition - Partition Key and Sort Key Prefix.
   fun loadAlbumTracks2(albumToken: String): List<AlbumTrack> {
     val page = table.albumTracksByTitle.query(
       keyCondition = BeginsWith(
@@ -50,6 +52,7 @@ class QueryNScan(
     return page.contents
   }
 
+  // Query - Key Condition - Partition Key and Sort Key Range.
   fun loadAlbumTracks3(albumToken: String): List<AlbumTrack> {
     val page = table.albumTracks.query(
       keyCondition = Between(
@@ -59,6 +62,7 @@ class QueryNScan(
     return page.contents
   }
 
+  // Query - Descending Order.
   fun loadAlbumTracks4(albumToken: String): List<AlbumTrack> {
     val page = table.albumTracks.query(
       keyCondition = BeginsWith(
@@ -69,6 +73,7 @@ class QueryNScan(
     return page.contents
   }
 
+  // Query - Filter Expression
   fun loadAlbumTracks5(albumToken: String): List<AlbumTrack> {
     val page = table.albumTracks.query(
       keyCondition = BeginsWith(prefix = AlbumTrack.Key(albumToken)),
@@ -86,6 +91,7 @@ class QueryNScan(
     )
   }
 
+  // Query - Pagination.
   fun loadAlbumTracks6(albumToken: String): List<AlbumTrack> {
     val tracks = mutableListOf<AlbumTrack>()
     var page: Page<AlbumTrack.Key, AlbumTrack>? = null
@@ -100,11 +106,13 @@ class QueryNScan(
     return tracks.toList()
   }
 
+  // Scan.
   fun loadAllAlbumTracks(): List<AlbumTrack> {
     val page = table.albumTracks.scan()
     return page.contents
   }
 
+  // Scan - Parallel.
   fun loadAllAlbumTracks2(): List<AlbumTrack> = runBlocking {
     val segment1 = async { loadSegment(1) }
     val segment2 = async { loadSegment(2) }

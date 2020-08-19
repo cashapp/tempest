@@ -31,13 +31,15 @@ class Transaction(
 ) {
   private val table: MusicTable = db.music
 
+  // Transactional Read.
   fun loadPlaylistTracks(playlist: PlaylistInfo): List<AlbumTrack> {
     val results = db.transactionLoad(
-      playlist.playlist_tracks // [ AlbumTrack.Key("ALBUM_1", track_number = 1), AlbumTrack.Key("ALBUM_354", 12), AlbumTrack.Key("ALBUM_23", 9) ]
+      playlist.playlist_tracks // [ AlbumTrack.Key("ALBUM_1", track_number = 1), AlbumTrack.Key("ALBUM_354", 12), ... ]
     )
     return results.getItems<AlbumTrack>()
   }
 
+  // Transactional Write.
   fun addTrackToPlaylist(
     playlistToken: String,
     albumTrack: AlbumTrack.Key
@@ -60,6 +62,7 @@ class Transaction(
     db.transactionWrite(writeSet)
   }
 
+  // Transactional Write - Writing Pager.
   fun addTracksToPlaylist(
     playlistToken: String,
     albumTracks: List<AlbumTrack.Key>
@@ -69,41 +72,6 @@ class Transaction(
       maxTransactionItems = 25,
       handler = AlbumTrackWritingPagerHandler(playlistToken, table)
     ).execute()
-  }
-
-  class AlbumTrackWritingPagerHandler(
-    private val playlistToken: String,
-    private val table: MusicTable
-  ) : WritingPager.Handler<AlbumTrack.Key> {
-    private lateinit var currentPagePlaylistInfo: PlaylistInfo
-    private lateinit var currentPageTracks: List<AlbumTrack.Key>
-
-    override fun eachPage(proceed: () -> Unit) {
-      proceed()
-    }
-
-    override fun beforePage(
-      remainingUpdates: List<AlbumTrack.Key>,
-      maxTransactionItems: Int
-    ): Int {
-      // Reserve 1 for the playlist info at the end.
-      currentPageTracks = remainingUpdates.take((maxTransactionItems - 1))
-      currentPagePlaylistInfo = table.playlistInfo.load(PlaylistInfo.Key(playlistToken))!!
-      return currentPageTracks.size
-    }
-
-    override fun item(builder: TransactionWriteSet.Builder, item: AlbumTrack.Key) {
-      builder.checkCondition(item, trackExists())
-    }
-
-    override fun finishPage(builder: TransactionWriteSet.Builder) {
-      val existing = currentPagePlaylistInfo
-      val newPlaylist = existing.copy(
-        playlist_tracks = existing.playlist_tracks + currentPageTracks,
-        playlist_version = existing.playlist_version + 1
-      )
-      builder.save(newPlaylist, ifPlaylistVersionIs(existing.playlist_version))
-    }
   }
 }
 
@@ -120,4 +88,39 @@ private fun ifPlaylistVersionIs(playlist_version: Long): DynamoDBTransactionWrit
 private fun trackExists(): DynamoDBTransactionWriteExpression {
   return DynamoDBTransactionWriteExpression()
     .withConditionExpression("attribute_exists(track_title)")
+}
+
+class AlbumTrackWritingPagerHandler(
+  private val playlistToken: String,
+  private val table: MusicTable
+) : WritingPager.Handler<AlbumTrack.Key> {
+  private lateinit var currentPagePlaylistInfo: PlaylistInfo
+  private lateinit var currentPageTracks: List<AlbumTrack.Key>
+
+  override fun eachPage(proceed: () -> Unit) {
+    proceed()
+  }
+
+  override fun beforePage(
+    remainingUpdates: List<AlbumTrack.Key>,
+    maxTransactionItems: Int
+  ): Int {
+    // Reserve 1 for the playlist info at the end.
+    currentPageTracks = remainingUpdates.take((maxTransactionItems - 1))
+    currentPagePlaylistInfo = table.playlistInfo.load(PlaylistInfo.Key(playlistToken))!!
+    return currentPageTracks.size
+  }
+
+  override fun item(builder: TransactionWriteSet.Builder, item: AlbumTrack.Key) {
+    builder.checkCondition(item, trackExists())
+  }
+
+  override fun finishPage(builder: TransactionWriteSet.Builder) {
+    val existing = currentPagePlaylistInfo
+    val newPlaylist = existing.copy(
+      playlist_tracks = existing.playlist_tracks + currentPageTracks,
+      playlist_version = existing.playlist_version + 1
+    )
+    builder.save(newPlaylist, ifPlaylistVersionIs(existing.playlist_version))
+  }
 }

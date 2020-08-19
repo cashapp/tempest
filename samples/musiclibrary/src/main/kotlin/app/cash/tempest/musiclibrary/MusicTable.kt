@@ -116,7 +116,7 @@ data class AlbumTrack(
   @ForIndex("album_track_title_index")
   data class TitleIndexOffset(
     val album_token: String,
-    val track_title: String,
+    val track_title: String? = null,
     // To uniquely identify an item in pagination.
     val track_token: String? = null
   )
