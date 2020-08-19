@@ -271,36 +271,71 @@ This [global secondary index](https://docs.aws.amazon.com/amazondynamodb/latest/
 
 Tempest lets you define strongly typed data models on top of your [`DynamoDBMapper`](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.html) classes.
 
-```kotlin
-interface MusicDb : LogicalDb {
-  val music: MusicTable
-}
+=== "Kotlin"
 
-interface MusicTable : LogicalTable<MusicItem> {
-  val albumInfo: InlineView<AlbumInfo.Key, AlbumInfo>
-  val albumTracks: InlineView<AlbumTrack.Key, AlbumTrack>
+    ```kotlin
+    interface MusicDb : LogicalDb {
+      val music: MusicTable
+    }
+    
+    interface MusicTable : LogicalTable<MusicItem> {
+      val albumInfo: InlineView<AlbumInfo.Key, AlbumInfo>
+      val albumTracks: InlineView<AlbumTrack.Key, AlbumTrack>
+    
+      val playlistInfo: InlineView<PlaylistInfo.Key, PlaylistInfo>
+    
+      // Global Secondary Indexes.
+      val albumInfoByGenre: SecondaryIndex<AlbumInfo.GenreIndexOffset, AlbumInfo>
+      val albumInfoByArtist: SecondaryIndex<AlbumInfo.ArtistIndexOffset, AlbumInfo>
+    
+      // Local Secondary Indexes.
+      val albumTracksByTitle: SecondaryIndex<AlbumTrack.TitleIndexOffset, AlbumTrack>
+    }
+    
+    @DynamoDBTable(tableName = "music_items")
+    class MusicItem {
+      // Primary key.
+      @DynamoDBHashKey
+      @DynamoDBIndexRangeKey(globalSecondaryIndexNames = ["genre_album_index", "artist_album_index"])
+      var partition_key: String? = null
+      @DynamoDBRangeKey
+      var sort_key: String? = null
+      // Attributes...
+    }
+    ```
 
-  val playlistInfo: InlineView<PlaylistInfo.Key, PlaylistInfo>
+=== "Java"
 
-  // Global Secondary Indexes.
-  val albumInfoByGenre: SecondaryIndex<AlbumInfo.GenreIndexOffset, AlbumInfo>
-  val albumInfoByArtist: SecondaryIndex<AlbumInfo.ArtistIndexOffset, AlbumInfo>
-
-  // Local Secondary Indexes.
-  val albumTracksByTitle: SecondaryIndex<AlbumTrack.TitleIndexOffset, AlbumTrack>
-}
-
-@DynamoDBTable(tableName = "music_items")
-class MusicItem {
-  // Primary key.
-  @DynamoDBHashKey
-  @DynamoDBIndexRangeKey(globalSecondaryIndexNames = ["genre_album_index", "artist_album_index"])
-  var partition_key: String? = null
-  @DynamoDBRangeKey
-  var sort_key: String? = null
-  // Attributes...
-}
-```
+    ```java
+    public interface MusicDb extends LogicalDb {
+      MusicTable music();
+    }
+    
+    public interface MusicTable extends LogicalTable<MusicItem> {
+      InlineView<AlbumInfo.Key, AlbumInfo> albumInfo();
+      InlineView<AlbumTrack.Key, AlbumTrack> albumTracks();
+    
+      InlineView<PlaylistInfo.Key, PlaylistInfo> playlistInfo();
+    
+      // Global Secondary Indexes.
+      SecondaryIndex<AlbumInfo.GenreIndexOffset, AlbumInfo> albumInfoByGenre();
+      SecondaryIndex<AlbumInfo.ArtistIndexOffset, AlbumInfo> albumInfoByArtist();
+    
+      // Local Secondary Indexes.
+      SecondaryIndex<AlbumTrack.TitleIndexOffset, AlbumTrack> albumTracksByTitle();
+    }
+    
+    @DynamoDBTable(tableName = "j_music_items")
+    public class MusicItem {
+      // All Items.
+      @DynamoDBHashKey
+      @DynamoDBIndexRangeKey(globalSecondaryIndexNames = {"genre_album_index", "artist_album_index"})
+      String partition_key = null;
+      @DynamoDBRangeKey
+      String sort_key = null;
+      // Attributes...
+    }
+    ```
 
 Tempest has these components:
 
@@ -319,20 +354,43 @@ item types into the same storage table. This makes it possible to perform aggreg
 and transactions on those item types.
 
 For example, you can batch load up to 100 items in a single request. 
-```kotlin
-val items = musicDb.batchLoad(
-  AlbumTrack.Key("ALBUM_1", "TRACK_5"),
-  AlbumTrack.Key("ALBUM_2", "TRACK_3"),
-  PlaylistInfo.Key("PLAYLIST_1"))
-```
+
+=== "Kotlin"
+
+    ```kotlin
+    val items = musicDb.batchLoad(
+      AlbumTrack.Key("ALBUM_1", "TRACK_5"),
+      AlbumTrack.Key("ALBUM_2", "TRACK_3"),
+      PlaylistInfo.Key("PLAYLIST_1"))
+    ```
+
+=== "Java"
+
+    ```java
+    ItemSet items = db.batchLoad(
+        List.of(
+            new AlbumTrack.Key("ALBUM_1", "TRACK_5"),
+            new AlbumTrack.Key("ALBUM_2", "TRACK_3"),
+            new PlaylistInfo.Key("PLAYLIST_1")));
+    ```
 
 To create a `LogicalDb`, you need to pass in an instance of `DynamoDBMapper`.
 
-```kotlin
-val client: AmazonDynamoDB = AmazonDynamoDBClientBuilder.standard().build()
-val mapper: DynamoDBMapper = DynamoDBMapper(client)
-val db: MusicDb = LogicalDb(mapper)
-```
+=== "Kotlin"
+    
+    ```kotlin
+    val client: AmazonDynamoDB = AmazonDynamoDBClientBuilder.standard().build()
+    val mapper: DynamoDBMapper = DynamoDBMapper(client)
+    val db: MusicDb = LogicalDb(mapper)
+    ```
+
+=== "Java"
+
+    ```java
+    AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
+    DynamoDBMapper mapper = new DynamoDBMapper(client);
+    MusicDb db = LogicalDb.create(MusicDb.class, mapper);
+    ```
 
 #### Optional Configuration
 
@@ -340,19 +398,35 @@ When you create an instance of DynamoDBMapper, it has certain default behaviors;
 
 The following code snippet creates a DynamoDBMapper with custom settings:
 
-```kotlin
+=== "Kotlin"
 
-val client = AmazonDynamoDBClientBuilder.standard().build()
-val mapperConfig = DynamoDBMapperConfig.builder()
-  .withSaveBehavior(SaveBehavior.CLOBBER)
-  .withConsistentReads(ConsistentReads.CONSISTENT)
-  .withTableNameOverride(null)
-  .withPaginationLoadingStrategy(PaginationLoadingStrategy.EAGER_LOADING)
-  .build()
-val mapper = DynamoDBMapper(client, mapperConfig)
-val musicDb: MusicDb = LogicalDB(mapper)
-```
+    ```kotlin
+    
+    val client = AmazonDynamoDBClientBuilder.standard().build()
+    val mapperConfig = DynamoDBMapperConfig.builder()
+      .withSaveBehavior(SaveBehavior.CLOBBER)
+      .withConsistentReads(ConsistentReads.CONSISTENT)
+      .withTableNameOverride(null)
+      .withPaginationLoadingStrategy(PaginationLoadingStrategy.EAGER_LOADING)
+      .build()
+    val mapper = DynamoDBMapper(client, mapperConfig)
+    val musicDb: MusicDb = LogicalDB(mapper)
+    ```
 
+=== "Java"
+    
+    ```java
+    AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
+    DynamoDBMapperConfig mapperConfig = DynamoDBMapperConfig.builder()
+        .withSaveBehavior(DynamoDBMapperConfig.SaveBehavior.CLOBBER)
+        .withConsistentReads(DynamoDBMapperConfig.ConsistentReads.CONSISTENT)
+        .withTableNameOverride(null)
+        .withPaginationLoadingStrategy(DynamoDBMapperConfig.PaginationLoadingStrategy.EAGER_LOADING)
+      .build();
+    DynamoDBMapper mapper = new DynamoDBMapper(client, mapperConfig);
+    MusicDb db = LogicalDb.create(MusicDb.class, mapper);
+    ```
+    
 For more information, see the [DynamoDBMapper documentation](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.OptionalConfig.html)
 
 ### Logical Table
@@ -362,30 +436,75 @@ A `LogicalTable` is a collection of views on a DynamoDB table that makes it easy
 #### Inline View 
 
 An `InlineView` lets you perform CRUD operations, queries, and scans on an entity type.
- 
-```kotlin
-interface MusicTable : LogicalTable<MusicItem> {
-  val albumInfo: InlineView<AlbumInfo.Key, AlbumInfo>
-}
 
-data class AlbumInfo.Key(
-  val album_token: String
-) {
-  val sort_key: String = ""
-}
+=== "Kotlin"
 
-data class AlbumInfo(
-  @Attribute(name = "partition_key")
-  val album_token: String,
-  val artist_name: String,
-  val release_date: LocalDate,
-  val genre_name: String
-) {
-  @Attribute(prefix = "INFO_")
-  val sort_key: String = ""
-}
-```
+    ```kotlin
+    interface MusicTable : LogicalTable<MusicItem> {
+      val albumInfo: InlineView<AlbumInfo.Key, AlbumInfo>
+    }
+    
+    data class AlbumInfo(
+      @Attribute(name = "partition_key")
+      val album_token: String,
+      val album_title: String,
+      val artist_name: String,
+      val release_date: LocalDate,
+      val genre_name: String
+    ) {
+      @Attribute(prefix = "INFO_")
+      val sort_key: String = ""
+      
+      data class Key(
+        val album_token: String
+      ) {
+        val sort_key: String = ""
+      }
+    }
+    ```
 
+=== "Java"
+
+    ```kotlin
+    public interface MusicTable extends LogicalTable<MusicItem> {
+      InlineView<AlbumInfo.Key, AlbumInfo> albumInfo();
+    }
+    
+    public class AlbumInfo {
+      @Attribute(name = "partition_key")
+      public final String album_token;
+      public final String album_title;
+      public final String artist_name;
+      public final LocalDate release_date;
+      public final String genre_name;
+    
+      @Attribute(prefix = "INFO_")
+      public final String sort_key = "";
+    
+      public AlbumInfo(
+          String album_token,
+          String album_title, 
+          String artist_name,
+          LocalDate release_date,
+          String genre_name) {
+        this.album_token = album_token;
+        this.album_title = album_title;
+        this.artist_name = artist_name;
+        this.release_date = release_date;
+        this.genre_name = genre_name;
+      }
+    
+      public static class Key {
+        public final String album_token;
+        public final String sort_key = "";
+    
+        public Key(String album_token) {
+          this.album_token = album_token;
+        }
+      }
+    }
+    ```
+    
 The `albumInfo` view is a type-safe way to access `AlbumInfo` entities:
 
 <table>
@@ -444,59 +563,134 @@ The `albumInfo` view is a type-safe way to access `AlbumInfo` entities:
     | INFO_     | AlbumInfo  |
     | TRACK_    | AlbumTrack |
     
+=== "Kotlin"
 
-```kotlin
-interface MusicTable : LogicalTable<MusicItem> {
-  val albumInfo: InlineView<AlbumInfo.Key, AlbumInfo>
-  val albumTracks: InlineView<AlbumTrack.Key, AlbumTrack>
-}
+    ```kotlin
+    interface MusicTable : LogicalTable<MusicItem> {
+      val albumInfo: InlineView<AlbumInfo.Key, AlbumInfo>
+      val albumTracks: InlineView<AlbumTrack.Key, AlbumTrack>
+    }
+    
+    data class AlbumInfo(
+      @Attribute(name = "partition_key")
+      val album_token: String,
+      // ...
+    ) {
+      @Attribute(prefix = "INFO_")
+      val sort_key: String = ""
+    }
+    
+    data class AlbumTrack(
+      @Attribute(name = "partition_key")
+      val album_token: String,
+      @Attribute(name = "sort_key", prefix = "TRACK_")
+      val track_token: String,
+      // ...
+    )
+    ```
 
-data class AlbumInfo(
-  @Attribute(name = "partition_key")
-  val album_token: String,
-  // ...
-) {
-  @Attribute(prefix = "INFO_")
-  val sort_key: String = ""
-}
+=== "Java"
 
-data class AlbumTrack(
-  @Attribute(name = "partition_key")
-  val album_token: String,
-  @Attribute(name = "sort_key", prefix = "TRACK_")
-  val track_token: String,
-  // ...
-)
-```
+    ```java
+    public interface MusicTable extends LogicalTable<MusicItem> {
+      InlineView<AlbumInfo.Key, AlbumInfo> albumInfo();
+      InlineView<AlbumTrack.Key, AlbumTrack> albumTracks();
+    }
+    
+    public class AlbumInfo {
+      @Attribute(name = "partition_key")
+      public final String album_token;
+      // ...
+      @Attribute(prefix = "INFO_")
+      public final String sort_key = "";
+      // ...
+    }
+    
+    public class AlbumTrack {
+      @Attribute(name = "partition_key")
+      public final String album_token;
+      @Attribute(name = "sort_key", prefix = "TRACK_")
+      public final String track_token;
+      // ...
+    }
+    ```
 
 #### Secondary Index
 
 An `SecondaryIndex` lets you perform queries, and scans on an entity type.
 
-```kotlin
-interface MusicTable : LogicalTable<MusicItem> {
-  val albumInfoByArtist: SecondaryIndex<AlbumInfo.ArtistIndexOffset, AlbumInfo>
-}
+=== "Kotlin"
 
-data class AlbumInfo(
-  @Attribute(name = "partition_key")
-  val album_token: String,
-  val artist_name: String,
-  val release_date: LocalDate,
-  val genre_name: String
-) {
-  @Attribute(prefix = "INFO_")
-  val sort_key: String = ""
+    ```kotlin
+    interface MusicTable : LogicalTable<MusicItem> {
+      val albumInfoByArtist: SecondaryIndex<AlbumInfo.ArtistIndexOffset, AlbumInfo>
+    }
+    
+    data class AlbumInfo(
+      @Attribute(name = "partition_key")
+      val album_token: String,
+      val album_title: String,
+      val artist_name: String,
+      val release_date: LocalDate,
+      val genre_name: String
+    ) {
+      @Attribute(prefix = "INFO_")
+      val sort_key: String = ""
+    
+      @ForIndex("artist_album_index")
+      data class ArtistIndexOffset(
+        val artist_name: String,
+        val album_token: String? = null,
+        // To uniquely identify an item in pagination.
+        val sort_key: String? = null
+      )
+    }
+    ```
+    
+=== "Java"
 
-  @ForIndex("artist_album_index")
-  data class ArtistIndexOffset(
-    val artist_name: String,
-    val album_token: String? = null,
-    // To uniquely identify an item in pagination.
-    val sort_key: String? = null
-  )
-}
-```
+    ```java
+    public interface MusicTable extends LogicalTable<MusicItem> {
+      SecondaryIndex<AlbumInfo.ArtistIndexOffset, AlbumInfo> albumInfoByArtist();
+    }
+    
+    public class AlbumInfo {
+      @Attribute(name = "partition_key")
+      public final String album_token;
+      public final String album_title;
+      public final String artist_name;
+      public final LocalDate release_date;
+      public final String genre_name;
+    
+      @Attribute(prefix = "INFO_")
+      public final String sort_key = "";
+    
+      @ForIndex(name = "artist_album_index")
+      public static class ArtistIndexOffset {
+        public final String artist_name;
+        @Nullable
+        public final String album_token;
+        // To uniquely identify an item in pagination.
+        @Nullable
+        public final String sort_key;
+    
+        public ArtistIndexOffset(String artist_name) {
+          this(artist_name, null, null);
+        }
+    
+        public ArtistIndexOffset(String artist_name, String album_token) {
+          this(artist_name, album_token, null);
+        }
+    
+        public ArtistIndexOffset(String artist_name, @Nullable String album_token,
+            @Nullable String sort_key) {
+          this.artist_name = artist_name;
+          this.album_token = album_token;
+          this.sort_key = sort_key;
+        }
+      }
+    }
+    ```
 
 DynamoDB secondary indexes allows duplicate values.
 In order to uniquely identify an item in pagination, a secondary index offset type needs
@@ -531,24 +725,48 @@ Tempest uses `DynamoDBMapper` to encode and decode entities.
 
 You may use `DynamoDBTypeConverter` to support [custom attribute types](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.ArbitraryDataMapping.html).
 
-```kotlin
-@DynamoDBTable(tableName = "music_items")
-class MusicItem {
-  // ...
-  @DynamoDBAttribute
-  @DynamoDBTypeConverted(converter = LocalDateTypeConverter::class)
-  var release_date: LocalDate? = null
-  // ...
-}
+=== "Kotlin"
 
-class LocalDateTypeConverter : DynamoDBTypeConverter<String, LocalDate> {
-  override fun unconvert(string: String): LocalDate {
-    return LocalDate.parse(string)
-  }
+    ```kotlin
+    @DynamoDBTable(tableName = "music_items")
+    class MusicItem {
+      // ...
+      @DynamoDBAttribute
+      @DynamoDBTypeConverted(converter = LocalDateTypeConverter::class)
+      var release_date: LocalDate? = null
+      // ...
+    }
+    
+    class LocalDateTypeConverter : DynamoDBTypeConverter<String, LocalDate> {
+      override fun unconvert(string: String): LocalDate {
+        return LocalDate.parse(string)
+      }
+    
+      override fun convert(localDate: LocalDate): String {
+        return localDate.toString()
+      }
+    }
+    ```
 
-  override fun convert(localDate: LocalDate): String {
-    return localDate.toString()
-  }
-}
-```
+=== "Java"
 
+    ```java
+    @DynamoDBTable(tableName = "j_music_items")
+    public class MusicItem {
+      // ...
+      @DynamoDBAttribute
+      @DynamoDBTypeConverted(converter = LocalDateTypeConverter.class)
+      LocalDate release_date = null;
+      // ...
+    }
+    
+    class LocalDateTypeConverter  implements DynamoDBTypeConverter<String, LocalDate> {
+      @Override public String convert(LocalDate object) {
+        return object.toString();
+      }
+    
+      @Override public LocalDate unconvert(String object) {
+        return LocalDate.parse(object);
+      }
+    }
+    ```

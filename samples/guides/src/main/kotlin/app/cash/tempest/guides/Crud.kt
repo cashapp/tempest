@@ -22,6 +22,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDeleteExpression
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.ConsistentReads
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBSaveExpression
 import com.amazonaws.services.dynamodbv2.model.ExpectedAttributeValue
+import java.time.LocalDate
 
 class Crud(
   private val table: MusicTable
@@ -31,6 +32,22 @@ class Crud(
   fun getAlbumTitle(albumToken: String): String? {
     val albumInfo = table.albumInfo.load(AlbumInfo.Key(albumToken)) ?: return null
     return albumInfo.album_title
+  }
+
+  // Read - Eventual consistency.
+  fun readAfterWrite() {
+    // Write an item.
+    val item = AlbumInfo(
+      album_token = "ALBUM_cafcf892",
+      album_title = "The Dark Side of the Moon",
+      artist_name = "Pink Floyd",
+      release_date = LocalDate.of(1973, 3, 1),
+      genre_name = "Progressive rock"
+    )
+    table.albumInfo.save(item)
+    // Read that item.
+    val itemRead = table.albumInfo.load(item.key)
+    // Note that the value we just read might be older than the value we wrote.
   }
 
   // Read - Strongly consistent.

@@ -26,8 +26,8 @@ import app.cash.tempest.musiclibrary.java.PlaylistInfo;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTransactionWriteExpression;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 
@@ -98,11 +98,10 @@ public class Transaction {
   }
 
   static DynamoDBTransactionWriteExpression ifPlaylistVersionIs(Long playlist_version) {
-    HashMap<String, AttributeValue> attributeValues = new HashMap<>();
-    attributeValues.put(":playlist_version", new AttributeValue().withN("$playlist_version"));
     return new DynamoDBTransactionWriteExpression()
         .withConditionExpression("playlist_version = :playlist_version")
-        .withExpressionAttributeValues(attributeValues);
+        .withExpressionAttributeValues(
+            Map.of(":playlist_version", new AttributeValue().withN("$playlist_version")));
   }
 
   static DynamoDBTransactionWriteExpression trackExists() {

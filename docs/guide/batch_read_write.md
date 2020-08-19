@@ -2,18 +2,38 @@
 
 `LogicalDb` lets you `batchLoad` multiple items from one or more tables using their primary keys.
 
-```kotlin
-val musicDb: MusicDb
+=== "Kotlin"
 
-fun loadPlaylistTracks(playlist: PlaylistInfo): Set<AlbumTrack> {
-  val results = musicDb.batchLoad(
-     playlist.track_tokens, // [ AlbumTrack.Key("ALBUM_1", track_number = 1), AlbumTrack.Key("ALBUM_354", 12), AlbumTrack.Key("ALBUM_23", 9) ]
-     consistentReads = ConsistentReads.EVENTUAL,
-     retryStrategy = DefaultBatchLoadRetryStrategy()
-  )
-  return results.getItems<AlbumTrack>()
-}
-```
+    ```kotlin
+    private val db: MusicDb
+    
+    fun loadPlaylistTracks(playlist: PlaylistInfo): List<AlbumTrack> {
+      val results = db.batchLoad(
+        keys = playlist.playlist_tracks, // [AlbumTrack.Key("ALBUM_1", track_number = 1), AlbumTrack.Key("ALBUM_354", 12), ...]
+        consistentReads = ConsistentReads.EVENTUAL,
+        retryStrategy = DefaultBatchLoadRetryStrategy()
+      )
+      return results.getItems<AlbumTrack>()
+    }
+    ```
+
+=== "Java"
+
+    ```java
+    private final MusicDb db;
+    
+    public List<AlbumTrack> loadPlaylistTracks(PlaylistInfo playlist) {
+      ItemSet results = db.batchLoad(
+          // keys.
+          playlist.playlist_tracks, // [AlbumTrack.Key("ALBUM_1", track_number = 1), AlbumTrack.Key("ALBUM_354", 12), ...]
+          // consistentReads.
+          ConsistentReads.EVENTUAL,
+          // retryStrategy.
+          new DefaultBatchLoadRetryStrategy()
+      );
+      return results.getItems(AlbumTrack.class);
+    }
+    ```
 
 !!! tip "Batch load does not return items in any particular order" 
 
@@ -41,22 +61,45 @@ fun loadPlaylistTracks(playlist: PlaylistInfo): Set<AlbumTrack> {
     provisioned throughput is exceeded or an internal processing failure occurs, the failed operations 
     are returned in the UnprocessedItems response parameter.
 
-```kotlin
-val musicDb: MusicDb
-
-fun backfill(
-  albumTracksToSave: List<AlbumTrack>, 
-  albumTracksToDelete: List<AlbumTrack.Key>
-): Boolean {
-  val writeSet = BatchWriteSet.Builder()
-    .clobber(albumTracksToSave)
-    .delete(albumTracksToDelete)
-    .build()
-  val result = musicDb.batchWrite(
-    writeSet,
-    retryStrategy = DefaultBatchWriteRetryStrategy()
-  )
-  return result.isSuccessful
-}
-```
+=== "Kotlin"
+    
+    ```kotlin
+    private val db: MusicDb
+    
+    fun backfill(
+      albumTracksToSave: List<AlbumTrack>,
+      albumTracksToDelete: List<AlbumTrack.Key>
+    ): Boolean {
+      val writeSet = BatchWriteSet.Builder()
+        .clobber(albumTracksToSave)
+        .delete(albumTracksToDelete)
+        .build()
+      val result = db.batchWrite(
+        writeSet,
+        retryStrategy = DefaultBatchWriteRetryStrategy()
+      )
+      return result.isSuccessful
+    }
+    ```
  
+=== "Java"
+
+    ```java
+    private final MusicDb db;
+    
+    public boolean backfill(
+        List<AlbumTrack> albumTracksToSave,
+        List<AlbumTrack.Key> albumTracksToDelete
+    ) {
+      BatchWriteSet writeSet = new BatchWriteSet.Builder()
+          .clobber(albumTracksToSave)
+          .delete(albumTracksToDelete)
+          .build();
+      BatchWriteResult result = db.batchWrite(
+          writeSet,
+          // retryStrategy.
+          new DefaultBatchWriteRetryStrategy()
+      );
+      return result.isSuccessful();
+    }
+    ```

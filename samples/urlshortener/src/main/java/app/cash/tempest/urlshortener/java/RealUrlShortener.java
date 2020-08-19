@@ -16,11 +16,9 @@
 
 package app.cash.tempest.urlshortener.java;
 
-import app.cash.tempest.urlshortener.UrlShortener;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBSaveExpression;
 import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException;
 import com.amazonaws.services.dynamodbv2.model.ExpectedAttributeValue;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RealUrlShortener implements UrlShortener {
@@ -31,11 +29,13 @@ public class RealUrlShortener implements UrlShortener {
     this.table = table;
   }
 
-  @Override public boolean shorten(@NotNull String shortUrl, @NotNull String destinationUrl) {
+  @Override
+  public boolean shorten(String shortUrl, String destinationUrl) {
     Alias item = new Alias(shortUrl, destinationUrl);
     DynamoDBSaveExpression ifNotExist = new DynamoDBSaveExpression()
-        .withExpectedEntry("short_url", new ExpectedAttributeValue()
-            .withExists(false));
+        .withExpectedEntry(
+            "short_url",
+            new ExpectedAttributeValue().withExists(false));
     try {
       table.aliases().save(item, ifNotExist);
       return true;
@@ -45,7 +45,9 @@ public class RealUrlShortener implements UrlShortener {
     }
   }
 
-  @Nullable @Override public String redirect(@NotNull String shortUrl) {
+  @Override
+  @Nullable
+  public String redirect(String shortUrl) {
     Alias.Key key = new Alias.Key(shortUrl);
     Alias alias = table.aliases().load(key);
     if (alias == null) {

@@ -22,6 +22,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDeleteExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.ConsistentReads;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBSaveExpression;
 import com.amazonaws.services.dynamodbv2.model.ExpectedAttributeValue;
+import java.time.LocalDate;
 import javax.annotation.Nullable;
 
 public class Crud {
@@ -41,9 +42,30 @@ public class Crud {
     return albumInfo.album_title;
   }
 
+  // Read - Eventual consistency.
+  public void readAfterWrite() {
+    // Write an item.
+    AlbumInfo item = new AlbumInfo(
+        // album_token.
+        "ALBUM_cafcf892",
+        // album_title.
+        "The Dark Side of the Moon",
+        // artist_name.
+        "Pink Floyd",
+        // release_date.
+        LocalDate.of(1973, 3, 1),
+        // genre_name.
+        "Progressive rock"
+    );
+    table.albumInfo().save(item);
+    // Read that item.
+    AlbumInfo itemRead = table.albumInfo().load(item.key);
+    // Note that the value we just read might be older than the value we wrote.
+  }
+
   // Read - Strongly consistent.
   @Nullable
-  public String consistentlyGetAlbumTitle(String albumToken) {
+  public String getAlbumTitle2(String albumToken) {
     AlbumInfo albumInfo = table.albumInfo().load(
         new AlbumInfo.Key(albumToken),
         // consistentReads.

@@ -28,8 +28,8 @@ import app.cash.tempest.musiclibrary.java.MusicTable;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -114,11 +114,9 @@ public class QueryNScan {
   }
 
   private FilterExpression runLengthLongerThan(Duration duration) {
-    HashMap<String, AttributeValue> attributeValues = new HashMap<>();
-    attributeValues.put(":duration", new AttributeValue().withS(duration.toString()));
     return new FilterExpression(
         "run_length > :duration",
-        attributeValues
+        Map.of(":duration", new AttributeValue().withS(duration.toString()))
     );
   }
 
