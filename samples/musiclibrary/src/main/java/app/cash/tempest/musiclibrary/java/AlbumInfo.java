@@ -20,6 +20,7 @@ import app.cash.tempest.Attribute;
 import app.cash.tempest.ForIndex;
 import app.cash.tempest.Ignore;
 import java.time.LocalDate;
+import javax.annotation.Nullable;
 
 public class AlbumInfo {
   @Attribute(name = "partition_key")
@@ -57,8 +58,10 @@ public class AlbumInfo {
   @ForIndex(name = "genre_album_index")
   public static class GenreIndexOffset {
     public final String genre_name;
+    @Nullable
     public final String album_token;
     // To uniquely identify an item in pagination.
+    @Nullable
     public final String sort_key;
 
     public GenreIndexOffset(String genre_name) {
@@ -79,8 +82,10 @@ public class AlbumInfo {
   @ForIndex(name = "artist_album_index")
   public static class ArtistIndexOffset {
     public final String artist_name;
+    @Nullable
     public final String album_token;
     // To uniquely identify an item in pagination.
+    @Nullable
     public final String sort_key;
 
     public ArtistIndexOffset(String artist_name) {
@@ -91,7 +96,8 @@ public class AlbumInfo {
       this(artist_name, album_token, null);
     }
 
-    public ArtistIndexOffset(String artist_name, String album_token, String sort_key) {
+    public ArtistIndexOffset(String artist_name, @Nullable String album_token,
+        @Nullable String sort_key) {
       this.artist_name = artist_name;
       this.album_token = album_token;
       this.sort_key = sort_key;

@@ -20,7 +20,7 @@ import app.cash.tempest.BatchWriteSet
 import app.cash.tempest.musiclibrary.AlbumTrack
 import app.cash.tempest.musiclibrary.MusicDb
 import app.cash.tempest.musiclibrary.PlaylistInfo
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.ConsistentReads
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.DefaultBatchLoadRetryStrategy
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.DefaultBatchWriteRetryStrategy
 
@@ -28,16 +28,17 @@ class BatchReadWrite(
   private val db: MusicDb
 ) {
 
+  // Batch Load.
   fun loadPlaylistTracks(playlist: PlaylistInfo): List<AlbumTrack> {
     val results = db.batchLoad(
-      // [AlbumTrack.Key("ALBUM_1", track_number = 1), AlbumTrack.Key("ALBUM_354", 12), AlbumTrack.Key("ALBUM_23", 9)]
-      keys = playlist.playlist_tracks,
-      consistentReads = DynamoDBMapperConfig.ConsistentReads.EVENTUAL,
+      keys = playlist.playlist_tracks, // [AlbumTrack.Key("ALBUM_1", track_number = 1), AlbumTrack.Key("ALBUM_354", 12), ...]
+      consistentReads = ConsistentReads.EVENTUAL,
       retryStrategy = DefaultBatchLoadRetryStrategy()
     )
     return results.getItems<AlbumTrack>()
   }
 
+  // Batch Write.
   fun backfill(
     albumTracksToSave: List<AlbumTrack>,
     albumTracksToDelete: List<AlbumTrack.Key>

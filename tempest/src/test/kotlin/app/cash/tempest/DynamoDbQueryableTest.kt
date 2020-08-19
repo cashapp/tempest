@@ -192,7 +192,7 @@ class DynamoDbQueryableTest {
     val expectedTrackTitles = AFTER_HOURS_EP.trackTitles.sorted()
 
     val page = musicTable.albumTracksByTitle.query(
-      keyCondition = BeginsWith(AlbumTrack.TitleIndexOffset(AFTER_HOURS_EP.album_token, ""))
+      keyCondition = BeginsWith(AlbumTrack.TitleIndexOffset(AFTER_HOURS_EP.album_token))
     )
     assertThat(page.hasMorePages).isFalse()
     assertThat(page.trackTitles).containsAll(expectedTrackTitles)
@@ -204,14 +204,14 @@ class DynamoDbQueryableTest {
     val expectedTrackTitles = AFTER_HOURS_EP.trackTitles.sorted()
 
     val page1 = musicTable.albumTracksByTitle.query(
-      keyCondition = BeginsWith(AlbumTrack.TitleIndexOffset(AFTER_HOURS_EP.album_token, "")),
+      keyCondition = BeginsWith(AlbumTrack.TitleIndexOffset(AFTER_HOURS_EP.album_token)),
       pageSize = 2
     )
     assertThat(page1.hasMorePages).isTrue()
     assertThat(page1.trackTitles).containsAll(expectedTrackTitles.slice(0..1))
 
     val page2 = musicTable.albumTracksByTitle.query(
-      keyCondition = BeginsWith(AlbumTrack.TitleIndexOffset(AFTER_HOURS_EP.album_token, "")),
+      keyCondition = BeginsWith(AlbumTrack.TitleIndexOffset(AFTER_HOURS_EP.album_token)),
       pageSize = 2,
       initialOffset = page1.offset
     )
@@ -219,7 +219,7 @@ class DynamoDbQueryableTest {
     assertThat(page2.trackTitles).containsAll(expectedTrackTitles.slice(2..3))
 
     val page3 = musicTable.albumTracksByTitle.query(
-      keyCondition = BeginsWith(AlbumTrack.TitleIndexOffset(AFTER_HOURS_EP.album_token, "")),
+      keyCondition = BeginsWith(AlbumTrack.TitleIndexOffset(AFTER_HOURS_EP.album_token)),
       pageSize = 2,
       initialOffset = page2.offset
     )

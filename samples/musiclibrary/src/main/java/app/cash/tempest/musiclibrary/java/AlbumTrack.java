@@ -20,6 +20,7 @@ import app.cash.tempest.Attribute;
 import app.cash.tempest.ForIndex;
 import app.cash.tempest.Ignore;
 import java.time.Duration;
+import javax.annotation.Nullable;
 
 public class AlbumTrack {
   @Attribute(name = "partition_key")
@@ -63,6 +64,10 @@ public class AlbumTrack {
     public Key(String album_token, Long track_number) {
       this(album_token, String.format("%016x", track_number));
     }
+
+    public Key(String album_token) {
+      this(album_token, "");
+    }
   }
 
   @ForIndex(name = "album_track_title_index")
@@ -70,7 +75,12 @@ public class AlbumTrack {
     public final String album_token;
     public final String track_title;
     // To uniquely identify an item in pagination.
+    @Nullable
     public final String track_token;
+
+    public TitleIndexOffset(String album_token, String track_title) {
+      this(album_token, track_title, null);
+    }
 
     public TitleIndexOffset(String album_token, String track_title, String track_token) {
       this.album_token = album_token;
