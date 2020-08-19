@@ -124,7 +124,7 @@ internal data class KeyType(
         val attribute = requireNotNull(
           itemType.attributes[property.name]
         ) { "Expect ${property.name}, required by $keyType, to be declared in ${itemType.type}." +
-            " Use @Ignore to exclude it." }
+            " Use @Transient to exclude it." }
         val expectedReturnType =
           requireNotNull(itemType.attributes[property.name]?.returnType).withNullability(false)
         val actualReturnType = property.returnType.withNullability(false)
@@ -247,7 +247,7 @@ internal data class ItemType(
       for (rawItemPropertyName in rawItemPropertyNames) {
         require(rawItemType.hasProperty(rawItemPropertyName)) {
           "Expect $rawItemPropertyName, required by $itemType, to be declared in " +
-              "${rawItemType.type}. Use @Ignore to exclude it."
+              "${rawItemType.type}. Use @Transient to exclude it."
         }
       }
       val prefix = annotation?.prefix ?: ""

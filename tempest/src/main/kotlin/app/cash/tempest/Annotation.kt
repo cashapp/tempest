@@ -30,13 +30,6 @@ annotation class Attribute(
 )
 
 /**
- * Indicates that the item class property should be ignored.
- */
-@Target(AnnotationTarget.PROPERTY, AnnotationTarget.FIELD)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class Ignore
-
-/**
  * Maps an key class to a global or local secondary index in a DynamoDB table.
  */
 @Target(AnnotationTarget.CLASS)
