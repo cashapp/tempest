@@ -21,6 +21,8 @@ package app.cash.tempest
  *
  * If this mapped to a primary range key, it must have a prefix.
  */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.RUNTIME)
 annotation class Attribute(
   val name: String = "",
   val names: Array<String> = [],
@@ -28,8 +30,17 @@ annotation class Attribute(
 )
 
 /**
+ * Indicates that the item class property should be ignored.
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class Ignore
+
+/**
  * Maps an key class to a global or local secondary index in a DynamoDB table.
  */
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
 annotation class ForIndex(
   val name: String = ""
 )

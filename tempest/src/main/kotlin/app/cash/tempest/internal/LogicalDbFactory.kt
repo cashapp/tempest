@@ -27,9 +27,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
 import java.lang.reflect.Method
 import kotlin.reflect.KClass
-import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.jvm.javaGetter
 import kotlin.reflect.jvm.jvmErasure
 
 internal class LogicalDbFactory(
@@ -52,13 +50,13 @@ internal class LogicalDbFactory(
 
   fun <DB : LogicalDb> logicalDb(dbType: KClass<DB>): DB {
     val methodHandlers = mutableMapOf<Method, MethodHandler>()
-    for (property in dbType.declaredMemberProperties) {
-      if (!property.returnType.jvmErasure.isSubclassOf(LogicalTable::class)) {
+    for (member in dbType.declaredMembers) {
+      if (!member.returnType.jvmErasure.isSubclassOf(LogicalTable::class)) {
         continue
       }
-      val tableType = property.returnType.jvmErasure as KClass<LogicalTable<Any>>
+      val tableType = member.returnType.jvmErasure as KClass<LogicalTable<Any>>
       val table = logicalTableFactory.logicalTable(tableType)
-      methodHandlers[property.javaGetter!!] = GetterMethodHandler(table)
+      methodHandlers[member.javaMethod] = GetterMethodHandler(table)
     }
     val logicalDb = DynamoDbLogicalDb(
       dynamoDbMapper,
@@ -123,21 +121,21 @@ internal class LogicalDbFactory(
           InlineView.Factory by inlineViewFactory,
           SecondaryIndex.Factory by secondaryIndexFactory {}
       val methodHandlers = mutableMapOf<Method, MethodHandler>()
-      for (property in tableType.declaredMemberProperties) {
-        val component = when (property.returnType.jvmErasure) {
+      for (member in tableType.declaredMembers) {
+        val component = when (member.returnType.jvmErasure) {
           InlineView::class -> {
-            val keyType = property.returnType.arguments[0].type?.jvmErasure!!
-            val itemType = property.returnType.arguments[1].type?.jvmErasure!!
+            val keyType = member.returnType.arguments[0].type?.jvmErasure!!
+            val itemType = member.returnType.arguments[1].type?.jvmErasure!!
             inlineViewFactory.inlineView(keyType, itemType)
           }
           SecondaryIndex::class -> {
-            val keyType = property.returnType.arguments[0].type?.jvmErasure!!
-            val itemType = property.returnType.arguments[1].type?.jvmErasure!!
+            val keyType = member.returnType.arguments[0].type?.jvmErasure!!
+            val itemType = member.returnType.arguments[1].type?.jvmErasure!!
             secondaryIndexFactory.secondaryIndex(keyType, itemType)
           }
           else -> null
         }
-        methodHandlers[property.javaGetter!!] = GetterMethodHandler(component)
+        methodHandlers[member.javaMethod] = GetterMethodHandler(component)
       }
       return proxyFactory.create(tableType, methodHandlers.toMap(), logicalTable)
     }

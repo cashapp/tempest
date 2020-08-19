@@ -16,8 +16,9 @@
 
 package app.cash.tempest.internal
 
-import app.cash.tempest.Attribute
+import app.cash.tempest.Attribute as AttributeAnnotation
 import app.cash.tempest.ForIndex
+import app.cash.tempest.Ignore
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperTableModel
@@ -27,10 +28,10 @@ import com.amazonaws.services.dynamodbv2.model.KeyType.HASH
 import com.amazonaws.services.dynamodbv2.model.KeyType.RANGE
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
+import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
-import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.full.withNullability
 
 internal class Schema(
@@ -67,7 +68,7 @@ internal class Schema(
   }
 
   private fun getLogicalType(type: KClass<*>): LogicalType? = getKey(type)
-      ?: getItem(type) ?: getRawItem(type)
+    ?: getItem(type) ?: getRawItem(type)
 
   fun addKey(keyType: KClass<*>, itemType: KClass<*>): KeyType {
     val existingKeyType = keyTypes.getOrPut(keyType) {
@@ -114,15 +115,15 @@ internal data class KeyType(
     private val codecFactory: ReflectionCodec.Factory
   ) {
     fun create(keyType: KClass<*>, itemType: ItemType, rawItemType: RawItemType): KeyType {
-      val constructor = requireNotNull(
-        keyType.primaryConstructor) { "$keyType must have a primary constructor" }
-      val constructorParameters = constructor.parameters.associateBy { requireNotNull(it.name) }
+      require(keyType.constructors.isNotEmpty()) { "$keyType must have a constructor" }
+      val constructorParameters = keyType.primaryConstructorParameters
       val attributeNames = mutableSetOf<String>()
       for (property in keyType.memberProperties) {
         val attribute = requireNotNull(
-            itemType.attributes[property.name]) { "Expect ${property.name}, required by $keyType, to be declared in ${itemType.type}" }
+          itemType.attributes[property.name]
+        ) { "Expect ${property.name}, required by $keyType, to be declared in ${itemType.type}" }
         val expectedReturnType =
-            requireNotNull(itemType.attributes[property.name]?.returnType).withNullability(false)
+          requireNotNull(itemType.attributes[property.name]?.returnType).withNullability(false)
         val actualReturnType = property.returnType.withNullability(false)
         require(actualReturnType == expectedReturnType) { "Expect the return type of $keyType.${property.name} to be $expectedReturnType but was $actualReturnType" }
         val attributeAnnotation: AttributeAnnotation? = property.findAnnotation()
@@ -152,7 +153,8 @@ internal data class KeyType(
           attributeNames.toSet(),
           hashKeyName,
           rangeKeyName,
-          secondaryIndexName)
+          secondaryIndexName
+      )
     }
   }
 }
@@ -184,18 +186,18 @@ internal data class ItemType(
   ) {
 
     fun create(itemType: KClass<*>, rawItemType: RawItemType): ItemType {
-      val constructor = requireNotNull(
-          itemType.primaryConstructor) { "$itemType must have a primary constructor" }
-      val parametersByName = constructor.parameters.associateBy { requireNotNull(it.name) }
+      require(itemType.constructors.isNotEmpty()) { "$itemType must have a constructor" }
+      val constructorParameters = itemType.primaryConstructorParameters
       val primaryIndex = findPrimaryIndex(rawItemType)
-      val attributes = findAttributes(itemType, parametersByName, rawItemType, primaryIndex)
+      val attributes = findAttributes(itemType, constructorParameters, rawItemType, primaryIndex)
       return ItemType(
           codecFactory.create(itemType, attributes, rawItemType),
           itemType,
           rawItemType.type,
           attributes,
           primaryIndex,
-          findSecondaryIndexes(rawItemType))
+          findSecondaryIndexes(rawItemType)
+      )
     }
 
     private fun findAttributes(
@@ -206,19 +208,12 @@ internal data class ItemType(
     ): Map<String, Attribute> {
       val attributes = mutableMapOf<String, Attribute>()
       for (property in itemType.memberProperties) {
-        val annotation: AttributeAnnotation? = property.findAnnotation()
-            ?: constructorParameters[property.name]?.findAnnotation()
-        val rawItemPropertyNames = annotation?.annotatedNames ?: setOf(property.name)
-        for (rawItemPropertyName in rawItemPropertyNames) {
-          require(rawItemType.hasProperty(rawItemPropertyName)) {
-            "Expect $rawItemPropertyName, required by $itemType, to be declared in ${rawItemType.type}"
-          }
-        }
-        val prefix = annotation?.prefix ?: ""
-        attributes[property.name] = Attribute(rawItemPropertyNames, prefix, property.returnType)
+        val attribute =
+          createAttribute(property, constructorParameters, rawItemType, itemType) ?: continue
+        attributes[property.name] = attribute
       }
       val attributesByName =
-          attributes.values.flatMap { attribute -> attribute.names.map { it to attribute } }.toMap()
+        attributes.values.flatMap { attribute -> attribute.names.map { it to attribute } }.toMap()
       require(attributesByName.contains(primaryIndex.hashKeyName)) {
         "Expect $itemType to map to ${rawItemType.type}'s hash key ${primaryIndex.hashKeyName}"
       }
@@ -232,6 +227,27 @@ internal data class ItemType(
         }
       }
       return attributes.toMap()
+    }
+
+    private fun createAttribute(
+      property: KProperty<*>,
+      constructorParameters: Map<String, KParameter>,
+      rawItemType: RawItemType,
+      itemType: KClass<*>
+    ): Attribute? {
+      if (property.shouldIgnore) {
+        return null
+      }
+      val annotation: AttributeAnnotation? = property.findAnnotation()
+        ?: constructorParameters[property.name]?.findAnnotation()
+      val rawItemPropertyNames = (annotation?.annotatedNames ?: setOf(property.name))
+      for (rawItemPropertyName in rawItemPropertyNames) {
+        require(rawItemType.hasProperty(rawItemPropertyName)) {
+          "Expect $rawItemPropertyName, required by $itemType, to be declared in ${rawItemType.type}"
+        }
+      }
+      val prefix = annotation?.prefix ?: ""
+      return Attribute(rawItemPropertyNames, prefix, property.returnType)
     }
 
     private fun findPrimaryIndex(rawItemType: RawItemType): PrimaryIndex {
@@ -262,6 +278,9 @@ internal data class ItemType(
       }
       return secondaryIndexes.toMap()
     }
+
+    private val KProperty<*>.shouldIgnore: Boolean
+      get() = findAnnotation<Ignore>() != null || findAnnotation<Transient>() != null
 
     private val AttributeAnnotation.annotatedNames: Set<String>?
       get() = when {
@@ -313,9 +332,8 @@ internal data class RawItemType(
           IdentityCodec,
           config.tableNameResolver.getTableName(rawItemType.java, config),
           rawItemType as KClass<Any>,
-          dynamoDbMapper.getTableModel(rawItemType.java) as DynamoDBMapperTableModel<Any>)
+          dynamoDbMapper.getTableModel(rawItemType.java) as DynamoDBMapperTableModel<Any>
+        )
     }
   }
 }
-
-internal typealias AttributeAnnotation = Attribute
