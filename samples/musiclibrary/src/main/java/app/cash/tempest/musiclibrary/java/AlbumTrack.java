@@ -18,7 +18,6 @@ package app.cash.tempest.musiclibrary.java;
 
 import app.cash.tempest.Attribute;
 import app.cash.tempest.ForIndex;
-import app.cash.tempest.Ignore;
 import java.time.Duration;
 import javax.annotation.Nullable;
 
@@ -29,10 +28,8 @@ public class AlbumTrack {
   public final String track_token;
   public final String track_title;
   public final Duration run_length;
-  @Ignore
-  public final Key key;
-  @Ignore
-  public final Long track_number;
+  public final transient Key key;
+  public final transient Long track_number;
 
   public AlbumTrack(
       String album_token,
@@ -58,8 +55,7 @@ public class AlbumTrack {
   public static class Key {
     public final String album_token;
     public final String track_token;
-    @Ignore
-    public final Long track_number;
+    public final transient Long track_number;
 
     public Key(String album_token, String track_token) {
       this.album_token = album_token;

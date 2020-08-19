@@ -16,7 +16,6 @@
 
 package app.cash.tempest.urlshortener
 
-import app.cash.tempest.Ignore
 import app.cash.tempest.InlineView
 import app.cash.tempest.LogicalTable
 
@@ -28,9 +27,8 @@ data class Alias(
   val short_url: String,
   val destination_url: String
 ) {
-  @Ignore
-  val key: Key
-    get() = Key(short_url)
+  @Transient
+  val key = Key(short_url)
 
   data class Key(
     val short_url: String

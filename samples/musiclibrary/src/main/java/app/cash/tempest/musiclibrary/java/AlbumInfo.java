@@ -18,7 +18,6 @@ package app.cash.tempest.musiclibrary.java;
 
 import app.cash.tempest.Attribute;
 import app.cash.tempest.ForIndex;
-import app.cash.tempest.Ignore;
 import java.time.LocalDate;
 import javax.annotation.Nullable;
 
@@ -29,8 +28,7 @@ public class AlbumInfo {
   public final String artist_name;
   public final LocalDate release_date;
   public final String genre_name;
-  @Ignore
-  public final Key key;
+  public final transient Key key;
 
   @Attribute(prefix = "INFO_")
   public final String sort_key = "";

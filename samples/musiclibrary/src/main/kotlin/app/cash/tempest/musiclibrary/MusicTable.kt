@@ -18,7 +18,6 @@ package app.cash.tempest.musiclibrary
 
 import app.cash.tempest.Attribute
 import app.cash.tempest.ForIndex
-import app.cash.tempest.Ignore
 import app.cash.tempest.InlineView
 import app.cash.tempest.LogicalTable
 import app.cash.tempest.SecondaryIndex
@@ -52,9 +51,8 @@ data class AlbumInfo(
   @Attribute(prefix = "INFO_")
   val sort_key: String = ""
 
-  @Ignore
-  val key: Key
-    get() = Key(album_token)
+  @Transient
+  val key = Key(album_token)
 
   data class Key(
     val album_token: String
@@ -94,13 +92,11 @@ data class AlbumTrack(
     run_length: Duration
   ) : this(album_token, "%016x".format(track_number), track_title, run_length)
 
-  @Ignore
-  val key: Key
-    get() = Key(album_token, album_token)
+  @Transient
+  val key = Key(album_token, track_token)
 
-  @Ignore
-  val track_number: Long
-    get() = track_token.toLong(radix = 16)
+  @Transient
+  val track_number = track_token.toLong(radix = 16)
 
   data class Key(
     val album_token: String,
@@ -108,9 +104,8 @@ data class AlbumTrack(
   ) {
     constructor(album_token: String, track_number: Long) : this(album_token, "%016x".format(track_number))
 
-    @Ignore
-    val track_number: Long
-      get() = track_token.toLong(radix = 16)
+    @Transient
+    val track_number = if (track_token.isEmpty()) 0 else track_token.toLong(radix = 16)
   }
 
   @ForIndex("album_track_title_index")
