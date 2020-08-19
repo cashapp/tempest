@@ -14,27 +14,19 @@
  * limitations under the License.
  */
 
-package app.cash.tempest.example
+package app.cash.tempest.musiclibrary
 
 import app.cash.tempest.LogicalDb
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTypeConverter
-import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.Projection
 import com.amazonaws.services.dynamodbv2.model.ProjectionType
 import com.google.inject.Provides
 import com.google.inject.Singleton
-import java.time.Duration
-import java.time.LocalDate
 import misk.MiskTestingServiceModule
 import misk.aws.dynamodb.testing.DockerDynamoDbModule
 import misk.aws.dynamodb.testing.DynamoDbTable
 import misk.inject.KAbstractModule
-
-interface TestDb : LogicalDb {
-  val music: MusicTable
-}
 
 class MusicDbTestModule : KAbstractModule() {
   override fun configure() {
@@ -50,48 +42,8 @@ class MusicDbTestModule : KAbstractModule() {
 
   @Provides
   @Singleton
-  fun provideTestDb(amazonDynamoDB: AmazonDynamoDB): TestDb {
+  fun provideTestDb(amazonDynamoDB: AmazonDynamoDB): MusicDb {
     val dynamoDbMapper = DynamoDBMapper(amazonDynamoDB)
     return LogicalDb(dynamoDbMapper)
-  }
-}
-
-internal class DurationTypeConverter : DynamoDBTypeConverter<String, Duration> {
-  override fun unconvert(string: String): Duration {
-    return Duration.parse(string)
-  }
-
-  override fun convert(duration: Duration): String {
-    return duration.toString()
-  }
-}
-
-internal class LocalDateTypeConverter : DynamoDBTypeConverter<String, LocalDate> {
-  override fun unconvert(string: String): LocalDate {
-    return LocalDate.parse(string)
-  }
-
-  override fun convert(localDate: LocalDate): String {
-    return localDate.toString()
-  }
-}
-
-internal class AlbumTrackKeyListTypeConverter :
-  DynamoDBTypeConverter<AttributeValue, List<AlbumTrack.Key>> {
-  override fun unconvert(items: AttributeValue): List<AlbumTrack.Key> {
-    return items.l.map { unconvert(it.s) }
-  }
-
-  override fun convert(keys: List<AlbumTrack.Key>): AttributeValue {
-    return AttributeValue().withL(keys.map { AttributeValue().withS(convert(it)) })
-  }
-
-  private fun unconvert(string: String): AlbumTrack.Key {
-    val parts = string.split("/")
-    return AlbumTrack.Key(parts[0], parts[1])
-  }
-
-  private fun convert(key: AlbumTrack.Key): String {
-    return "${key.album_token}/${key.track_token}"
   }
 }

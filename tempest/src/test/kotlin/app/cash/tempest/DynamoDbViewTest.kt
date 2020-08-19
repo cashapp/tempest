@@ -16,12 +16,11 @@
 
 package app.cash.tempest
 
-import app.cash.tempest.example.AlbumInfo
-import app.cash.tempest.example.AlbumTrack
-import app.cash.tempest.example.MusicDbTestModule
-import app.cash.tempest.example.PlaylistInfo
-import app.cash.tempest.example.TestDb
-import app.cash.tempest.example.key
+import app.cash.tempest.musiclibrary.AlbumInfo
+import app.cash.tempest.musiclibrary.AlbumTrack
+import app.cash.tempest.musiclibrary.MusicDb
+import app.cash.tempest.musiclibrary.MusicDbTestModule
+import app.cash.tempest.musiclibrary.PlaylistInfo
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBSaveExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.ComparisonOperator
@@ -45,9 +44,9 @@ class DynamoDbViewTest {
   @MiskExternalDependency
   val dockerDynamoDb = DockerDynamoDb
 
-  @Inject lateinit var testDb: TestDb
+  @Inject lateinit var musicDb: MusicDb
 
-  private val musicTable get() = testDb.music
+  private val musicTable get() = musicDb.music
 
   @Test
   fun loadAfterSave() {
@@ -92,7 +91,10 @@ class DynamoDbViewTest {
     val playlistInfoV1 = PlaylistInfo(
       "PLAYLIST_1",
       "WFH Music",
-      listOf(AlbumTrack.Key("ALBUM_1", 1), AlbumTrack.Key("ALBUM_3", 2))
+      listOf(
+        AlbumTrack.Key("ALBUM_1", 1),
+        AlbumTrack.Key("ALBUM_3", 2)
+      )
     )
     musicTable.playlistInfo.save(playlistInfoV1)
 

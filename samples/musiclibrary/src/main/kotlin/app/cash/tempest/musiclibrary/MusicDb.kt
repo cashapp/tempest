@@ -14,19 +14,10 @@
  * limitations under the License.
  */
 
-package app.cash.tempest.interop
+package app.cash.tempest.musiclibrary
 
-import app.cash.tempest.Ignore
+import app.cash.tempest.LogicalDb
 
-data class KAlias(
-  val short_url: String,
-  val destination_url: String
-) {
-  @Ignore
-  val key: Key
-    get() = Key(short_url)
-
-  data class Key(
-    val short_url: String
-  )
+interface MusicDb : LogicalDb {
+  val music: MusicTable
 }

@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package app.cash.tempest.interop;
+package app.cash.tempest.urlshortener.java;
 
-import app.cash.tempest.InlineView;
-import app.cash.tempest.LogicalTable;
+import app.cash.tempest.LogicalDb;
 
-public interface JAliasTable extends LogicalTable<JAliasItem> {
-  InlineView<JAlias.Key, JAlias> jAliases();
-  InlineView<KAlias.Key, KAlias> kAliases();
+public interface AliasDb extends LogicalDb {
+  AliasTable aliasTable();
 }

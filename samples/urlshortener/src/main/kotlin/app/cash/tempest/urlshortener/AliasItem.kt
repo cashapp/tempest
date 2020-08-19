@@ -14,10 +14,16 @@
  * limitations under the License.
  */
 
-package app.cash.tempest.interop;
+package app.cash.tempest.urlshortener
 
-import app.cash.tempest.LogicalDb;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable
 
-public interface JAliasDb extends LogicalDb {
-  JAliasTable aliasTable();
+@DynamoDBTable(tableName = "alias_items")
+class AliasItem {
+  @DynamoDBHashKey
+  var short_url: String? = null
+  @DynamoDBAttribute
+  var destination_url: String? = null
 }

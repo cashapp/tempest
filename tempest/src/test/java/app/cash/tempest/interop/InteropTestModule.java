@@ -17,6 +17,8 @@
 package app.cash.tempest.interop;
 
 import app.cash.tempest.LogicalDb;
+import app.cash.tempest.urlshortener.java.AliasDb;
+import app.cash.tempest.urlshortener.java.AliasItem;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.google.inject.Provides;
@@ -34,11 +36,7 @@ public class InteropTestModule extends AbstractModule {
     install(
         new DockerDynamoDbModule(
             new DynamoDbTable(
-                Reflection.createKotlinClass(JAliasItem.class),
-                (createTableRequest) -> createTableRequest
-            ),
-            new DynamoDbTable(
-                Reflection.createKotlinClass(KAliasItem.class),
+                Reflection.createKotlinClass(AliasItem.class),
                 (createTableRequest) -> createTableRequest
             )
         )
@@ -47,15 +45,8 @@ public class InteropTestModule extends AbstractModule {
 
   @Provides
   @Singleton
-  JAliasDb provideJAliasDb(AmazonDynamoDB amazonDynamoDB) {
+  AliasDb provideJAliasDb(AmazonDynamoDB amazonDynamoDB) {
     var dynamoDbMapper = new DynamoDBMapper(amazonDynamoDB);
-    return LogicalDb.create(JAliasDb.class, dynamoDbMapper);
-  }
-
-  @Provides
-  @Singleton
-  KAliasDb provideKAliasDb(AmazonDynamoDB amazonDynamoDB) {
-    var dynamoDbMapper = new DynamoDBMapper(amazonDynamoDB);
-    return LogicalDb.create(KAliasDb.class, dynamoDbMapper);
+    return LogicalDb.create(AliasDb.class, dynamoDbMapper);
   }
 }

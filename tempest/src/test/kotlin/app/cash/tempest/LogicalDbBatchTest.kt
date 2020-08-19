@@ -16,10 +16,10 @@
 
 package app.cash.tempest
 
-import app.cash.tempest.example.AlbumTrack
-import app.cash.tempest.example.MusicDbTestModule
-import app.cash.tempest.example.PlaylistInfo
-import app.cash.tempest.example.TestDb
+import app.cash.tempest.musiclibrary.AlbumTrack
+import app.cash.tempest.musiclibrary.MusicDb
+import app.cash.tempest.musiclibrary.MusicDbTestModule
+import app.cash.tempest.musiclibrary.PlaylistInfo
 import java.time.Duration
 import javax.inject.Inject
 import misk.aws.dynamodb.testing.DockerDynamoDb
@@ -37,9 +37,9 @@ class LogicalDbBatchTest {
   @MiskExternalDependency
   val dockerDynamoDb = DockerDynamoDb
 
-  @Inject lateinit var testDb: TestDb
+  @Inject lateinit var musicDb: MusicDb
 
-  private val musicTable get() = testDb.music
+  private val musicTable get() = musicDb.music
 
   @Test
   fun batchLoad() {
@@ -51,10 +51,14 @@ class LogicalDbBatchTest {
     for (albumTrack in albumTracks) {
       musicTable.albumTracks.save(albumTrack)
     }
-    val playlistInfo = PlaylistInfo("PLAYLIST_1", "WFH Music", listOf(AlbumTrack.Key("ALBUM_1", 1)))
+    val playlistInfo = PlaylistInfo(
+      playlist_token = "PLAYLIST_1",
+      playlist_name = "WFH Music",
+      playlist_tracks = listOf(AlbumTrack.Key("ALBUM_1", 1))
+    )
     musicTable.playlistInfo.save(playlistInfo)
 
-    val loadedItems = testDb.batchLoad(
+    val loadedItems = musicDb.batchLoad(
       PlaylistInfo.Key("PLAYLIST_1"),
       AlbumTrack.Key("ALBUM_1", track_number = 1),
       AlbumTrack.Key("ALBUM_1", track_number = 2),
@@ -74,10 +78,14 @@ class LogicalDbBatchTest {
     for (albumTrack in albumTracks) {
       musicTable.albumTracks.save(albumTrack)
     }
-    val playlistInfo = PlaylistInfo("PLAYLIST_1", "WFH Music", listOf(AlbumTrack.Key("ALBUM_1", 1)))
+    val playlistInfo = PlaylistInfo(
+      "PLAYLIST_1",
+      "WFH Music",
+      listOf(AlbumTrack.Key("ALBUM_1", 1))
+    )
     musicTable.playlistInfo.save(playlistInfo)
 
-    val items = testDb.batchLoad(
+    val items = musicDb.batchLoad(
       AlbumTrack.Key("ALBUM_1", track_number = 1),
       AlbumTrack.Key("ALBUM_1", track_number = 2),
       AlbumTrack.Key("ALBUM_1", track_number = 3),
@@ -94,10 +102,10 @@ class LogicalDbBatchTest {
       AlbumTrack("ALBUM_1", 2, "what you do to me", Duration.parse("PT3M24S")),
       AlbumTrack("ALBUM_1", 3, "too slow", Duration.parse("PT2M27S"))
     )
-    val result = testDb.batchWrite(BatchWriteSet.Builder().clobber(albumTracks).build())
+    val result = musicDb.batchWrite(BatchWriteSet.Builder().clobber(albumTracks).build())
     assertThat(result.isSuccessful).isTrue()
 
-    val items = testDb.batchLoad(
+    val items = musicDb.batchLoad(
       AlbumTrack.Key("ALBUM_1", track_number = 1),
       AlbumTrack.Key("ALBUM_1", track_number = 2),
       AlbumTrack.Key("ALBUM_1", track_number = 3)
@@ -111,12 +119,12 @@ class LogicalDbBatchTest {
     val t2 = AlbumTrack("ALBUM_1", 2, "what you do to me", Duration.parse("PT3M24S"))
     val t3 = AlbumTrack("ALBUM_1", 3, "too slow", Duration.parse("PT2M27S"))
 
-    val result1 = testDb.batchWrite(BatchWriteSet.Builder().clobber(t1, t2, t3).build())
+    val result1 = musicDb.batchWrite(BatchWriteSet.Builder().clobber(t1, t2, t3).build())
     assertThat(result1.isSuccessful).isTrue()
-    val result2 = testDb.batchWrite(BatchWriteSet.Builder().delete(AlbumTrack.Key("ALBUM_1", 2)).build())
+    val result2 = musicDb.batchWrite(BatchWriteSet.Builder().delete(AlbumTrack.Key("ALBUM_1", 2)).build())
     assertThat(result2.isSuccessful).isTrue()
 
-    val items = testDb.batchLoad(
+    val items = musicDb.batchLoad(
       AlbumTrack.Key("ALBUM_1", track_number = 1),
       AlbumTrack.Key("ALBUM_1", track_number = 2),
       AlbumTrack.Key("ALBUM_1", track_number = 3)

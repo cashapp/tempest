@@ -1,0 +1,15 @@
+apply plugin: 'kotlin'
+
+dependencies {
+  implementation project(":tempest")
+  implementation project(":samples:musiclibrary")
+  implementation project(":samples:urlshortener")
+  implementation dep.kotlinStdLib
+  implementation dep.kotlinxCoroutines
+
+  testImplementation dep.miskAwsDynamodbTesting
+  testImplementation dep.assertj
+  testImplementation dep.miskTesting
+  testImplementation dep.junitApi
+  testImplementation dep.junitEngine
+}

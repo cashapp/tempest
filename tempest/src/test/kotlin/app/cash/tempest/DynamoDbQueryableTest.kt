@@ -16,18 +16,18 @@
 
 package app.cash.tempest
 
-import app.cash.tempest.example.AFTER_HOURS_EP
-import app.cash.tempest.example.AlbumInfo
-import app.cash.tempest.example.AlbumTrack
-import app.cash.tempest.example.LOCKDOWN_SINGLE
-import app.cash.tempest.example.MusicDbTestModule
-import app.cash.tempest.example.THE_DARK_SIDE_OF_THE_MOON
-import app.cash.tempest.example.THE_WALL
-import app.cash.tempest.example.TestDb
-import app.cash.tempest.example.WHAT_YOU_DO_TO_ME_SINGLE
-import app.cash.tempest.example.albumTitles
-import app.cash.tempest.example.givenAlbums
-import app.cash.tempest.example.trackTitles
+import app.cash.tempest.musiclibrary.AFTER_HOURS_EP
+import app.cash.tempest.musiclibrary.AlbumInfo
+import app.cash.tempest.musiclibrary.AlbumTrack
+import app.cash.tempest.musiclibrary.LOCKDOWN_SINGLE
+import app.cash.tempest.musiclibrary.MusicDb
+import app.cash.tempest.musiclibrary.MusicDbTestModule
+import app.cash.tempest.musiclibrary.THE_DARK_SIDE_OF_THE_MOON
+import app.cash.tempest.musiclibrary.THE_WALL
+import app.cash.tempest.musiclibrary.WHAT_YOU_DO_TO_ME_SINGLE
+import app.cash.tempest.musiclibrary.albumTitles
+import app.cash.tempest.musiclibrary.givenAlbums
+import app.cash.tempest.musiclibrary.trackTitles
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import java.time.Duration
 import javax.inject.Inject
@@ -46,9 +46,9 @@ class DynamoDbQueryableTest {
   @MiskExternalDependency
   val dockerDynamoDb = DockerDynamoDb
 
-  @Inject lateinit var testDb: TestDb
+  @Inject lateinit var musicDb: MusicDb
 
-  private val musicTable get() = testDb.music
+  private val musicTable get() = musicDb.music
 
   @Test
   fun primaryIndexBetween() {

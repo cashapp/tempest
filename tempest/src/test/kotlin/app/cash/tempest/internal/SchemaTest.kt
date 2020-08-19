@@ -18,9 +18,9 @@ package app.cash.tempest.internal
 
 import app.cash.tempest.Attribute
 import app.cash.tempest.ForIndex
-import app.cash.tempest.example.AlbumInfo
-import app.cash.tempest.example.MusicDbTestModule
-import app.cash.tempest.example.TestDb
+import app.cash.tempest.musiclibrary.AlbumInfo
+import app.cash.tempest.musiclibrary.MusicDb
+import app.cash.tempest.musiclibrary.MusicDbTestModule
 import java.time.LocalDate
 import javax.inject.Inject
 import misk.aws.dynamodb.testing.DockerDynamoDb
@@ -39,71 +39,71 @@ class SchemaTest {
   @MiskExternalDependency
   val dockerDynamoDb = DockerDynamoDb
 
-  @Inject lateinit var testDb: TestDb
+  @Inject lateinit var musicDb: MusicDb
 
   @Test
   fun badKeyType() {
     assertThatIllegalArgumentException().isThrownBy {
-      testDb.music.secondaryIndex(BadIndexOffset1::class, AlbumInfo::class)
+      musicDb.music.secondaryIndex(BadIndexOffset1::class, AlbumInfo::class)
     }.withMessageContaining("partition_key")
 
     assertThatIllegalArgumentException().isThrownBy {
-      testDb.music.secondaryIndex(BadIndexOffset2::class, AlbumInfo::class)
+      musicDb.music.secondaryIndex(BadIndexOffset2::class, AlbumInfo::class)
     }.withMessageContaining("sort_key")
 
     assertThatIllegalArgumentException().isThrownBy {
-      testDb.music.secondaryIndex(BadIndexOffset3::class, AlbumInfo::class)
+      musicDb.music.secondaryIndex(BadIndexOffset3::class, AlbumInfo::class)
     }.withMessageContaining("artist_name")
 
     assertThatIllegalArgumentException().isThrownBy {
-      testDb.music.secondaryIndex(BadIndexOffset4::class, AlbumInfo::class)
+      musicDb.music.secondaryIndex(BadIndexOffset4::class, AlbumInfo::class)
     }.withMessageContaining("nonexistent_attribute")
 
     assertThatIllegalArgumentException().isThrownBy {
-      testDb.music.secondaryIndex(BadIndexOffset5::class, AlbumInfo::class)
+      musicDb.music.secondaryIndex(BadIndexOffset5::class, AlbumInfo::class)
     }.withMessageContaining("nonexistent_index_name")
 
     assertThatIllegalArgumentException().isThrownBy {
-      testDb.music.secondaryIndex(BadIndexOffset6::class, AlbumInfo::class)
+      musicDb.music.secondaryIndex(BadIndexOffset6::class, AlbumInfo::class)
     }.withMessageContaining("sort_key")
 
     assertThatIllegalArgumentException().isThrownBy {
-      testDb.music.secondaryIndex(BadIndexOffset7::class, AlbumInfo::class)
+      musicDb.music.secondaryIndex(BadIndexOffset7::class, AlbumInfo::class)
     }.withMessageContaining("constructor")
   }
 
   @Test
   fun badItemType() {
     assertThatIllegalArgumentException().isThrownBy {
-      testDb.music.inlineView(Any::class, BadItem1::class)
+      musicDb.music.inlineView(Any::class, BadItem1::class)
     }.withMessageContaining("partition_key")
 
     assertThatIllegalArgumentException().isThrownBy {
-      testDb.music.inlineView(Any::class, BadItem2::class)
+      musicDb.music.inlineView(Any::class, BadItem2::class)
     }.withMessageContaining("sort_key")
 
     assertThatIllegalArgumentException().isThrownBy {
-      testDb.music.inlineView(Any::class, BadItem3::class)
+      musicDb.music.inlineView(Any::class, BadItem3::class)
     }.withMessageContaining("ambiguous")
 
     assertThatIllegalArgumentException().isThrownBy {
-      testDb.music.inlineView(Any::class, BadItem4::class)
+      musicDb.music.inlineView(Any::class, BadItem4::class)
     }.withMessageContaining("album_title")
 
     assertThatIllegalArgumentException().isThrownBy {
-      testDb.music.inlineView(Any::class, BadItem5::class)
+      musicDb.music.inlineView(Any::class, BadItem5::class)
     }.withMessageContaining("nonexistent_attribute")
 
     assertThatIllegalArgumentException().isThrownBy {
-      testDb.music.inlineView(Any::class, BadItem6::class)
+      musicDb.music.inlineView(Any::class, BadItem6::class)
     }.withMessageContaining("prefix")
 
     assertThatIllegalArgumentException().isThrownBy {
-      testDb.music.inlineView(Any::class, BadItem7::class)
+      musicDb.music.inlineView(Any::class, BadItem7::class)
     }.withMessageContaining("constructor")
 
     assertThatIllegalArgumentException().isThrownBy {
-      testDb.music.inlineView(Any::class, BadItem8::class)
+      musicDb.music.inlineView(Any::class, BadItem8::class)
     }.withMessageContainingAll("mapped properties", "album_title", "playlist_size")
   }
 }
@@ -236,6 +236,7 @@ interface BadItem7 { // Must have a constructor.
   val artist_name: String
   val release_date: LocalDate
   val genre_name: String
+
   @Attribute(prefix = "INFO_")
   val sort_key: String
 }

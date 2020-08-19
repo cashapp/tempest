@@ -14,28 +14,11 @@
  * limitations under the License.
  */
 
-package app.cash.tempest.interop;
+package app.cash.tempest.urlshortener.java;
 
-public class JAlias {
+import app.cash.tempest.InlineView;
+import app.cash.tempest.LogicalTable;
 
-  public final String short_url;
-  public final String destination_url;
-
-  public JAlias(String short_url, String destination_url) {
-    this.short_url = short_url;
-    this.destination_url = destination_url;
-  }
-
-  Key key() {
-    return new Key(short_url);
-  }
-
-  public static class Key {
-
-    public final String short_url;
-
-    public Key(String short_url) {
-      this.short_url = short_url;
-    }
-  }
+public interface AliasTable extends LogicalTable<AliasItem> {
+  InlineView<Alias.Key, Alias> aliases();
 }
