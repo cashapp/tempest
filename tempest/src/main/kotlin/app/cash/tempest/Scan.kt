@@ -33,6 +33,68 @@ interface Scannable<K : Any, I : Any> {
     filterExpression: FilterExpression? = null,
     initialOffset: Offset<K>? = null
   ): Page<K, I>
+
+  // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
+
+  fun scan() = scan(
+    ScanConfig.Builder().build(),
+    initialOffset = null
+  )
+
+  fun scan(initialOffset: Offset<K>?) = scan(
+    ScanConfig.Builder().build(),
+    initialOffset = initialOffset
+  )
+
+  fun scan(config: ScanConfig) = scan(
+    config,
+    initialOffset = null
+  )
+
+  fun scan(config: ScanConfig, initialOffset: Offset<K>?) = scan(
+    config.workerId,
+    config.pageSize,
+    config.consistentRead,
+    config.returnConsumedCapacity,
+    config.filterExpression,
+    initialOffset
+  )
+}
+
+data class ScanConfig internal constructor(
+  val workerId: WorkerId,
+  val pageSize: Int,
+  val consistentRead: Boolean,
+  val returnConsumedCapacity: ReturnConsumedCapacity,
+  val filterExpression: FilterExpression?
+) {
+  class Builder {
+    private var workerId = WorkerId.SEQUENTIAL
+    private var pageSize = 100
+    private var consistentRead = false
+    private var returnConsumedCapacity = NONE
+    private var filterExpression: FilterExpression? = null
+
+    fun workerId(workerId: WorkerId) = apply { this.workerId = workerId }
+
+    fun pageSize(pageSize: Int) = apply { this.pageSize = pageSize }
+
+    fun consistentRead(consistentRead: Boolean) = apply { this.consistentRead = consistentRead }
+
+    fun returnConsumedCapacity(returnConsumedCapacity: ReturnConsumedCapacity) =
+      apply { this.returnConsumedCapacity = returnConsumedCapacity }
+
+    fun filterExpression(filterExpression: FilterExpression) =
+      apply { this.filterExpression = filterExpression }
+
+    fun build() = ScanConfig(
+      workerId,
+      pageSize,
+      consistentRead,
+      returnConsumedCapacity,
+      filterExpression
+    )
+  }
 }
 
 /**
@@ -71,6 +133,7 @@ data class WorkerId(
   }
 
   companion object {
+    @JvmField
     val SEQUENTIAL = WorkerId(0, 1)
   }
 }
@@ -84,7 +147,7 @@ data class WorkerId(
  * Therefore, a Scan consumes the same amount of read capacity, regardless of whether a filter
  * expression is present.
  */
-data class FilterExpression(
+data class FilterExpression @JvmOverloads constructor(
   /**
    * The syntax for a filter expression is identical to that of a condition expression. Filter
    * expressions can use the same comparators, functions, and logical operators as a condition

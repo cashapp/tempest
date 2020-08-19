@@ -140,7 +140,49 @@ interface LogicalDb : LogicalTable.Factory {
     ): DB {
       return LogicalDbFactory(dynamoDbMapper, config).logicalDb(dbType)
     }
+
+    // Overloaded functions for Java callers (Kotlin interface companion objects do not support
+    // having @JvmStatic and `@JvmOverloads` at the same time).
+    // https://youtrack.jetbrains.com/issue/KT-35716
+
+    @JvmStatic
+    fun <DB : LogicalDb> create(
+      dbType: Class<DB>,
+      dynamoDbMapper: DynamoDBMapper
+    ) = create(dbType.kotlin, dynamoDbMapper)
+
+    @JvmStatic
+    fun <DB : LogicalDb> create(
+      dbType: Class<DB>,
+      dynamoDbMapper: DynamoDBMapper,
+      config: DynamoDBMapperConfig
+    ) = create(dbType.kotlin, dynamoDbMapper, config)
   }
+
+  // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
+
+  fun batchLoad(
+    keys: Iterable<Any>
+  ) = batchLoad(keys, consistentReads = EVENTUAL, retryStrategy = DefaultBatchLoadRetryStrategy())
+
+  fun batchLoad(
+    keys: Iterable<Any>,
+    consistentReads: ConsistentReads
+  ) = batchLoad(
+    keys, consistentReads = consistentReads, retryStrategy = DefaultBatchLoadRetryStrategy()
+  )
+
+  fun batchLoad(
+    keys: Iterable<Any>,
+    retryStrategy: BatchLoadRetryStrategy
+  ) = batchLoad(
+    keys, consistentReads = EVENTUAL, retryStrategy = retryStrategy
+  )
+
+  @CheckReturnValue
+  fun batchWrite(
+    writeSet: BatchWriteSet
+  ) = batchWrite(writeSet, retryStrategy = DefaultBatchWriteRetryStrategy())
 }
 
 /**
@@ -153,7 +195,6 @@ interface LogicalTable<RI : Any> :
   SecondaryIndex.Factory {
 
   interface Factory {
-
     fun <T : LogicalTable<RI>, RI : Any> logicalTable(
       tableType: KClass<T>
     ): T

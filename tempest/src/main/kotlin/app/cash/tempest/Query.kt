@@ -27,25 +27,95 @@ interface Queryable<K : Any, I : Any> {
    */
   fun query(
     keyCondition: KeyCondition<K>,
-    consistentRead: Boolean = false,
     asc: Boolean = true,
     pageSize: Int = 100,
+    consistentRead: Boolean = false,
     returnConsumedCapacity: ReturnConsumedCapacity = NONE,
     filterExpression: FilterExpression? = null,
     initialOffset: Offset<K>? = null
   ): Page<K, I>
+
+  // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
+
+  fun query(keyCondition: KeyCondition<K>) = query(
+    keyCondition,
+    config = QueryConfig.Builder().build(),
+    initialOffset = null
+  )
+
+  fun query(keyCondition: KeyCondition<K>, initialOffset: Offset<K>?) = query(
+    keyCondition,
+    config = QueryConfig.Builder().build(),
+    initialOffset = initialOffset
+  )
+
+  fun query(keyCondition: KeyCondition<K>, config: QueryConfig) = query(
+    keyCondition,
+    config = config,
+    initialOffset = null
+  )
+
+  fun query(
+    keyCondition: KeyCondition<K>,
+    config: QueryConfig,
+    initialOffset: Offset<K>?
+  ) = query(
+    keyCondition,
+    config.asc,
+    config.pageSize,
+    config.consistentRead,
+    config.returnConsumedCapacity,
+    config.filterExpression,
+    initialOffset
+  )
+}
+
+data class QueryConfig internal constructor(
+  val asc: Boolean,
+  val pageSize: Int,
+  val consistentRead: Boolean,
+  val returnConsumedCapacity: ReturnConsumedCapacity,
+  val filterExpression: FilterExpression?
+) {
+  class Builder {
+    private var asc = true
+    private var pageSize = 100
+    private var consistentRead = false
+    private var returnConsumedCapacity = NONE
+    private var filterExpression: FilterExpression? = null
+
+    fun asc(asc: Boolean) = apply { this.asc = asc }
+
+    fun pageSize(pageSize: Int) = apply { this.pageSize = pageSize }
+
+    fun consistentRead(consistentRead: Boolean) = apply { this.consistentRead = consistentRead }
+
+    fun returnConsumedCapacity(returnConsumedCapacity: ReturnConsumedCapacity) =
+      apply { this.returnConsumedCapacity = returnConsumedCapacity }
+
+    fun filterExpression(filterExpression: FilterExpression) =
+      apply { this.filterExpression = filterExpression }
+
+    fun build() = QueryConfig(
+      asc,
+      pageSize,
+      consistentRead,
+      returnConsumedCapacity,
+      filterExpression
+    )
+  }
 }
 
 /**
  * Used to query a table or an index.
  */
-sealed class KeyCondition<K : Any>
+sealed class KeyCondition<K>
 
 /**
  * Applies equality condition on the hash key and the following condition on the range key
  * - begins_with (a, substr)— true if the value of attribute a begins with a particular substring.
  */
-data class BeginsWith<K : Any>(
+data class BeginsWith<K>(
   val prefix: K
 ) : KeyCondition<K>()
 
@@ -53,7 +123,7 @@ data class BeginsWith<K : Any>(
  * Applies equality condition on the hash key and the following condition on the range key
  * - a BETWEEN b AND c — true if a is greater than or equal to b, and less than or equal to c.
  */
-data class Between<K : Any>(
+data class Between<K>(
   val startInclusive: K,
   val endInclusive: K
 ) : KeyCondition<K>()

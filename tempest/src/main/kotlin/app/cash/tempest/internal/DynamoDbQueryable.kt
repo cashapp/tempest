@@ -48,9 +48,9 @@ internal class DynamoDbQueryable<K : Any, I : Any>(
 
   override fun query(
     keyCondition: KeyCondition<K>,
-    consistentRead: Boolean,
     asc: Boolean,
     pageSize: Int,
+    consistentRead: Boolean,
     returnConsumedCapacity: ReturnConsumedCapacity,
     filterExpression: FilterExpression?,
     initialOffset: Offset<K>?

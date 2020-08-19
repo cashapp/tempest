@@ -105,6 +105,7 @@ data class TransactionWriteSet(
      * This adds a put operation to clear and replace all attributes, including unmodeled ones.
      * Partial update is not supported.
      */
+    @JvmOverloads
     fun save(
       item: Any,
       expression: DynamoDBTransactionWriteExpression? = null
@@ -117,6 +118,7 @@ data class TransactionWriteSet(
       }
     }
 
+    @JvmOverloads
     fun delete(
       key: Any,
       expression: DynamoDBTransactionWriteExpression? = null
@@ -129,6 +131,7 @@ data class TransactionWriteSet(
       }
     }
 
+    @JvmOverloads
     fun checkCondition(
       key: Any,
       expression: DynamoDBTransactionWriteExpression? = null
@@ -146,7 +149,7 @@ data class TransactionWriteSet(
     }
 
     fun addAll(builder: Builder) {
-      check(builder.idempotencyToken == null) { "too many idempotence keys" }
+      check(builder.idempotencyToken == null) { "too many idempotency tokens" }
 
       for (item in builder.itemsToSave) {
         save(item)
@@ -184,8 +187,12 @@ class KeySet private constructor(
 
   fun <K : Any> getKeys(
     keyType: KClass<K>
+  ): Set<K> = getKeys(keyType.java)
+
+  fun <K : Any> getKeys(
+    keyType: Class<K>
   ): Set<K> {
-    return contents.filterIsInstance(keyType.java).toSet()
+    return contents.filterIsInstance(keyType).toSet()
   }
 
   inline fun <reified K : Any> getKeys(): Collection<K> {
@@ -204,8 +211,12 @@ class ItemSet private constructor(
 
   fun <I : Any> getItems(
     itemType: KClass<I>
+  ): Set<I> = getItems(itemType.java)
+
+  fun <I : Any> getItems(
+    itemType: Class<I>
   ): Set<I> {
-    return contents.filterIsInstance(itemType.java).toSet()
+    return contents.filterIsInstance(itemType).toSet()
   }
 
   inline fun <reified I : Any> getItems(): Collection<I> {
