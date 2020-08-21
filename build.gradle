@@ -65,7 +65,7 @@ subprojects { subProject ->
   afterEvaluate { project ->
     if (project.tasks.findByName('dokka')) {
       project.tasks.dokka {
-        outputDirectory = "$rootDir/docs/0.x/"
+        outputDirectory = "$rootDir/docs/1.x/"
         outputFormat = 'gfm'
         externalDocumentationLink {
           url = new URL("https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/")

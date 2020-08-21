@@ -8,6 +8,7 @@ service/web/**/lib/
 
 **/site/
 docs/0.x/*
+docs/1.x/*
 docs/index.md
 docs/changelog.md
 docs/contributing.md
