@@ -770,3 +770,10 @@ You may use `DynamoDBTypeConverter` to support [custom attribute types](https://
       }
     }
     ```
+    
+---
+
+Check out the code samples on Github:
+
+ * Music Library ([.kt](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary/src/main/kotlin/app/cash/tempest/musiclibrary), [.java](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary/src/main/java/app/cash/tempest/musiclibrary/java))
+ 

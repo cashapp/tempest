@@ -467,3 +467,11 @@ See query filter expression above.
 ### Pagination
 
 See query pagination above.
+
+---
+
+Check out the code samples on Github:
+
+ * Music Library ([.kt](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary/src/main/kotlin/app/cash/tempest/musiclibrary), [.java](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary/src/main/java/app/cash/tempest/musiclibrary/java))
+ * Query & Scan ([.kt](https://github.com/cashapp/tempest/blob/master/samples/guides/src/main/kotlin/app/cash/tempest/guides/QueryNScan.kt), [.java](https://github.com/cashapp/tempest/blob/master/samples/guides/src/main/java/app/cash/tempest/guides/java/QueryNScan.java))
+ 

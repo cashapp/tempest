@@ -14,8 +14,6 @@ theme:
   palette:
     primary: 'white'
     accent: 'green'
-  features:
-    tabs: true
 
 extra_css:
   - 'css/app.css'

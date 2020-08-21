@@ -1,4 +1,4 @@
-!!! tip
+!!! tip "Prerequisites"
     In DynamoDB, [tables, items, and attributes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html) are the core components that you work with. 
     A table is a collection of items, and each item is a collection of attributes. 
     DynamoDB uses primary keys to uniquely identify each item in a table and secondary indexes to provide more querying flexibility.
@@ -291,3 +291,10 @@ Let's put everything together.
       urlShortener.shorten("tempest", "https://cashapp.github.io/tempest");
     }
     ```
+
+---
+
+Check out the code samples on Github:
+
+ * URL Shortener ([.kt](https://github.com/cashapp/tempest/tree/master/samples/urlshortener/src/main/kotlin/app/cash/tempest/urlshortener), [.java](https://github.com/cashapp/tempest/tree/master/samples/urlshortener/src/main/java/app/cash/tempest/urlshortener/java))
+ 

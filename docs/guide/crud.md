@@ -341,3 +341,11 @@ Similarly, you can add a condition expression to the delete operation.
           .withExpectedEntry("partition_key", new ExpectedAttributeValue().withExists(true));
     }
     ```
+
+---
+
+Check out the code samples on Github:
+
+ * Music Library ([.kt](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary/src/main/kotlin/app/cash/tempest/musiclibrary), [.java](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary/src/main/java/app/cash/tempest/musiclibrary/java))
+ * CRUD ([.kt](https://github.com/cashapp/tempest/blob/master/samples/guides/src/main/kotlin/app/cash/tempest/guides/Crud.kt), [.java](https://github.com/cashapp/tempest/blob/master/samples/guides/src/main/java/app/cash/tempest/guides/java/Crud.java))
+ 
