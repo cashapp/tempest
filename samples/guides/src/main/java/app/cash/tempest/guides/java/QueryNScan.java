@@ -19,6 +19,7 @@ package app.cash.tempest.guides.java;
 import app.cash.tempest.BeginsWith;
 import app.cash.tempest.Between;
 import app.cash.tempest.FilterExpression;
+import app.cash.tempest.Offset;
 import app.cash.tempest.Page;
 import app.cash.tempest.QueryConfig;
 import app.cash.tempest.ScanConfig;
@@ -134,6 +135,28 @@ public class QueryNScan {
               .build(),
           // initialOffset.
           page != null ? page.getOffset() : null
+      );
+      tracks.addAll(page.getContents());
+    } while (page.getHasMorePages());
+    return tracks;
+  }
+
+  // Query - Specified Offset
+  public List<AlbumTrack> loadAlbumTracksAfterTrack(String albumToken, String trackToken) {
+    List<AlbumTrack> tracks = new ArrayList<>();
+    Page<AlbumTrack.Key, AlbumTrack> page = null;
+    Offset<AlbumTrack.Key> firstOffset = new Offset<>(new AlbumTrack.Key(albumToken, trackToken));
+
+    do {
+      page = table.albumTracks().query(
+          // keyCondition.
+          new BeginsWith<>(new AlbumTrack.Key(albumToken)),
+          // config.
+          new QueryConfig.Builder()
+                  .pageSize(10)
+                  .build(),
+          // initialOffset.
+          page != null ? page.getOffset() : firstOffset
       );
       tracks.addAll(page.getContents());
     } while (page.getHasMorePages());

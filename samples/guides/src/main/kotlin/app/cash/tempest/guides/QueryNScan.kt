@@ -19,6 +19,7 @@ package app.cash.tempest.guides
 import app.cash.tempest.BeginsWith
 import app.cash.tempest.Between
 import app.cash.tempest.FilterExpression
+import app.cash.tempest.Offset
 import app.cash.tempest.Page
 import app.cash.tempest.WorkerId
 import app.cash.tempest.musiclibrary.AlbumTrack
@@ -100,6 +101,22 @@ class QueryNScan(
         keyCondition = BeginsWith(AlbumTrack.Key(albumToken)),
         pageSize = 10,
         initialOffset = page?.offset
+      )
+      tracks.addAll(page.contents)
+    } while (page?.hasMorePages == true)
+    return tracks.toList()
+  }
+
+  // Query - Specified Offset
+  fun loadAlbumTracksAfterTrack(albumToken: String, trackToken: String): List<AlbumTrack> {
+    val tracks = mutableListOf<AlbumTrack>()
+    var page: Page<AlbumTrack.Key, AlbumTrack>? = null
+    val offset = Offset(AlbumTrack.Key(trackToken))
+    do {
+      page = table.albumTracks.query(
+        keyCondition = BeginsWith(AlbumTrack.Key(albumToken)),
+        pageSize = 10,
+        initialOffset = page?.offset ?: offset
       )
       tracks.addAll(page.contents)
     } while (page?.hasMorePages == true)
