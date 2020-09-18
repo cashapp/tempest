@@ -381,7 +381,7 @@ You build business logic with logical types. Tempest handles mapping them to the
       InlineView<AlbumTrack.Key, AlbumTrack> albumTracks();
     }
     
-    private final MusicLibraryTable musicLibrary; 
+    private MusicLibraryTable musicLibrary; 
     
     // Load.
     @Nullable
@@ -406,7 +406,7 @@ You build business logic with logical types. Tempest handles mapping them to the
     
     // Query.
     public List<String> getAlbumTrackTitles(String albumToken) {
-      Page<AlbumTrack.Key, AlbumTrack> page = table.albumTracks().query(
+      Page<AlbumTrack.Key, AlbumTrack> page = musicLibrary.albumTracks().query(
           // keyCondition.
           new BeginsWith<>(
               // prefix.
@@ -422,7 +422,7 @@ You build business logic with logical types. Tempest handles mapping them to the
 With Gradle:
 
 ```groovy
-implementation "app.cash.tempest:tempest:1.0.0"
+implementation "app.cash.tempest:tempest:1.0.1"
 ```
 
 ## License
