@@ -19,8 +19,9 @@ package app.cash.tempest
 /**
  * Maps an item class property to one or more attributes in a DynamoDB table.
  *
- * If this mapped to a primary range key, it must have a prefix. The prefix
- * will automatically be added and removed by Tempest to data and queries.
+ * If this mapped to a primary range key, it must have a prefix. Tempest
+ * automatically adds the prefix before database writes and removes it after
+ * database reads.
  */
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
