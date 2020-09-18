@@ -36,6 +36,6 @@ data class Page<K, T> internal constructor(
     get() = offset != null
 }
 
-data class Offset<K> internal constructor(
+data class Offset<K>(
   val key: K
 )
