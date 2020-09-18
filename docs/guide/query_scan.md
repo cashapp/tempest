@@ -368,6 +368,56 @@ This find all tracks in the given album that last longer than 3 minutes, sorted 
     }
     ```
 
+#### Specifying the Offset
+
+=== "Kotlin"
+    
+    ```kotlin
+    private val table: MusicTable
+    
+    fun loadAlbumTracksAfterTrack(albumToken: String, trackToken: String): List<AlbumTrack> {
+      val tracks = mutableListOf<AlbumTrack>()
+      var page: Page<AlbumTrack.Key, AlbumTrack>? = null
+      val offset = Offset(AlbumTrack.Key(trackToken))
+      do {
+        page = table.albumTracks.query(
+          keyCondition = BeginsWith(AlbumTrack.Key(albumToken)),
+          pageSize = 10,
+          initialOffset = page?.offset ?: offset
+        )
+        tracks.addAll(page.contents)
+      } while (page?.hasMorePages == true)
+      return tracks.toList()
+    }
+    ```
+
+=== "Java"
+
+    ```java
+    private final MusicTable table;
+
+    public List<AlbumTrack> loadAlbumTracksAfterTrack(String albumToken, String trackToken) {
+      List<AlbumTrack> tracks = new ArrayList<>();
+      Page<AlbumTrack.Key, AlbumTrack> page = null;
+      Offset<AlbumTrack.Key> firstOffset = new Offset<>(new AlbumTrack.Key(albumToken, trackToken));
+  
+      do {
+        page = table.albumTracks().query(
+            // keyCondition.
+            new BeginsWith<>(new AlbumTrack.Key(albumToken)),
+            // config.
+            new QueryConfig.Builder()
+                    .pageSize(10)
+                    .build(),
+            // initialOffset.
+            page != null ? page.getOffset() : firstOffset
+        );
+        tracks.addAll(page.getContents());
+      } while (page.getHasMorePages());
+      return tracks;
+    }
+    ```
+
 ## Scan
 
 A Scan operation in Amazon DynamoDB reads every item in a table or a secondary index.
