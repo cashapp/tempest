@@ -19,9 +19,9 @@ Let's build a music library with the following features:
 
 We express it like this in code:
 
-=== "Kotlin"
+#### Kotlin
 
-    ```kotlin
+```kotlin
     interface MusicLibrary {
       fun getAlbum(key: AlbumKey): Album
       fun getTrack(key: TrackKey): Track
@@ -39,11 +39,11 @@ We express it like this in code:
       val track_title: String,
       val run_length: String
     )
-    ```
+```
 
-=== "Java"
+#### Java
 
-    ```java
+```java
     public interface MusicLibrary {
       Album getAlbum(AlbumKey key);
       Track getTrack(TrackKey key); 
@@ -61,7 +61,7 @@ We express it like this in code:
       public final String track_title;
       public final String run_length;
     )
-    ```
+```
 
 We optimize for this access pattern by putting albums and tracks in the same table:
 
@@ -197,9 +197,9 @@ For locality, we smashed together several entity types in the same table. This i
 
 [`DynamoDBMapper`](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.html), the official Java API, forces you to write weakly-typed code that models the actual persistence type.
 
-=== "Kotlin"
+#### Kotlin
 
-    ```kotlin
+```kotlin
     // NOTE: This is not Tempest! It is an example used for comparison.
     @DynamoDBTable(tableName = "music_library_items")
     class MusicLibraryItem {
@@ -225,11 +225,11 @@ For locality, we smashed together several entity types in the same table. This i
       @DynamoDBAttribute
       var run_length: String? = null
     }
-    ```
+```
 
-=== "Java"
+#### Java
 
-    ```java
+```java
     // NOTE: This is not Tempest! It is an example used for comparison.
     @DynamoDBTable(tableName = "music_library_items")
     public class MusicLibraryItem {
@@ -255,7 +255,7 @@ For locality, we smashed together several entity types in the same table. This i
       @DynamoDBAttribute
       public String run_length;
     }
-    ```
+```
 
 Note that `MusicLibraryItem` is a union type of all the entity types: `AlbumInfo` and `AlbumTrack`. Because all of its attributes are nullable and mutable, code that interacts with it is brittle and error prone.
 
@@ -263,9 +263,9 @@ Note that `MusicLibraryItem` is a union type of all the entity types: `AlbumInfo
 
 Tempest restores maintainability without losing locality. It lets you declare strongly-typed key and item classes for each logical type in the domain layer.
 
-=== "Kotlin"
+#### Kotlin
     
-    ```kotlin
+```kotlin
     data class AlbumInfo(
       @Attribute(name = "partition_key")
       val album_token: String,
@@ -297,11 +297,11 @@ Tempest restores maintainability without losing locality. It lets you declare st
         val track_token: String
       )
     }
-    ```
+```
 
-=== "Java"
+#### Java
 
-    ```java
+```java
     public class AlbumInfo {
       @Attribute(name = "partition_key")
       public final String album_token;
@@ -332,13 +332,13 @@ Tempest restores maintainability without losing locality. It lets you declare st
         public final String track_token;
       }
     }
-    ```
+```
 
 You build business logic with logical types. Tempest handles mapping them to the underlying persistence type.
 
-=== "Kotlin"
+#### Kotlin
 
-    ```kotlin
+```kotlin
     interface MusicLibraryTable : LogicalTable<MusicLibraryItem> {
       val albumInfo: InlineView<AlbumInfo.Key, AlbumInfo>
       val albumTracks: InlineView<AlbumTrack.Key, AlbumTrack>
@@ -371,11 +371,11 @@ You build business logic with logical types. Tempest handles mapping them to the
       )
       return page.contents.map { it.track_title }
     }
-    ```
+```
 
-=== "Java"
+#### Java
 
-    ```java
+```java
     public interface MusicLibraryTable extends LogicalTable<MusicLibraryItem> {
       InlineView<AlbumInfo.Key, AlbumInfo> albumInfo();
       InlineView<AlbumTrack.Key, AlbumTrack> albumTracks();
@@ -415,7 +415,7 @@ You build business logic with logical types. Tempest handles mapping them to the
       );
       return page.getContents().stream().map(track -> track.track_title).collect(Collectors.toList());
     }
-    ```
+```
 
 ## Get Tempest
 
