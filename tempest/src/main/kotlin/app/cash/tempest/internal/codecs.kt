@@ -16,6 +16,7 @@
 
 package app.cash.tempest.internal
 
+import app.cash.tempest.Codec
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
@@ -28,11 +29,6 @@ import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.full.withNullability
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.javaField
-
-internal interface Codec<A : Any, D : Any> {
-  fun toDb(appItem: A): D
-  fun toApp(dbItem: D): A
-}
 
 internal object IdentityCodec : Codec<Any, Any> {
   override fun toDb(appItem: Any): Any = appItem

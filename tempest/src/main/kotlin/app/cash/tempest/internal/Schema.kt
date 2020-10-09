@@ -17,6 +17,7 @@
 package app.cash.tempest.internal
 
 import app.cash.tempest.Attribute as AttributeAnnotation
+import app.cash.tempest.Codec
 import app.cash.tempest.ForIndex
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
@@ -94,6 +95,18 @@ internal class Schema(
     return rawItemTypes.getOrPut(rawItemType) {
       rawItemTypeFactory.create(rawItemType)
     }
+  }
+
+  fun <T : Any, RI : Any> codec(type: KClass<T>): Codec<T, RI> {
+    val keyType: KeyType? = keyTypes[type]
+    if (keyType != null) return keyType.codec as Codec<T, RI>
+
+    val itemType = itemTypes[type]
+    if (itemType != null) return itemType.codec as Codec<T, RI>
+
+    throw IllegalArgumentException(
+      "unexpected type $type not in ${keyTypes.keys} or ${itemTypes.keys}"
+    )
   }
 }
 
