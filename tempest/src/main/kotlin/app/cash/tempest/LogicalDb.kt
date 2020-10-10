@@ -194,6 +194,9 @@ interface LogicalTable<RI : Any> :
   InlineView.Factory,
   SecondaryIndex.Factory {
 
+  /** [type] must be a key type or item type of one of the views of this table. */
+  fun <T : Any> codec(type: KClass<T>): Codec<T, RI>
+
   interface Factory {
     fun <T : LogicalTable<RI>, RI : Any> logicalTable(
       tableType: KClass<T>

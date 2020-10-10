@@ -16,6 +16,7 @@
 
 package app.cash.tempest.internal
 
+import app.cash.tempest.Codec
 import app.cash.tempest.InlineView
 import app.cash.tempest.LogicalDb
 import app.cash.tempest.LogicalTable
@@ -119,7 +120,9 @@ internal class LogicalDbFactory(
         object : LogicalTable<RI>,
           View<RI, RI> by view,
           InlineView.Factory by inlineViewFactory,
-          SecondaryIndex.Factory by secondaryIndexFactory {}
+          SecondaryIndex.Factory by secondaryIndexFactory {
+          override fun <T : Any> codec(type: KClass<T>): Codec<T, RI> = schema.codec(type)
+        }
       val methodHandlers = mutableMapOf<Method, MethodHandler>()
       for (member in tableType.declaredMembers) {
         val component = when (member.returnType.jvmErasure) {
