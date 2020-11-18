@@ -422,7 +422,7 @@ You build business logic with logical types. Tempest handles mapping them to the
 With Gradle:
 
 ```groovy
-implementation "app.cash.tempest:tempest:1.0.1"
+implementation "app.cash.tempest:tempest:1.1.0"
 ```
 
 ## License

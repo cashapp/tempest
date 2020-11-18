@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.1.0] - 2020-11-18
+
+* New: `LogicalTable.codec` makes it easy to interoperate with `DynamoDBMapper` APIs.
+
 ## [1.0.1] - 2020-09-18
 
 * New: Make `Offset`'s constructor public.
