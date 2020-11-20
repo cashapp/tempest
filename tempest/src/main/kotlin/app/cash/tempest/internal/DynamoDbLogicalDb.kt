@@ -121,11 +121,15 @@ internal class DynamoDbLogicalDb(
     if (writeSet.idempotencyToken != null) {
       writeRequest.withIdempotencyToken(writeSet.idempotencyToken)
     }
+
+    // We don't want to wrap these exceptions but only add a more useful message so upstream callers can themselves
+    // parse the potentially concurrency related TransactionCancelledExceptions
+    // https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/dynamodbv2/model/TransactionCanceledException.html
     try {
       dynamoDbMapper.transactionWrite(writeRequest)
     } catch (e: TransactionCanceledException) {
-      val reasons = writeSet.describeOperations().zip(e.cancellationReasons)
-      throw IllegalStateException("Failed to transaction write: $reasons", e)
+      throw TransactionCanceledException("Write transaction failed: ${writeSet.describeOperations()}")
+        .withCancellationReasons(e.cancellationReasons)
     }
   }
 

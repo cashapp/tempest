@@ -20,6 +20,8 @@ import app.cash.tempest.musiclibrary.AlbumTrack
 import app.cash.tempest.musiclibrary.MusicDb
 import app.cash.tempest.musiclibrary.MusicDbTestModule
 import app.cash.tempest.musiclibrary.MusicItem
+import java.time.LocalDate
+import javax.inject.Inject
 import misk.aws.dynamodb.testing.DockerDynamoDb
 import misk.testing.MiskExternalDependency
 import misk.testing.MiskTest
@@ -27,8 +29,6 @@ import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import org.junit.jupiter.api.Test
-import java.time.LocalDate
-import javax.inject.Inject
 
 @MiskTest(startService = true)
 class CodecTest {
