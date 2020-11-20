@@ -25,12 +25,12 @@ import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.TransactionCanceledException
 import java.time.Duration
 import javax.inject.Inject
+import kotlin.test.assertFailsWith
 import misk.aws.dynamodb.testing.DockerDynamoDb
 import misk.testing.MiskExternalDependency
 import misk.testing.MiskTest
 import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatIllegalStateException
 import org.junit.jupiter.api.Test
 
 @MiskTest(startService = true)
@@ -195,11 +195,9 @@ class LogicalDbTransactionTest {
     // Introduce a race condition.
     musicTable.playlistInfo.save(playlistInfoV2)
 
-    assertThatIllegalStateException()
-      .isThrownBy {
-        musicDb.transactionWrite(writeTransaction)
-      }
-      .withCauseExactlyInstanceOf(TransactionCanceledException::class.java)
+    assertFailsWith<TransactionCanceledException> {
+      musicDb.transactionWrite(writeTransaction)
+    }
   }
 
   @Test
@@ -258,11 +256,9 @@ class LogicalDbTransactionTest {
       )
       .build()
 
-    assertThatIllegalStateException()
-      .isThrownBy {
-        musicDb.transactionWrite(writeTransaction)
-      }
-      .withCauseExactlyInstanceOf(TransactionCanceledException::class.java)
+    assertFailsWith<TransactionCanceledException> {
+      musicDb.transactionWrite(writeTransaction)
+    }
   }
 
   private fun ifPlaylistVersionIs(playlist_version: Long): DynamoDBTransactionWriteExpression {
