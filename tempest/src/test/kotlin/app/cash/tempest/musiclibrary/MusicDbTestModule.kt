@@ -17,6 +17,8 @@
 package app.cash.tempest.musiclibrary
 
 import app.cash.tempest.LogicalDb
+import app.cash.tempest.reservedwords.ReservedWordsDb
+import app.cash.tempest.reservedwords.ReservedWordsItem
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.model.Projection
@@ -31,18 +33,27 @@ import misk.inject.KAbstractModule
 class MusicDbTestModule : KAbstractModule() {
   override fun configure() {
     install(MiskTestingServiceModule())
-    install(DockerDynamoDbModule(DynamoDbTable(MusicItem::class) {
-      it.apply {
-        for (gsi in globalSecondaryIndexes) {
-          gsi.withProjection(Projection().withProjectionType(ProjectionType.ALL))
-        }
-      }
-    }))
+    install(DockerDynamoDbModule(
+        DynamoDbTable(MusicItem::class) {
+          it.apply {
+            for (gsi in globalSecondaryIndexes) {
+              gsi.withProjection(Projection().withProjectionType(ProjectionType.ALL))
+            }
+          }
+        },
+        DynamoDbTable(ReservedWordsItem::class)))
   }
 
   @Provides
   @Singleton
-  fun provideTestDb(amazonDynamoDB: AmazonDynamoDB): MusicDb {
+  fun provideTestMusicDb(amazonDynamoDB: AmazonDynamoDB): MusicDb {
+    val dynamoDbMapper = DynamoDBMapper(amazonDynamoDB)
+    return LogicalDb(dynamoDbMapper)
+  }
+
+  @Provides
+  @Singleton
+  fun provideTestReservedWordsDb(amazonDynamoDB: AmazonDynamoDB): ReservedWordsDb {
     val dynamoDbMapper = DynamoDBMapper(amazonDynamoDB)
     return LogicalDb(dynamoDbMapper)
   }
