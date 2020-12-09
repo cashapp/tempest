@@ -28,6 +28,8 @@ import app.cash.tempest.musiclibrary.WHAT_YOU_DO_TO_ME_SINGLE
 import app.cash.tempest.musiclibrary.albumTitles
 import app.cash.tempest.musiclibrary.givenAlbums
 import app.cash.tempest.musiclibrary.trackTitles
+import app.cash.tempest.reservedwords.ReservedWordObject
+import app.cash.tempest.reservedwords.ReservedWordsDb
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import java.time.Duration
 import javax.inject.Inject
@@ -47,8 +49,10 @@ class DynamoDbQueryableTest {
   val dockerDynamoDb = DockerDynamoDb
 
   @Inject lateinit var musicDb: MusicDb
+  @Inject lateinit var reservedWordsDb: ReservedWordsDb
 
   private val musicTable get() = musicDb.music
+  private val reservedWordsTable get() = reservedWordsDb.table
 
   @Test
   fun primaryIndexBetween() {
@@ -282,6 +286,15 @@ class DynamoDbQueryableTest {
     assertThat(page2.albumTitles).containsExactly(
       LOCKDOWN_SINGLE.album_title
     )
+  }
+
+  @Test
+  fun reservedWordsAreAliased() {
+    reservedWordsTable.reservedWords.save(
+        ReservedWordObject("agent", "counter", "tOkEn"))
+
+    // This will throw if we're not correctly handling the reserved words in the object.
+    reservedWordsTable.reservedWords.query(BeginsWith(ReservedWordObject.Key("agent")))
   }
 
   private fun runLengthLongerThan(duration: Duration): FilterExpression {
