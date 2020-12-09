@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.2.1] - 2020-12-09
+
+* Fixed: Automatically handle reserved words (#20).
+
+## [1.2.0] - 2020-11-20
+
+* Fixed: Remove `IllegalStateException` wrapping of `TransactionCanceledException` (#18).
+
 ## [1.1.0] - 2020-11-18
 
 * New: `LogicalTable.codec` makes it easy to interoperate with `DynamoDBMapper` APIs.
