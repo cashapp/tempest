@@ -1,7 +1,7 @@
 // Auto-generated from polyrepo's master-dependencies.json. Update via polyrepo dep-add and polyrepo dep-upgrade.
 ext.dep = [
   "assertj": "org.assertj:assertj-core:3.15.0",
-  "awsApi": "com.amazonaws:aws-java-sdk:1.11.728",
+  "awsDynamodb": "com.amazonaws:aws-java-sdk-dynamodb:1.11.728",
   "clikt": "com.github.ajalt:clikt:2.8.0",
   "findbugsJsr305": "com.google.code.findbugs:jsr305:3.0.2",
   "grpcBom": "io.grpc:grpc-bom:1.21.0",
