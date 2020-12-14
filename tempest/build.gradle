@@ -3,7 +3,7 @@ apply plugin: 'kotlin'
 apply plugin: 'com.vanniktech.maven.publish'
 
 dependencies {
-  api dep.awsApi
+  api dep.awsDynamodb
   api dep.findbugsJsr305
   implementation dep.kotlinReflection
   implementation dep.kotlinStdLib
