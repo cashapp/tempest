@@ -22,6 +22,12 @@ subprojects { subProject ->
   apply plugin: 'com.diffplug.gradle.spotless'
   apply plugin: 'org.jetbrains.dokka'
 
+  repositories {
+    maven {
+      url "https://s3-us-west-2.amazonaws.com/dynamodb-local/release"
+    }
+  }
+
   compileKotlin {
     kotlinOptions {
       jvmTarget = JavaVersion.VERSION_1_8

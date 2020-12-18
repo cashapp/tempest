@@ -26,14 +26,14 @@ import com.amazonaws.services.dynamodbv2.model.ProjectionType
 import com.google.inject.Provides
 import com.google.inject.Singleton
 import misk.MiskTestingServiceModule
-import misk.aws.dynamodb.testing.DockerDynamoDbModule
 import misk.aws.dynamodb.testing.DynamoDbTable
+import misk.aws.dynamodb.testing.InProcessDynamoDbModule
 import misk.inject.KAbstractModule
 
 class MusicDbTestModule : KAbstractModule() {
   override fun configure() {
     install(MiskTestingServiceModule())
-    install(DockerDynamoDbModule(
+    install(InProcessDynamoDbModule(
         DynamoDbTable(MusicItem::class) {
           it.apply {
             for (gsi in globalSecondaryIndexes) {
