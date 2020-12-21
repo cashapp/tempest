@@ -33,8 +33,6 @@ import app.cash.tempest.reservedwords.ReservedWordsDb
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import java.time.Duration
 import javax.inject.Inject
-import misk.aws.dynamodb.testing.DockerDynamoDb
-import misk.testing.MiskExternalDependency
 import misk.testing.MiskTest
 import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThat
@@ -44,9 +42,6 @@ import org.junit.jupiter.api.Test
 class DynamoDbQueryableTest {
   @MiskTestModule
   val module = MusicDbTestModule()
-
-  @MiskExternalDependency
-  val dockerDynamoDb = DockerDynamoDb
 
   @Inject lateinit var musicDb: MusicDb
   @Inject lateinit var reservedWordsDb: ReservedWordsDb

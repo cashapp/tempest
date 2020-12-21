@@ -20,8 +20,6 @@ import app.cash.tempest.urlshortener.java.Alias
 import app.cash.tempest.urlshortener.java.AliasDb
 import app.cash.tempest.urlshortener.java.AliasTable
 import javax.inject.Inject
-import misk.aws.dynamodb.testing.DockerDynamoDb
-import misk.testing.MiskExternalDependency
 import misk.testing.MiskTest
 import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThat
@@ -32,9 +30,6 @@ class JavaInteropTest {
 
   @MiskTestModule
   val module = InteropTestModule()
-
-  @MiskExternalDependency
-  val dockerDynamoDb = DockerDynamoDb
 
   @Inject lateinit var aliasDb: AliasDb
   val aliasTable: AliasTable get() = aliasDb.aliasTable()

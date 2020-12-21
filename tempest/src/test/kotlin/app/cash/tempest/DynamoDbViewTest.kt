@@ -28,8 +28,6 @@ import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException
 import com.amazonaws.services.dynamodbv2.model.ExpectedAttributeValue
 import java.time.LocalDate
 import javax.inject.Inject
-import misk.aws.dynamodb.testing.DockerDynamoDb
-import misk.testing.MiskExternalDependency
 import misk.testing.MiskTest
 import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThat
@@ -40,9 +38,6 @@ import org.junit.jupiter.api.Test
 class DynamoDbViewTest {
   @MiskTestModule
   val module = MusicDbTestModule()
-
-  @MiskExternalDependency
-  val dockerDynamoDb = DockerDynamoDb
 
   @Inject lateinit var musicDb: MusicDb
 
