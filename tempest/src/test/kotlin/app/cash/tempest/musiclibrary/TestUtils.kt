@@ -17,21 +17,6 @@
 package app.cash.tempest.musiclibrary
 
 import app.cash.tempest.Page
-import java.time.Duration
-import java.time.LocalDate
-
-data class Album(
-  val album_token: String,
-  val album_title: String,
-  val artist_name: String,
-  val release_date: LocalDate,
-  val genre_name: String,
-  val tracks: List<Track>
-) {
-  val trackTitles = tracks.map { it.track_title }
-}
-
-data class Track(val track_title: String, val run_length: Duration)
 
 val Page<*, AlbumTrack>.trackTitles: List<String>
   get() = contents.map { it.track_title }
