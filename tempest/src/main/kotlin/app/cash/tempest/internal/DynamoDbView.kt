@@ -16,7 +16,6 @@
 
 package app.cash.tempest.internal
 
-import app.cash.tempest.Codec
 import app.cash.tempest.View
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBDeleteExpression
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper

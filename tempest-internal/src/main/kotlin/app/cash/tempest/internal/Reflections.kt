@@ -18,6 +18,7 @@ package app.cash.tempest.internal
 
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty
@@ -32,16 +33,21 @@ import kotlin.reflect.jvm.javaMethod
 internal val KClass<*>.primaryConstructorParameters: Map<String, KParameter>
   get() = primaryConstructor?.parameters?.associateBy { requireNotNull(it.name) } ?: emptyMap()
 
-internal data class ClassMember(
+data class ClassMember(
+  val annotations: List<Annotation>,
   val returnType: KType,
   val javaMethod: Method
 )
 
-internal val KClass<*>.declaredMembers: List<ClassMember>
+val KClass<*>.declaredMembers: List<ClassMember>
   get() {
-    return declaredMemberProperties.map { ClassMember(it.returnType, it.javaGetter!!) } +
-        declaredMemberFunctions.map { ClassMember(it.returnType, it.javaMethod!!) }
+    return declaredMemberProperties.map { ClassMember(it.annotations, it.returnType, it.javaGetter!!) } +
+        declaredMemberFunctions.map { ClassMember(it.annotations, it.returnType, it.javaMethod!!) }
   }
 
 internal val KProperty<*>.shouldIgnore: Boolean
   get() = Modifier.isTransient(javaField?.modifiers ?: 0)
+
+internal fun <T : Annotation> KAnnotatedElement.findAnnotation(type: KClass<T>): T? =
+  @Suppress("UNCHECKED_CAST")
+  annotations.firstOrNull { type.isInstance(it) } as T?

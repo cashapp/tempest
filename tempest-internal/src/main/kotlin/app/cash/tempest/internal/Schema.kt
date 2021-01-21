@@ -16,25 +16,14 @@
 
 package app.cash.tempest.internal
 
-import app.cash.tempest.Attribute as AttributeAnnotation
-import app.cash.tempest.Codec
-import app.cash.tempest.ForIndex
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperTableModel
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMappingException
-import com.amazonaws.services.dynamodbv2.model.AttributeValue
-import com.amazonaws.services.dynamodbv2.model.KeyType.HASH
-import com.amazonaws.services.dynamodbv2.model.KeyType.RANGE
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
-import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.withNullability
 
-internal class Schema(
+class Schema private constructor(
   private val keyTypeFactory: KeyType.Factory,
   private val itemTypeFactory: ItemType.Factory,
   private val rawItemTypeFactory: RawItemType.Factory
@@ -50,20 +39,20 @@ internal class Schema(
   fun getRawItem(type: KClass<*>): RawItemType? = rawItemTypes[type]
 
   fun resolveEnclosingItemType(type: KClass<*>): ItemType? {
-    val schema = getLogicalType(type) ?: return null
-    return when (schema) {
-      is KeyType -> getItem(schema.itemType)
-      is ItemType -> schema
+    val logicalType = getLogicalType(type) ?: return null
+    return when (logicalType) {
+      is KeyType -> getItem(logicalType.itemType)
+      is ItemType -> logicalType
       else -> null
     }
   }
 
   fun resolveEnclosingRawItemType(type: KClass<*>): RawItemType? {
-    val schema = getLogicalType(type) ?: return null
-    return when (schema) {
-      is KeyType -> getRawItem(getItem(schema.itemType)!!.rawItemType)
-      is ItemType -> getRawItem(schema.rawItemType)
-      is RawItemType -> schema
+    val logicalType = getLogicalType(type) ?: return null
+    return when (logicalType) {
+      is KeyType -> getRawItem(getItem(logicalType.itemType)!!.rawItemType)
+      is ItemType -> getRawItem(logicalType.rawItemType)
+      is RawItemType -> logicalType
     }
   }
 
@@ -91,9 +80,9 @@ internal class Schema(
     return existingItemType
   }
 
-  fun addRawItem(rawItemType: KClass<*>): RawItemType {
+  fun addRawItem(tableName: String, rawItemType: KClass<*>): RawItemType {
     return rawItemTypes.getOrPut(rawItemType) {
-      rawItemTypeFactory.create(rawItemType)
+      rawItemTypeFactory.create(tableName, rawItemType)
     }
   }
 
@@ -108,13 +97,30 @@ internal class Schema(
       "unexpected type $type not in ${keyTypes.keys} or ${itemTypes.keys}"
     )
   }
+
+  companion object {
+    fun create(
+      stringAttributeValue: StringAttributeValue<*>,
+      mapAttributeValueFactory: MapAttributeValue.Factory,
+      forIndexAnnotation: ForIndexAnnotation<*>,
+      attributeAnnotation: AttributeAnnotation<*>,
+      rawItemTypeFactory: RawItemType.Factory
+    ): Schema {
+      val reflectionCodecFactory = ReflectionCodec.Factory(stringAttributeValue, mapAttributeValueFactory)
+      return Schema(
+        KeyType.Factory(reflectionCodecFactory, forIndexAnnotation, attributeAnnotation),
+        ItemType.Factory(reflectionCodecFactory, attributeAnnotation),
+        rawItemTypeFactory
+      )
+    }
+  }
 }
 
-internal sealed class LogicalType {
+sealed class LogicalType {
   abstract val codec: Codec<Any, Any>
 }
 
-internal data class KeyType(
+data class KeyType(
   override val codec: Codec<Any, Any>,
   val type: KClass<*>,
   val itemType: KClass<*>,
@@ -123,8 +129,11 @@ internal data class KeyType(
   val rangeKeyName: String?,
   val secondaryIndexName: String?
 ) : LogicalType() {
-  class Factory(
-    private val codecFactory: ReflectionCodec.Factory
+
+  class Factory internal constructor(
+    private val codecFactory: ReflectionCodec.Factory,
+    private val forIndexAnnotation: ForIndexAnnotation<*>,
+    private val attributeAnnotation: AttributeAnnotation<*>
   ) {
     fun create(keyType: KClass<*>, itemType: ItemType, rawItemType: RawItemType): KeyType {
       require(keyType.constructors.isNotEmpty()) { "$keyType must have a constructor" }
@@ -136,15 +145,20 @@ internal data class KeyType(
         }
         val attribute = requireNotNull(
           itemType.attributes[property.name]
-        ) { "Expect ${property.name}, required by $keyType, to be declared in ${itemType.type}." +
-            " Use @Transient to exclude it." }
+        ) {
+          "Expect ${property.name}, required by $keyType, to be declared in ${itemType.type}." +
+            " Use @Transient to exclude it."
+        }
         val expectedReturnType =
           requireNotNull(itemType.attributes[property.name]?.returnType).withNullability(false)
         val actualReturnType = property.returnType.withNullability(false)
         require(actualReturnType == expectedReturnType) { "Expect the return type of $keyType.${property.name} to be $expectedReturnType but was $actualReturnType" }
-        val attributeAnnotation: AttributeAnnotation? = property.findAnnotation()
-          ?: constructorParameters[property.name]?.findAnnotation()
-        require(attributeAnnotation == null) { "Please move Attribute annotation from $keyType.${property.name} to ${itemType.type}.${property.name}" }
+        require(
+          !attributeAnnotation.hasAttributeAnnotation(
+            property,
+            constructorParameters
+          )
+        ) { "Please move Attribute annotation from $keyType.${property.name} to ${itemType.type}.${property.name}" }
         attributeNames.addAll(attribute.names)
       }
       val primaryIndex = itemType.primaryIndex
@@ -152,7 +166,7 @@ internal data class KeyType(
       if (primaryIndex.rangeKeyName != null) {
         require(attributeNames.contains(primaryIndex.rangeKeyName)) { "Expect $keyType to have property ${primaryIndex.rangeKeyName}" }
       }
-      val secondaryIndexName = keyType.findAnnotation<ForIndex>()?.name
+      val secondaryIndexName = forIndexAnnotation.secondaryIndexName(keyType)
       val (hashKeyName, rangeKeyName) = if (secondaryIndexName != null) {
         val secondaryIndex =
           requireNotNull(itemType.secondaryIndexes[secondaryIndexName]) { "Expect to $itemType have secondary index $secondaryIndexName" }
@@ -163,19 +177,19 @@ internal data class KeyType(
         primaryIndex.hashKeyName to primaryIndex.rangeKeyName
       }
       return KeyType(
-          codecFactory.create(keyType, itemType.attributes, rawItemType),
-          keyType,
-          itemType.type,
-          attributeNames.toSet(),
-          hashKeyName,
-          rangeKeyName,
-          secondaryIndexName
+        codecFactory.create(keyType, itemType.attributes, rawItemType),
+        keyType,
+        itemType.type,
+        attributeNames.toSet(),
+        hashKeyName,
+        rangeKeyName,
+        secondaryIndexName
       )
     }
   }
 }
 
-internal data class ItemType(
+data class ItemType(
   override val codec: Codec<Any, Any>,
   val type: KClass<*>,
   val rawItemType: KClass<*>,
@@ -197,32 +211,32 @@ internal data class ItemType(
 
   data class SecondaryIndex(val name: String, val hashKeyName: String, val rangeKeyName: String)
 
-  class Factory(
-    private val codecFactory: ReflectionCodec.Factory
+  class Factory internal constructor(
+    private val codecFactory: ReflectionCodec.Factory,
+    private val attributeAnnotation: AttributeAnnotation<*>
   ) {
 
     fun create(itemType: KClass<*>, rawItemType: RawItemType): ItemType {
       require(itemType.constructors.isNotEmpty()) { "$itemType must have a constructor" }
-      val constructorParameters = itemType.primaryConstructorParameters
-      val primaryIndex = findPrimaryIndex(rawItemType)
-      val attributes = findAttributes(itemType, constructorParameters, rawItemType, primaryIndex)
+      val primaryIndex = PrimaryIndex(rawItemType.hashKeyName, rawItemType.rangeKeyName)
+      val attributes = findAttributes(itemType, rawItemType, primaryIndex)
       return ItemType(
-          codecFactory.create(itemType, attributes, rawItemType),
-          itemType,
-          rawItemType.type,
-          attributes,
-          primaryIndex,
-          findSecondaryIndexes(rawItemType)
+        codecFactory.create(itemType, attributes, rawItemType),
+        itemType,
+        rawItemType.type,
+        attributes,
+        primaryIndex,
+        rawItemType.secondaryIndexes
       )
     }
 
     private fun findAttributes(
       itemType: KClass<*>,
-      constructorParameters: Map<String, KParameter>,
       rawItemType: RawItemType,
       primaryIndex: PrimaryIndex
     ): Map<String, Attribute> {
       val attributes = mutableMapOf<String, Attribute>()
+      val constructorParameters: Map<String, KParameter> = itemType.primaryConstructorParameters
       for (property in itemType.memberProperties) {
         val attribute =
           createAttribute(property, constructorParameters, rawItemType, itemType) ?: continue
@@ -254,100 +268,33 @@ internal data class ItemType(
       if (property.shouldIgnore) {
         return null
       }
-      val annotation: AttributeAnnotation? = property.findAnnotation()
-        ?: constructorParameters[property.name]?.findAnnotation()
-      val rawItemPropertyNames = (annotation?.annotatedNames ?: setOf(property.name))
-      for (rawItemPropertyName in rawItemPropertyNames) {
-        require(rawItemType.hasProperty(rawItemPropertyName)) {
-          "Expect $rawItemPropertyName, required by $itemType, to be declared in " +
-              "${rawItemType.type}. Use @Transient to exclude it."
+      val (expectedRawItemAttributes, prefix) = attributeAnnotation.attributeMetadata(
+        property,
+        constructorParameters
+      )
+      for (expectedAttribute in expectedRawItemAttributes) {
+        require(rawItemType.propertyNames.contains(expectedAttribute)) {
+          "Expect $expectedAttribute, required by $itemType, to be declared in " +
+            "${rawItemType.type}. Use @Transient to exclude it."
         }
       }
-      val prefix = annotation?.prefix ?: ""
-      return Attribute(rawItemPropertyNames, prefix, property.returnType)
-    }
-
-    private fun findPrimaryIndex(rawItemType: RawItemType): PrimaryIndex {
-      return PrimaryIndex(
-          rawItemType.tableModel.hashKey<Any>().name(),
-          rawItemType.tableModel.rangeKeyIfExists<Any>()?.name())
-    }
-
-    private fun findSecondaryIndexes(
-      rawItemType: RawItemType
-    ): Map<String, SecondaryIndex> {
-      val secondaryIndexes = mutableMapOf<String, SecondaryIndex>()
-      val globalSecondaryIndexes = rawItemType.tableModel.globalSecondaryIndexes() ?: emptyList()
-      for (globalSecondaryIndex in globalSecondaryIndexes) {
-        val indexName = globalSecondaryIndex.indexName
-        val keys = globalSecondaryIndex.keySchema.associateBy { it.keyType }
-        val hashKeyName = requireNotNull(keys[HASH.toString()]).attributeName
-        val rangeKeyName = requireNotNull(keys[RANGE.toString()]).attributeName
-        secondaryIndexes[indexName] = SecondaryIndex(indexName, hashKeyName, rangeKeyName)
-      }
-      val localSecondaryIndexes = rawItemType.tableModel.localSecondaryIndexes() ?: emptyList()
-      for (localSecondaryIndex in localSecondaryIndexes) {
-        val indexName = localSecondaryIndex.indexName
-        val keys = localSecondaryIndex.keySchema.associateBy { it.keyType }
-        val hashKeyName = requireNotNull(keys[HASH.toString()]).attributeName
-        val rangeKeyName = requireNotNull(keys[RANGE.toString()]).attributeName
-        secondaryIndexes[indexName] = SecondaryIndex(indexName, hashKeyName, rangeKeyName)
-      }
-      return secondaryIndexes.toMap()
-    }
-
-    private val AttributeAnnotation.annotatedNames: Set<String>?
-      get() = when {
-        names.isNotEmpty() -> {
-          require(name.isEmpty()) { "Attribute annotation is ambiguous. name: $name, names: $names" }
-          names.toSet()
-        }
-        name.isNotEmpty() -> {
-          setOf(name)
-        }
-        else -> {
-          null
-        }
-      }
-
-    private fun RawItemType.hasProperty(name: String): Boolean {
-      return try {
-        tableModel.field<Any>(name)
-        true
-      } catch (e: DynamoDBMappingException) {
-        false
-      }
+      return Attribute(expectedRawItemAttributes, prefix, property.returnType)
     }
   }
 }
 
-internal data class RawItemType(
-  override val codec: Codec<Any, Any>,
-  val tableName: String,
+data class RawItemType(
   val type: KClass<Any>,
-  val tableModel: DynamoDBMapperTableModel<Any>
+  val tableName: String,
+  val hashKeyName: String,
+  val rangeKeyName: String?,
+  val propertyNames: List<String>,
+  val secondaryIndexes: Map<String, ItemType.SecondaryIndex>
 ) : LogicalType() {
 
-  fun key(rawItem: Any): RawItemKey {
-    val keyAttributes = tableModel.convert(rawItem)
-    val hashKey = keyAttributes[tableModel.hashKey<Any>().name()]!!
-    val rangeKey = keyAttributes[tableModel.rangeKeyIfExists<Any>()?.name()]
-    return RawItemKey(tableName, hashKey, rangeKey)
-  }
+  override val codec: Codec<Any, Any> = IdentityCodec
 
-  data class RawItemKey(val tableName: String, val hashKey: AttributeValue, val rangeKey: AttributeValue?)
-
-  class Factory(
-    private val dynamoDbMapper: DynamoDBMapper,
-    private val config: DynamoDBMapperConfig
-  ) {
-    fun create(rawItemType: KClass<*>): RawItemType {
-      return RawItemType(
-          IdentityCodec,
-          config.tableNameResolver.getTableName(rawItemType.java, config),
-          rawItemType as KClass<Any>,
-          dynamoDbMapper.getTableModel(rawItemType.java) as DynamoDBMapperTableModel<Any>
-        )
-    }
+  interface Factory {
+    fun create(tableName: String, rawItemType: KClass<*>): RawItemType
   }
 }

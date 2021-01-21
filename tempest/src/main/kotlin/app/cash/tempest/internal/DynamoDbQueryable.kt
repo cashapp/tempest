@@ -18,7 +18,6 @@ package app.cash.tempest.internal
 
 import app.cash.tempest.BeginsWith
 import app.cash.tempest.Between
-import app.cash.tempest.Codec
 import app.cash.tempest.FilterExpression
 import app.cash.tempest.KeyCondition
 import app.cash.tempest.Offset

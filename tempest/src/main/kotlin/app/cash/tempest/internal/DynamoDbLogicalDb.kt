@@ -28,8 +28,10 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.BatchLoadRetryStrategy
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.BatchWriteRetryStrategy
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.ConsistentReads
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperTableModel
 import com.amazonaws.services.dynamodbv2.datamodeling.TransactionLoadRequest
 import com.amazonaws.services.dynamodbv2.datamodeling.TransactionWriteRequest
+import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.TransactionCanceledException
 
 internal class DynamoDbLogicalDb(
@@ -44,13 +46,13 @@ internal class DynamoDbLogicalDb(
     retryStrategy: BatchLoadRetryStrategy
   ): ItemSet {
     val keysToLoad = mutableListOf<Any>()
-    val itemTypes = mutableMapOf<RawItemType.RawItemKey, ItemType>()
+    val itemTypes = mutableMapOf<RawItemKey, ItemType>()
     val rawItemTypes = mutableMapOf<String, RawItemType>()
     for (key in keys) {
       val keyRawItem = key.encodeAsKey()
       val rawItemType = key.expectedRawItemType()
       keysToLoad.add(keyRawItem)
-      itemTypes[rawItemType.key(keyRawItem)] = key.expectedItemType()
+      itemTypes[key(rawItemType, keyRawItem)] = key.expectedItemType()
       rawItemTypes[rawItemType.tableName] = rawItemType
     }
     val config = DynamoDBMapperConfig.builder()
@@ -64,7 +66,7 @@ internal class DynamoDbLogicalDb(
         requireNotNull(rawItemTypes[tableName]) { "Unexpected table name $tableName" }
       for (rawItem in rawItems) {
         if (rawItem == null) continue
-        val itemType = itemTypes[rawItemType.key(rawItem)]!!
+        val itemType = itemTypes[key(rawItemType, rawItem)]!!
         val decoded = itemType.codec.toApp(rawItem)
         results.add(decoded)
       }
@@ -133,6 +135,14 @@ internal class DynamoDbLogicalDb(
     }
   }
 
+  fun key(rawItemType: RawItemType, rawItem: Any): RawItemKey {
+    val tableModel = dynamoDbMapper.getTableModel(rawItemType.type.java) as DynamoDBMapperTableModel<Any>
+    val keyAttributes = tableModel.convert(rawItem)
+    val hashKey = keyAttributes[tableModel.hashKey<Any>().name()]!!
+    val rangeKey = keyAttributes[tableModel.rangeKeyIfExists<Any>()?.name()]
+    return RawItemKey(rawItemType.tableName, hashKey, rangeKey)
+  }
+
   private fun Any.expectedRawItemType(): RawItemType {
     return requireNotNull(schema.resolveEnclosingRawItemType(
         this::class)) { "Cannot find a dynamodb table for ${this::class}" }
@@ -179,4 +189,10 @@ internal class DynamoDbLogicalDb(
     }
     return descriptions.toList()
   }
+
+  data class RawItemKey(
+    val tableName: String,
+    val hashKey: AttributeValue,
+    val rangeKey: AttributeValue?
+  )
 }

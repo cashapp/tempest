@@ -1,3 +1,4 @@
+include 'tempest-internal'
 include 'tempest'
 include ':samples:guides'
 include ':samples:musiclibrary'
