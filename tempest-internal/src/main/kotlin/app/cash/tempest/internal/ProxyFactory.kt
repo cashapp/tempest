@@ -22,7 +22,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import kotlin.reflect.KClass
 
-internal class ProxyFactory {
+class ProxyFactory {
 
   fun <T : Any> create(
     type: KClass<T>,
@@ -64,10 +64,10 @@ internal class ProxyFactory {
   }
 }
 
-internal interface MethodHandler {
+interface MethodHandler {
   fun invoke(args: Array<out Any>): Any?
 }
 
-internal class GetterMethodHandler(private val value: Any?) : MethodHandler {
+class GetterMethodHandler(private val value: Any?) : MethodHandler {
   override fun invoke(args: Array<out Any>): Any? = value
 }

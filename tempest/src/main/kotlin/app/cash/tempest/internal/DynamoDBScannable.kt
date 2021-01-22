@@ -16,7 +16,6 @@
 
 package app.cash.tempest.internal
 
-import app.cash.tempest.Codec
 import app.cash.tempest.FilterExpression
 import app.cash.tempest.Offset
 import app.cash.tempest.Page

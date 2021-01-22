@@ -25,7 +25,7 @@ import java.lang.reflect.InvocationTargetException
  * @author Joel Leitch
  * @author Jesse Wilson
  */
-internal abstract class ClassFactory<T> {
+abstract class ClassFactory<T> {
   @Throws(
     InvocationTargetException::class,
     IllegalAccessException::class,

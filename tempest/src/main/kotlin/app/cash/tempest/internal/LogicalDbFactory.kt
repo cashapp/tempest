@@ -16,7 +16,6 @@
 
 package app.cash.tempest.internal
 
-import app.cash.tempest.Codec
 import app.cash.tempest.InlineView
 import app.cash.tempest.LogicalDb
 import app.cash.tempest.LogicalTable
@@ -26,6 +25,7 @@ import app.cash.tempest.SecondaryIndex
 import app.cash.tempest.View
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperTableModel
 import java.lang.reflect.Method
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
@@ -38,16 +38,13 @@ internal class LogicalDbFactory(
 
   private val logicalTableFactory = LogicalTableFactory()
   private val proxyFactory: ProxyFactory = ProxyFactory()
-  private val schema: Schema
-
-  init {
-    val reflectionCodecFactory = ReflectionCodec.Factory()
-    schema = Schema(
-      KeyType.Factory(reflectionCodecFactory),
-      ItemType.Factory(reflectionCodecFactory),
-      RawItemType.Factory(dynamoDbMapper, config)
-    )
-  }
+  private val schema = Schema.create(
+    V1StringAttributeValue,
+    V1MapAttributeValue.Factory(dynamoDbMapper),
+    V1ForIndexAnnotation,
+    V1AttributeAnnotation,
+    V1RawItemTypeFactory(dynamoDbMapper)
+  )
 
   fun <DB : LogicalDb> logicalDb(dbType: KClass<DB>): DB {
     val methodHandlers = mutableMapOf<Method, MethodHandler>()
@@ -77,13 +74,13 @@ internal class LogicalDbFactory(
     }
     return DynamoDbQueryable(
       keyType.hashKeyName,
-      keyType.rangeKeyName,
+      keyType.rangeKeyName!!,
       keyType.secondaryIndexName,
       itemType.attributeNames,
       keyType.codec as Codec<K, Any>,
       itemType.codec as Codec<I, Any>,
       rawItemType.type,
-      rawItemType.tableModel,
+      dynamoDbMapper.getTableModel(rawItemType.type.java) as DynamoDBMapperTableModel<Any>,
       dynamoDbMapper
     )
   }
@@ -99,7 +96,7 @@ internal class LogicalDbFactory(
       keyType.codec as Codec<K, Any>,
       itemType.codec as Codec<I, Any>,
       rawItemType.type,
-      rawItemType.tableModel,
+      dynamoDbMapper.getTableModel(rawItemType.type.java) as DynamoDBMapperTableModel<Any>,
       dynamoDbMapper
     )
   }
@@ -107,7 +104,8 @@ internal class LogicalDbFactory(
   inner class LogicalTableFactory : LogicalTable.Factory {
 
     override fun <T : LogicalTable<RI>, RI : Any> logicalTable(tableType: KClass<T>): T {
-      val rawItemType = schema.addRawItem(tableType.rawItemType)
+      val tableName = config.tableNameResolver.getTableName(tableType.rawItemType.java, config)
+      val rawItemType = schema.addRawItem(tableName, tableType.rawItemType)
       val codec = rawItemType.codec as Codec<RI, Any>
       val view = DynamoDbView(
         codec,
@@ -121,7 +119,7 @@ internal class LogicalDbFactory(
           View<RI, RI> by view,
           InlineView.Factory by inlineViewFactory,
           SecondaryIndex.Factory by secondaryIndexFactory {
-          override fun <T : Any> codec(type: KClass<T>): Codec<T, RI> = schema.codec(type)
+          override fun <T : Any> codec(type: KClass<T>): app.cash.tempest.Codec<T, RI> = CodecAdapter(schema.codec(type))
         }
       val methodHandlers = mutableMapOf<Method, MethodHandler>()
       for (member in tableType.declaredMembers) {
@@ -197,6 +195,13 @@ internal class LogicalDbFactory(
       return object : SecondaryIndex<K, I>, Queryable<K, I> by queryable,
         Scannable<K, I> by scannable {}
     }
+  }
+
+  private class CodecAdapter<A : Any, D : Any>(
+    private val internal: Codec<A, D>
+  ) : app.cash.tempest.Codec<A, D> {
+    override fun toDb(appItem: A): D = internal.toDb(appItem)
+    override fun toApp(dbItem: D): A = internal.toApp(dbItem)
   }
 
   companion object {
