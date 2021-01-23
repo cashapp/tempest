@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.3.0] - 2021-01-22
+
+* New: `app.cash.tempest:tempest2:1.3.0` supports AWS SDK 2.x (#23).
+
 ## [1.2.1] - 2020-12-09
 
 * Fixed: Automatically handle reserved words (#20).

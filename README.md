@@ -419,10 +419,16 @@ You build business logic with logical types. Tempest handles mapping them to the
 
 ## Get Tempest
 
-With Gradle:
+For AWS SDK 1.x:
 
 ```groovy
-implementation "app.cash.tempest:tempest:1.2.1"
+implementation "app.cash.tempest:tempest:1.3.0"
+```
+
+For AWS SDK 2.x:
+
+```groovy
+implementation "app.cash.tempest:tempest2:1.3.0"
 ```
 
 ## License
