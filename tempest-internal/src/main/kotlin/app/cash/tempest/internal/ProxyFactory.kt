@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,10 @@ class ProxyFactory {
     val classLoader = type.java.classLoader
     @Suppress("UNCHECKED_CAST") // The proxy implements the requested interface.
     return Proxy.newProxyInstance(
-        classLoader,
-        arrayOf<Class<*>>(type.java),
-        invocationHandler(methodHandlers, instance)) as T
+      classLoader,
+      arrayOf<Class<*>>(type.java),
+      invocationHandler(methodHandlers, instance)
+    ) as T
   }
 
   private fun invocationHandler(

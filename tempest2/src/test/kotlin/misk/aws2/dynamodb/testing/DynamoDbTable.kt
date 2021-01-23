@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package misk.aws2.dynamodb.testing
 
-import kotlin.reflect.KClass
 import software.amazon.awssdk.enhanced.dynamodb.model.CreateTableEnhancedRequest
+import kotlin.reflect.KClass
 
 /**
  * Use this with [DockerDynamoDbModule] or [InProcessDynamoDbModule] to configure your DynamoDB

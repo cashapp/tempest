@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,48 +33,50 @@ import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput
 class MusicDbTestModule : KAbstractModule() {
   override fun configure() {
     install(MiskTestingServiceModule())
-    install(DockerDynamoDbModule(
-      DynamoDbTable("music_items", MusicItem::class) {
-        it.globalSecondaryIndices(
-          EnhancedGlobalSecondaryIndex.builder()
-            .indexName("genre_album_index")
-            .projection(
-              Projection.builder()
-                .projectionType("ALL")
-                .build()
-            )
-            .provisionedThroughput(
-              ProvisionedThroughput.builder()
-                .readCapacityUnits(1)
-                .writeCapacityUnits(1)
-                .build()
-            )
-            .build(),
-          EnhancedGlobalSecondaryIndex.builder()
-            .indexName("artist_album_index")
-            .projection(
-              Projection.builder()
-                .projectionType("ALL")
-                .build()
-            )
-            .provisionedThroughput(
-              ProvisionedThroughput.builder()
-                .readCapacityUnits(1)
-                .writeCapacityUnits(1)
-                .build()
-            )
-            .build()
-        )
-          .localSecondaryIndices(
-            EnhancedLocalSecondaryIndex.create(
-              "album_track_title_index",
-              Projection.builder()
-                .projectionType("ALL")
-                .build()
-            )
+    install(
+      DockerDynamoDbModule(
+        DynamoDbTable("music_items", MusicItem::class) {
+          it.globalSecondaryIndices(
+            EnhancedGlobalSecondaryIndex.builder()
+              .indexName("genre_album_index")
+              .projection(
+                Projection.builder()
+                  .projectionType("ALL")
+                  .build()
+              )
+              .provisionedThroughput(
+                ProvisionedThroughput.builder()
+                  .readCapacityUnits(1)
+                  .writeCapacityUnits(1)
+                  .build()
+              )
+              .build(),
+            EnhancedGlobalSecondaryIndex.builder()
+              .indexName("artist_album_index")
+              .projection(
+                Projection.builder()
+                  .projectionType("ALL")
+                  .build()
+              )
+              .provisionedThroughput(
+                ProvisionedThroughput.builder()
+                  .readCapacityUnits(1)
+                  .writeCapacityUnits(1)
+                  .build()
+              )
+              .build()
           )
-      }
-    ))
+            .localSecondaryIndices(
+              EnhancedLocalSecondaryIndex.create(
+                "album_track_title_index",
+                Projection.builder()
+                  .projectionType("ALL")
+                  .build()
+              )
+            )
+        }
+      )
+    )
   }
 
   @Provides

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,8 @@ class WritingPager<T> @JvmOverloads constructor(
     val appliedUpdates = mutableListOf<T>()
 
     while (appliedUpdates.size < currentPage.size &&
-        writeSet.size <= maxTransactionItems) {
+      writeSet.size <= maxTransactionItems
+    ) {
       val newEntity = currentPage[appliedUpdates.size]
 
       val itemWriteSet = TransactionWriteSet.Builder()
@@ -112,9 +113,9 @@ fun <DB : LogicalDb, T> DB.transactionWritingPager(
   handler: WritingPager.Handler<T>
 ): WritingPager<T> {
   return WritingPager(
-      db = this,
-      maxTransactionItems = maxTransactionItems,
-      updates = items,
-      handler = handler
+    db = this,
+    maxTransactionItems = maxTransactionItems,
+    updates = items,
+    handler = handler
   )
 }

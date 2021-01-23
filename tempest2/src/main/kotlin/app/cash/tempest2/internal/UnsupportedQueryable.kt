@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import app.cash.tempest2.KeyCondition
 import app.cash.tempest2.Offset
 import app.cash.tempest2.Page
 import app.cash.tempest2.Queryable
+import software.amazon.awssdk.enhanced.dynamodb.Expression
 import java.lang.UnsupportedOperationException
 import kotlin.reflect.KClass
-import software.amazon.awssdk.enhanced.dynamodb.Expression
 
 internal class UnsupportedQueryable<K : Any, I : Any>(
   private val rawType: KClass<*>

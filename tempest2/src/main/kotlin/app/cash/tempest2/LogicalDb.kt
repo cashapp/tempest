@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 package app.cash.tempest2
 
 import app.cash.tempest2.internal.LogicalDbFactory
-import javax.annotation.CheckReturnValue
-import kotlin.reflect.KClass
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.extensions.annotations.DynamoDbVersionAttribute
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import javax.annotation.CheckReturnValue
+import kotlin.reflect.KClass
 
 /**
  * A collection of tables that implement the DynamoDB best practice of putting multiple

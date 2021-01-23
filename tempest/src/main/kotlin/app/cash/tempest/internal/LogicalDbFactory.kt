@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,8 @@ internal class LogicalDbFactory(
       val inlineViewFactory = InlineViewFactory(rawItemType)
       val secondaryIndexFactory = SecondaryIndexFactory(rawItemType)
       val logicalTable =
-        object : LogicalTable<RI>,
+        object :
+          LogicalTable<RI>,
           View<RI, RI> by view,
           InlineView.Factory by inlineViewFactory,
           SecondaryIndex.Factory by secondaryIndexFactory {
@@ -167,7 +168,10 @@ internal class LogicalDbFactory(
         item,
         key
       )
-      return object : InlineView<K, I>, View<K, I> by view, Queryable<K, I> by queryable,
+      return object :
+        InlineView<K, I>,
+        View<K, I> by view,
+        Queryable<K, I> by queryable,
         Scannable<K, I> by scannable {}
     }
   }
@@ -192,7 +196,9 @@ internal class LogicalDbFactory(
         item,
         key
       )
-      return object : SecondaryIndex<K, I>, Queryable<K, I> by queryable,
+      return object :
+        SecondaryIndex<K, I>,
+        Queryable<K, I> by queryable,
         Scannable<K, I> by scannable {}
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,17 +44,20 @@ object DockerDynamoDb : ExternalDependency {
 
   val awsCredentialsProvider = localDynamoDb.awsCredentialsProvider
 
-  private val composer = Composer("e-$id", Container {
-    // DynamoDB Local listens on port 8000 by default.
-    val exposedClientPort = ExposedPort.tcp(8000)
-    val portBindings =
-      Ports().apply { bind(exposedClientPort, Ports.Binding.bindPort(url.port)) }
-    withImage("amazon/dynamodb-local")
-      .withName(id)
-      .withExposedPorts(exposedClientPort)
-      .withCmd("-jar", "DynamoDBLocal.jar", "-sharedDb")
-      .withPortBindings(portBindings)
-  })
+  private val composer = Composer(
+    "e-$id",
+    Container {
+      // DynamoDB Local listens on port 8000 by default.
+      val exposedClientPort = ExposedPort.tcp(8000)
+      val portBindings =
+        Ports().apply { bind(exposedClientPort, Ports.Binding.bindPort(url.port)) }
+      withImage("amazon/dynamodb-local")
+        .withName(id)
+        .withExposedPorts(exposedClientPort)
+        .withCmd("-jar", "DynamoDBLocal.jar", "-sharedDb")
+        .withPortBindings(portBindings)
+    }
+  )
 
   override fun beforeEach() {
     // noop

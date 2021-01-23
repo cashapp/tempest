@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import app.cash.tempest2.LogicalTable
 import app.cash.tempest2.TransactionWriteSet
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.CLOBBER
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.DELETE
-import kotlin.reflect.KClass
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable
 import software.amazon.awssdk.enhanced.dynamodb.Expression
@@ -46,6 +45,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.TransactWriteItemsEnhanced
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch
 import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException
+import kotlin.reflect.KClass
 
 internal class DynamoDbLogicalDb(
   private val dynamoDbEnhancedClient: DynamoDbEnhancedClient,

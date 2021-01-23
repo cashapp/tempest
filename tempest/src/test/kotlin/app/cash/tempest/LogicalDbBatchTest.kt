@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import app.cash.tempest.musiclibrary.AlbumTrack
 import app.cash.tempest.musiclibrary.MusicDb
 import app.cash.tempest.musiclibrary.MusicDbTestModule
 import app.cash.tempest.musiclibrary.PlaylistInfo
-import java.time.Duration
-import javax.inject.Inject
 import misk.testing.MiskTest
 import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.Duration
+import javax.inject.Inject
 
 @MiskTest(startService = true)
 class LogicalDbBatchTest {

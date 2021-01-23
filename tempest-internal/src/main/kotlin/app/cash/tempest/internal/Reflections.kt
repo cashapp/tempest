@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ data class ClassMember(
 val KClass<*>.declaredMembers: List<ClassMember>
   get() {
     return declaredMemberProperties.map { ClassMember(it.annotations, it.returnType, it.javaGetter!!) } +
-        declaredMemberFunctions.map { ClassMember(it.annotations, it.returnType, it.javaMethod!!) }
+      declaredMemberFunctions.map { ClassMember(it.annotations, it.returnType, it.javaMethod!!) }
   }
 
 internal val KProperty<*>.shouldIgnore: Boolean

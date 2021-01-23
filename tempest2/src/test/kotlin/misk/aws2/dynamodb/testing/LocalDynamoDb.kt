@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 
 package misk.aws2.dynamodb.testing
 
-import javax.inject.Inject
-import javax.inject.Singleton
 import okhttp3.HttpUrl
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * A DynamoDB test server running in-process or in a local Docker container.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,13 +144,19 @@ internal class DynamoDbLogicalDb(
   }
 
   private fun Any.expectedRawItemType(): RawItemType {
-    return requireNotNull(schema.resolveEnclosingRawItemType(
-        this::class)) { "Cannot find a dynamodb table for ${this::class}" }
+    return requireNotNull(
+      schema.resolveEnclosingRawItemType(
+        this::class
+      )
+    ) { "Cannot find a dynamodb table for ${this::class}" }
   }
 
   private fun Any.expectedItemType(): ItemType {
-    return requireNotNull(schema.resolveEnclosingItemType(
-        this::class)) { "Cannot find an item type for ${this::class}" }
+    return requireNotNull(
+      schema.resolveEnclosingItemType(
+        this::class
+      )
+    ) { "Cannot find an item type for ${this::class}" }
   }
 
   private fun Any.encodeAsKey(): Any {

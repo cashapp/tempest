@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@ import app.cash.tempest.musiclibrary.THE_WALL
 import app.cash.tempest.musiclibrary.givenAlbums
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTransactionWriteExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
-import javax.inject.Inject
 import misk.testing.MiskTest
 import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import javax.inject.Inject
 
 @MiskTest(startService = true)
 class WritingPagerTest {
@@ -95,7 +95,8 @@ class WritingPagerTest {
           playlist_tracks = playlistInfo.playlist_tracks + currentPageTracks,
           playlist_version = playlistInfo.playlist_version + 1
         ),
-        ifPlaylistVersionIs(playlistInfo.playlist_version))
+        ifPlaylistVersionIs(playlistInfo.playlist_version)
+      )
     }
   }
 }

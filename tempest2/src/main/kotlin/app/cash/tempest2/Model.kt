@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package app.cash.tempest2
 
-import kotlin.reflect.KClass
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.enhanced.dynamodb.Key
+import kotlin.reflect.KClass
 
 /**
  * A write that the client sends to the DynamoDb service.
@@ -62,9 +62,10 @@ data class BatchWriteSet(
 
     fun build(): BatchWriteSet {
       return BatchWriteSet(
-          ItemSet(
-              itemsToClobber
-          ), KeySet(keysToDelete)
+        ItemSet(
+          itemsToClobber
+        ),
+        KeySet(keysToDelete)
       )
     }
   }
@@ -112,7 +113,8 @@ data class TransactionWriteSet(
       expression: Expression? = null
     ) = apply {
       require(!itemsToSave.contains(item) && !itemsToSave.contains(item)) {
-        "Duplicate items are not allowed: $item." }
+        "Duplicate items are not allowed: $item."
+      }
       itemsToSave.add(item)
       if (expression != null) {
         writeExpressions[item] = expression
@@ -126,7 +128,8 @@ data class TransactionWriteSet(
       ? = null
     ) = apply {
       require(!keysToDelete.contains(key) && !keysToDelete.contains(key)) {
-        "Duplicate items are not allowed: $key." }
+        "Duplicate items are not allowed: $key."
+      }
       keysToDelete.add(key)
       if (expression != null) {
         writeExpressions[key] = expression
@@ -139,7 +142,8 @@ data class TransactionWriteSet(
       expression: Expression? = null
     ) = apply {
       require(!keysToCheck.contains(key) && !keysToCheck.contains(key)) {
-        "Duplicate items are not allowed: $key." }
+        "Duplicate items are not allowed: $key."
+      }
       keysToCheck.add(key)
       if (expression != null) {
         writeExpressions[key] = expression
@@ -168,11 +172,11 @@ data class TransactionWriteSet(
 
     fun build(): TransactionWriteSet {
       return TransactionWriteSet(
-          ItemSet(itemsToSave),
-          KeySet(keysToDelete),
-          KeySet(keysToCheck),
-          writeExpressions.toMap(),
-          idempotencyToken
+        ItemSet(itemsToSave),
+        KeySet(keysToDelete),
+        KeySet(keysToCheck),
+        writeExpressions.toMap(),
+        idempotencyToken
       )
     }
   }

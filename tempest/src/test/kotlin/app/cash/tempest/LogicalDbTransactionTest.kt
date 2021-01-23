@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,13 @@ import app.cash.tempest.musiclibrary.PlaylistInfo
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTransactionWriteExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.TransactionCanceledException
-import java.time.Duration
-import javax.inject.Inject
-import kotlin.test.assertFailsWith
 import misk.testing.MiskTest
 import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.Duration
+import javax.inject.Inject
+import kotlin.test.assertFailsWith
 
 @MiskTest(startService = true)
 class LogicalDbTransactionTest {

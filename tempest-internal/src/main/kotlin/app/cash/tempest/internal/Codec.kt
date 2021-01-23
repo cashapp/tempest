@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,8 +92,8 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
   override fun toApp(dbItem: D): A {
     val dbItem = prefixer.removePrefix(dbItem)
     val constructorArgs = constructorParameters
-        .map { it.parameter to it.getDb(dbItem) }
-        .toMap()
+      .map { it.parameter to it.getDb(dbItem) }
+      .toMap()
     val appItem =
       appItemConstructor?.callBy(constructorArgs) ?: appItemClassFactory.newInstance()
     for (binding in varBindings) {
@@ -169,7 +169,7 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
         val propertyName = property.name
         val itemAttribute = itemAttributes[propertyName] ?: continue
         val mappedProperties = itemAttribute.names
-            .map { requireNotNull(rawItemProperties[it]) { "Expect ${rawItemType.type} to have property $propertyName" } }
+          .map { requireNotNull(rawItemProperties[it]) { "Expect ${rawItemType.type} to have property $propertyName" } }
         val mappedPropertyTypes = mappedProperties.map { it.returnType }.distinct()
         require(mappedPropertyTypes.size == 1) { "Expect mapped properties of $propertyName to have the same type: ${mappedProperties.map { it.name }}" }
         val expectedReturnType = requireNotNull(mappedPropertyTypes.single()).withNullability(false)
@@ -177,13 +177,16 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
         require(actualReturnType == expectedReturnType) { "Expect the return type of $itemType.${property.name} to be $expectedReturnType but was $actualReturnType" }
         if (appItemConstructorParameters.contains(propertyName)) {
           constructorParameterBindings.add(
-              ConstructorParameterBinding(
-                  property as KProperty1<Any, Any?>,
-                  appItemConstructorParameters[propertyName]!!,
-                  mappedProperties))
+            ConstructorParameterBinding(
+              property as KProperty1<Any, Any?>,
+              appItemConstructorParameters[propertyName]!!,
+              mappedProperties
+            )
+          )
         } else if (property.isVar) {
           varBindings.add(
-              VarBinding(property as KProperty1<Any, Any?>, mappedProperties))
+            VarBinding(property as KProperty1<Any, Any?>, mappedProperties)
+          )
         } else {
           valBindings.add(ValBinding(property as KProperty1<Any, Any?>, mappedProperties))
         }

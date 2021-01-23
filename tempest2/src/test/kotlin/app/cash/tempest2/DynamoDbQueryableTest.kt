@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,6 @@ import app.cash.tempest2.musiclibrary.MusicDbTestModule
 import app.cash.tempest2.musiclibrary.albumTitles
 import app.cash.tempest2.musiclibrary.givenAlbums
 import app.cash.tempest2.musiclibrary.trackTitles
-import java.time.Duration
-import javax.inject.Inject
 import misk.aws2.dynamodb.testing.DockerDynamoDb
 import misk.testing.MiskExternalDependency
 import misk.testing.MiskTest
@@ -38,6 +36,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+import java.time.Duration
+import javax.inject.Inject
 
 @MiskTest(startService = true)
 class DynamoDbQueryableTest {

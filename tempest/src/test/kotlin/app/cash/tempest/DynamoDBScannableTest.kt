@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,12 @@ import app.cash.tempest.musiclibrary.albumTitles
 import app.cash.tempest.musiclibrary.givenAlbums
 import app.cash.tempest.musiclibrary.trackTitles
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
-import java.time.Duration
-import javax.inject.Inject
 import misk.testing.MiskTest
 import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.Duration
+import javax.inject.Inject
 
 @MiskTest(startService = true)
 class DynamoDBScannableTest {

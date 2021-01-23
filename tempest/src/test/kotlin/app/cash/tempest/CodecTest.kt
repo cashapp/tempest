@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,13 @@ import app.cash.tempest.musiclibrary.AlbumTrack
 import app.cash.tempest.musiclibrary.MusicDb
 import app.cash.tempest.musiclibrary.MusicDbTestModule
 import app.cash.tempest.musiclibrary.MusicItem
-import java.time.LocalDate
-import javax.inject.Inject
 import misk.testing.MiskTest
 import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
+import javax.inject.Inject
 
 @MiskTest(startService = true)
 class CodecTest {
@@ -42,11 +42,11 @@ class CodecTest {
     val albumInfoCodec = musicDb.music.codec(AlbumInfo::class)
 
     val albumInfo = AlbumInfo(
-        "ALBUM_1",
-        "after hours - EP",
-        "53 Thieves",
-        LocalDate.of(2020, 2, 21),
-        "Contemporary R&B"
+      "ALBUM_1",
+      "after hours - EP",
+      "53 Thieves",
+      LocalDate.of(2020, 2, 21),
+      "Contemporary R&B"
     )
 
     val musicItem = albumInfoCodec.toDb(albumInfo)
@@ -77,13 +77,13 @@ class CodecTest {
 
     val albumInfo = albumInfoCodec.toApp(musicItem)
     assertThat(albumInfo).isEqualTo(
-        AlbumInfo(
-            "ALBUM_1",
-            "after hours - EP",
-            "53 Thieves",
-            LocalDate.of(2020, 2, 21),
-            "Contemporary R&B"
-        )
+      AlbumInfo(
+        "ALBUM_1",
+        "after hours - EP",
+        "53 Thieves",
+        LocalDate.of(2020, 2, 21),
+        "Contemporary R&B"
+      )
     )
   }
 
@@ -92,8 +92,8 @@ class CodecTest {
     val albumKeyCodec = musicDb.music.codec(AlbumTrack.Key::class)
 
     val albumTrackKey = AlbumTrack.Key(
-        album_token = "ALBUM_1",
-        track_number = 1L
+      album_token = "ALBUM_1",
+      track_number = 1L
     )
 
     val musicItem = albumKeyCodec.toDb(albumTrackKey)
@@ -117,10 +117,10 @@ class CodecTest {
 
     val albumTrackKey = albumKeyCodec.toApp(musicItem)
     assertThat(albumTrackKey).isEqualTo(
-        AlbumTrack.Key(
-            album_token = "ALBUM_1",
-            track_number = 1L
-        )
+      AlbumTrack.Key(
+        album_token = "ALBUM_1",
+        track_number = 1L
+      )
     )
   }
 

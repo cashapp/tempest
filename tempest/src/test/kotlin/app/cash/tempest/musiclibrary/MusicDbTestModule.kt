@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,8 @@ import misk.inject.KAbstractModule
 class MusicDbTestModule : KAbstractModule() {
   override fun configure() {
     install(MiskTestingServiceModule())
-    install(InProcessDynamoDbModule(
+    install(
+      InProcessDynamoDbModule(
         DynamoDbTable(MusicItem::class) {
           it.apply {
             for (gsi in globalSecondaryIndexes) {
@@ -41,7 +42,9 @@ class MusicDbTestModule : KAbstractModule() {
             }
           }
         },
-        DynamoDbTable(ReservedWordsItem::class)))
+        DynamoDbTable(ReservedWordsItem::class)
+      )
+    )
   }
 
   @Provides

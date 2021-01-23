@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,12 @@ import app.cash.tempest.musiclibrary.trackTitles
 import app.cash.tempest.reservedwords.ReservedWordObject
 import app.cash.tempest.reservedwords.ReservedWordsDb
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
-import java.time.Duration
-import javax.inject.Inject
 import misk.testing.MiskTest
 import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.Duration
+import javax.inject.Inject
 
 @MiskTest(startService = true)
 class DynamoDbQueryableTest {
@@ -286,7 +286,8 @@ class DynamoDbQueryableTest {
   @Test
   fun reservedWordsAreAliased() {
     reservedWordsTable.reservedWords.save(
-        ReservedWordObject("agent", "counter", "tOkEn"))
+      ReservedWordObject("agent", "counter", "tOkEn")
+    )
 
     // This will throw if we're not correctly handling the reserved words in the object.
     reservedWordsTable.reservedWords.query(BeginsWith(ReservedWordObject.Key("agent")))

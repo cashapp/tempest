@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
 package misk.aws2.dynamodb.testing
 
 import com.google.common.util.concurrent.AbstractIdleService
-import javax.inject.Inject
-import javax.inject.Singleton
 import misk.logging.getLogger
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema
@@ -26,6 +24,8 @@ import software.amazon.awssdk.enhanced.dynamodb.model.CreateTableEnhancedRequest
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.DeleteTableRequest
 import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 class CreateTablesService @Inject constructor(

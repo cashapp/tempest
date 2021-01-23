@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package app.cash.tempest2.musiclibrary
 
-import java.time.Duration
-import java.time.LocalDate
 import software.amazon.awssdk.enhanced.dynamodb.AttributeConverter
 import software.amazon.awssdk.enhanced.dynamodb.AttributeValueType
 import software.amazon.awssdk.enhanced.dynamodb.EnhancedType
@@ -28,6 +26,8 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecon
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondarySortKey
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+import java.time.Duration
+import java.time.LocalDate
 
 @DynamoDbBean
 class MusicItem {

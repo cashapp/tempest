@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@ import app.cash.tempest.internal.RawItemType
 import app.cash.tempest.internal.StringAttributeValue
 import app.cash.tempest2.Attribute
 import app.cash.tempest2.ForIndex
-import kotlin.reflect.KClass
 import software.amazon.awssdk.enhanced.dynamodb.TableMetadata
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+import kotlin.reflect.KClass
 
 internal object V2ForIndexAnnotation : ForIndexAnnotation<ForIndex> {
   override val type = ForIndex::class
@@ -73,12 +73,12 @@ internal class V2RawItemTypeFactory : RawItemType.Factory {
       tableSchema.tableMetadata().indices()
         .filter { it.name() != TableMetadata.primaryIndexName() }
         .map {
-        ItemType.SecondaryIndex(
-          it.name(),
-          it.partitionKey().orElse(null)?.name() ?: tableSchema.tableMetadata().primaryPartitionKey(),
-          it.sortKey().get().name()
-        )
-      }.associateBy { it.name }
+          ItemType.SecondaryIndex(
+            it.name(),
+            it.partitionKey().orElse(null)?.name() ?: tableSchema.tableMetadata().primaryPartitionKey(),
+            it.sortKey().get().name()
+          )
+        }.associateBy { it.name }
     )
   }
 }

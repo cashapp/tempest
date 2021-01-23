@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ import app.cash.tempest.WorkerId
 import app.cash.tempest.musiclibrary.AlbumTrack
 import app.cash.tempest.musiclibrary.MusicTable
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
-import java.time.Duration
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import java.time.Duration
 
 class QueryNScan(
   private val table: MusicTable
@@ -58,7 +58,8 @@ class QueryNScan(
     val page = table.albumTracks.query(
       keyCondition = Between(
         startInclusive = AlbumTrack.Key(albumToken, track_number = 5),
-        endInclusive = AlbumTrack.Key(albumToken, track_number = 9))
+        endInclusive = AlbumTrack.Key(albumToken, track_number = 9)
+      )
     )
     return page.contents
   }

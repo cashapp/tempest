@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,14 @@ import app.cash.tempest2.ForIndex
 import app.cash.tempest2.musiclibrary.AlbumInfo
 import app.cash.tempest2.musiclibrary.MusicDb
 import app.cash.tempest2.musiclibrary.MusicDbTestModule
-import java.time.LocalDate
-import javax.inject.Inject
 import misk.aws2.dynamodb.testing.DockerDynamoDb
 import misk.testing.MiskExternalDependency
 import misk.testing.MiskTest
 import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
+import javax.inject.Inject
 
 @MiskTest(startService = true)
 class SchemaTest {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Square Inc.
+ * Copyright 2021 Square Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package misk.aws2.dynamodb.testing
 
 import com.google.inject.Provides
-import javax.inject.Singleton
 import misk.inject.KAbstractModule
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import javax.inject.Singleton
 
 internal class LocalDynamoDbModule(
   private val tables: List<DynamoDbTable>
