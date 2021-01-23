@@ -1,0 +1,33 @@
+apply plugin: 'java-library'
+apply plugin: 'kotlin'
+apply plugin: 'com.vanniktech.maven.publish'
+
+dependencies {
+  api dep.aws2Dynamodb
+  api dep.aws2DynamodbEnhanced
+  api dep.findbugsJsr305
+  implementation project(":tempest-internal")
+  implementation dep.kotlinReflection
+  implementation dep.kotlinStdLib
+  implementation dep.okio
+
+  // The docker-java we use in tests depends on an old version of junixsocket that depends on
+  // log4j. We force it up a minor version in packages that use it.
+  testImplementation('com.kohlschutter.junixsocket:junixsocket-native-common:2.3.2') {
+    force = true
+  }
+  testImplementation('com.kohlschutter.junixsocket:junixsocket-common:2.3.2') {
+    force = true
+  }
+  testImplementation dep.docker
+
+  testImplementation project(":samples:musiclibrary2")
+  testImplementation project(":samples:urlshortener2")
+  testImplementation project(":test-utils")
+  testImplementation dep.assertj
+  testImplementation dep.miskTesting
+  testImplementation dep.junitApi
+  testImplementation dep.junitEngine
+}
+
+apply from: "$rootDir/gradle-mvn-publish.gradle"

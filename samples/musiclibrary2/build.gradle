@@ -1,0 +1,12 @@
+apply plugin: 'kotlin'
+
+dependencies {
+  implementation project(":tempest2")
+  implementation dep.kotlinStdLib
+
+  testImplementation dep.miskAwsDynamodbTesting
+  testImplementation dep.assertj
+  testImplementation dep.miskTesting
+  testImplementation dep.junitApi
+  testImplementation dep.junitEngine
+}

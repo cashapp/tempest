@@ -1,0 +1,81 @@
+/*
+ * Copyright 2020 Square Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package app.cash.tempest2
+
+import software.amazon.awssdk.enhanced.dynamodb.Expression
+
+interface View<K : Any, I : Any> {
+  /**
+   * Returns an item whose keys match those of the prototype key object given, or null if no
+   * such item exists.
+   */
+  fun load(key: K, consistentReads: Boolean = false): I?
+
+  /**
+   * Saves an item in DynamoDB. This method uses [DynamoDBMapperConfig.SaveBehavior.PUT] to clear
+   * and replace all attributes, including unmodeled ones, on save. Partial update, i.e.
+   * [DynamoDBMapperConfig.SaveBehavior.UPDATE_SKIP_NULL_ATTRIBUTES], is not supported yet.
+   *
+   * Any options specified in the [saveExpression] parameter will be overlaid on any constraints due
+   * to versioned attributes.
+   */
+  fun save(
+    item: I,
+    saveExpression: Expression? = null
+  )
+
+  /**
+   * Deletes the item identified by [key] from its DynamoDB table using [deleteExpression]. Any
+   * options specified in the [deleteExpression] parameter will be overlaid on any constraints due
+   * to versioned attributes.
+   *
+   * If the item to be deleted has versioned attributes, load the item and use [delete] instead or
+   * use [ignoreVersionConstraints] to discard them.
+   */
+  fun deleteKey(
+    key: K,
+    deleteExpression: Expression? = null
+  )
+
+  /**
+   * Deletes [item] from its DynamoDB table using [deleteExpression]. Any options specified in the
+   * [deleteExpression] parameter will be overlaid on any constraints due to versioned attributes.
+   *
+   * If [ignoreVersionConstraints] is true, version attributes will not be considered when deleting
+   * the object.
+   */
+  fun delete(
+    item: I,
+    deleteExpression: Expression? = null
+  )
+
+  // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
+
+  fun load(key: K) = load(key, false)
+
+  fun save(
+    item: I
+  ) = save(item, saveExpression = null)
+
+  fun deleteKey(
+    key: K
+  ) = deleteKey(key, deleteExpression = null)
+
+  fun delete(
+    item: I
+  ) = delete(item, deleteExpression = null)
+}

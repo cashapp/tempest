@@ -58,6 +58,10 @@ subprojects { subProject ->
     jcenter()
   }
 
+  dependencies {
+    api enforcedPlatform(dep.nettyBom)
+  }
+
   test {
     useJUnitPlatform()
     testLogging {
