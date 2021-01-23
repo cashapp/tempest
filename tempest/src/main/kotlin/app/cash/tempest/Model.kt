@@ -71,7 +71,7 @@ data class BatchWriteSet(
 }
 
 /**
- * It contains the information about the unprocessed items and the
+ * It contains information about the unprocessed items and the
  * exception causing the failure.
  */
 data class BatchWriteResult(

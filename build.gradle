@@ -80,6 +80,9 @@ subprojects { subProject ->
         externalDocumentationLink {
           url = new URL("https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/")
         }
+        externalDocumentationLink {
+          url = new URL("https://sdk.amazonaws.com/java/api/latest/")
+        }
       }
     }
   }

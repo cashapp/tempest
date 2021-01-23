@@ -17,6 +17,8 @@
 package app.cash.tempest2
 
 import software.amazon.awssdk.enhanced.dynamodb.Expression
+import software.amazon.awssdk.enhanced.dynamodb.extensions.VersionedRecordExtension
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 interface View<K : Any, I : Any> {
   /**
@@ -26,9 +28,9 @@ interface View<K : Any, I : Any> {
   fun load(key: K, consistentReads: Boolean = false): I?
 
   /**
-   * Saves an item in DynamoDB. This method uses [DynamoDBMapperConfig.SaveBehavior.PUT] to clear
+   * Saves an item in DynamoDB. This method uses [DynamoDbClient.putItem] to clear
    * and replace all attributes, including unmodeled ones, on save. Partial update, i.e.
-   * [DynamoDBMapperConfig.SaveBehavior.UPDATE_SKIP_NULL_ATTRIBUTES], is not supported yet.
+   * [DynamoDbClient.updateItem], is not supported yet.
    *
    * Any options specified in the [saveExpression] parameter will be overlaid on any constraints due
    * to versioned attributes.
@@ -43,8 +45,8 @@ interface View<K : Any, I : Any> {
    * options specified in the [deleteExpression] parameter will be overlaid on any constraints due
    * to versioned attributes.
    *
-   * If the item to be deleted has versioned attributes, load the item and use [delete] instead or
-   * use [ignoreVersionConstraints] to discard them.
+   * If the item to be deleted has versioned attributes, load the item and use [delete] instead.
+   * For more information, see [VersionedRecordExtension].
    */
   fun deleteKey(
     key: K,
@@ -54,9 +56,6 @@ interface View<K : Any, I : Any> {
   /**
    * Deletes [item] from its DynamoDB table using [deleteExpression]. Any options specified in the
    * [deleteExpression] parameter will be overlaid on any constraints due to versioned attributes.
-   *
-   * If [ignoreVersionConstraints] is true, version attributes will not be considered when deleting
-   * the object.
    */
   fun delete(
     item: I,

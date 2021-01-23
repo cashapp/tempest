@@ -20,6 +20,8 @@ import app.cash.tempest2.internal.LogicalDbFactory
 import javax.annotation.CheckReturnValue
 import kotlin.reflect.KClass
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
+import software.amazon.awssdk.enhanced.dynamodb.extensions.annotations.DynamoDbVersionAttribute
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 /**
  * A collection of tables that implement the DynamoDB best practice of putting multiple
@@ -31,7 +33,7 @@ interface LogicalDb : LogicalTable.Factory {
   /**
    * Retrieves multiple items from multiple tables using their primary keys.
    *
-   * This method performs one or more calls to the [AmazonDynamoDB.batchGetItem] API.
+   * This method performs one or more calls to the [DynamoDbClient.batchGetItem] API.
    *
    * A single operation can retrieve up to 16 MB of data, which can contain as many as 100 items.
    * BatchGetItem returns a partial result if the response size limit is exceeded, the table's
@@ -60,12 +62,11 @@ interface LogicalDb : LogicalTable.Factory {
 
   /**
    * Saves and deletes the objects given using one or more calls to the
-   * [AmazonDynamoDB.batchWriteItem] API. **Callers should always check the returned
+   * [DynamoDbClient.batchWriteItem] API. **Callers should always check the returned
    * [BatchWriteResult]** because this method returns normally even if some writes were not
    * performed.
    *
-   * This method does not support versioning annotations and behaves as if
-   * [DynamoDBMapperConfig.SaveBehavior.CLOBBER] was specified.
+   * This method does not support versioning annotations and behaves like [DynamoDbClient.putItem].
    *
    * A single call to BatchWriteItem can write up to 16 MB of data, which can comprise as many as 25
    * put or delete requests. Individual items to be written can be as large as 400 KB.
@@ -82,7 +83,7 @@ interface LogicalDb : LogicalTable.Factory {
 
   /**
    * Transactionally loads objects specified by transactionLoadRequest by calling
-   * [AmazonDynamoDB.transactGetItems] API.
+   * [DynamoDbClient.transactGetItems] API.
    *
    * A transaction cannot contain more than 25 unique items.
    * A transaction cannot contain more than 4 MB of data.
@@ -100,11 +101,11 @@ interface LogicalDb : LogicalTable.Factory {
 
   /**
    * Transactionally writes objects specified by transactionWriteRequest by calling
-   * [AmazonDynamoDB.transactWriteItems] API.
+   * [DynamoDbClient.transactWriteItems] API.
    *
    * This method does not support versioning annotations. It throws
-   * [com.amazonaws.SdkClientException] exception if class of any input object is annotated
-   * with [DynamoDBVersionAttribute] or [DynamoDBVersioned].
+   * [software.amazon.awssdk.core.exception.SdkClientException] exception if class of any input
+   * object is annotated with [DynamoDbVersionAttribute].
    *
    * A transaction cannot contain more than 25 unique items, including conditions.
    * A transaction cannot contain more than 4 MB of data.

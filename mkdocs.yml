@@ -67,7 +67,8 @@ nav:
       - 'DynamoDB Resources': guide/dynamodb_resources.md
 
   - 'Reference':
-      - '1.x API': 1.x/tempest/app.cash.tempest/index.md
+      - 'For AWS SDK 1.x': 1.x/tempest/app.cash.tempest/index.md
+      - 'For AWS SDK 2.x': 1.x/tempest2/app.cash.tempest2/index.md
 
   - 'Changelog': changelog.md
   - 'Contributing': contributing.md

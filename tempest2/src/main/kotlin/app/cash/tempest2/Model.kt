@@ -33,7 +33,7 @@ data class BatchWriteSet(
     private val keysToDelete = mutableSetOf<Any>()
 
     /**
-     * This method behaves as if SaveBehavior.CLOBBER was specified. Versioned attributes will be
+     * This method behaves like `DynamoDbClient.putItem`. Versioned attributes will be
      * discarded.
      */
     fun clobber(
@@ -71,7 +71,7 @@ data class BatchWriteSet(
 }
 
 /**
- * It contains the information about the unprocessed items and the
+ * It contains information about the unprocessed items and the
  * exception causing the failure.
  */
 data class BatchWriteResult(

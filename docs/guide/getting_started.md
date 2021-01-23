@@ -9,11 +9,19 @@
 
 First, add Tempest to your project.
 
-With Gradle:
+For AWS SDK 1.x:
 
 ```groovy
 dependencies {
   implementation "app.cash.tempest:tempest:{{ versions.tempest }}"
+}
+```
+
+For AWS SDK 2.x:
+
+```groovy
+dependencies {
+  implementation "app.cash.tempest:tempest2:{{ versions.tempest }}"
 }
 ```
 

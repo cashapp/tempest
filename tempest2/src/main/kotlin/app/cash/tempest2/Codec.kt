@@ -16,10 +16,10 @@
 package app.cash.tempest2
 
 /**
- * Converts values between the mutable `DynamoDBMapper` objects that defines the union of all key
+ * Converts values between the mutable `DynamoDbBean` objects that defines the union of all key
  * and value attributes, and specific Tempest values.
  *
- * It is the caller's responsibility to check that the `DynamoDBMapper` instance can be safely
+ * It is the caller's responsibility to check that the `DynamoDbBean` instance can be safely
  * converted to the target type. If it cannot be, the behavior of this codec is undefined.
  */
 interface Codec<A : Any, D : Any> {
