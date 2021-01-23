@@ -20,6 +20,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
@@ -30,8 +31,11 @@ import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.javaGetter
 import kotlin.reflect.jvm.javaMethod
 
-internal val KClass<*>.primaryConstructorParameters: Map<String, KParameter>
-  get() = primaryConstructor?.parameters?.associateBy { requireNotNull(it.name) } ?: emptyMap()
+internal val KClass<*>.defaultConstructor: KFunction<Any>?
+  get() = primaryConstructor ?: constructors.singleOrNull()
+
+internal val KClass<*>.defaultConstructorParameters: Map<String, KParameter>
+  get() = defaultConstructor?.parameters?.associateBy { requireNotNull(it.name) } ?: emptyMap()
 
 data class ClassMember(
   val annotations: List<Annotation>,

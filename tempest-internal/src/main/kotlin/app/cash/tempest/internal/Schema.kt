@@ -137,7 +137,7 @@ data class KeyType(
   ) {
     fun create(keyType: KClass<*>, itemType: ItemType, rawItemType: RawItemType): KeyType {
       require(keyType.constructors.isNotEmpty()) { "$keyType must have a constructor" }
-      val constructorParameters = keyType.primaryConstructorParameters
+      val constructorParameters = keyType.defaultConstructorParameters
       val attributeNames = mutableSetOf<String>()
       for (property in keyType.memberProperties) {
         if (property.shouldIgnore) {
@@ -236,7 +236,7 @@ data class ItemType(
       primaryIndex: PrimaryIndex
     ): Map<String, Attribute> {
       val attributes = mutableMapOf<String, Attribute>()
-      val constructorParameters: Map<String, KParameter> = itemType.primaryConstructorParameters
+      val constructorParameters: Map<String, KParameter> = itemType.defaultConstructorParameters
       for (property in itemType.memberProperties) {
         val attribute =
           createAttribute(property, constructorParameters, rawItemType, itemType) ?: continue

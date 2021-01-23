@@ -1,0 +1,40 @@
+apply plugin: 'kotlin'
+
+dependencies {
+  implementation project(":tempest")
+
+  testImplementation dep.miskAwsDynamodbTesting
+  testImplementation dep.assertj
+  testImplementation dep.miskTesting
+  testImplementation dep.junitApi
+  testImplementation dep.junitEngine
+}
+
+compileKotlin {
+  kotlinOptions {
+    jvmTarget = JavaVersion.VERSION_14
+  }
+}
+
+compileTestKotlin {
+  kotlinOptions {
+    jvmTarget = JavaVersion.VERSION_14
+  }
+}
+
+compileJava {
+  sourceCompatibility = JavaVersion.VERSION_14
+  targetCompatibility = JavaVersion.VERSION_14
+}
+
+tasks.withType(JavaCompile) {
+  options.compilerArgs += "--enable-preview"
+}
+
+tasks.withType(Test) {
+  jvmArgs += "--enable-preview"
+}
+
+tasks.withType(JavaExec) {
+  jvmArgs += '--enable-preview'
+}
