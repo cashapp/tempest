@@ -13,11 +13,12 @@ dependencies {
   testImplementation project(":samples:musiclibrary")
   testImplementation project(":samples:urlshortener")
   testImplementation project(":test-utils")
-  testImplementation dep.miskAwsDynamodbTesting
   testImplementation dep.assertj
-  testImplementation dep.miskTesting
   testImplementation dep.junitApi
   testImplementation dep.junitEngine
+  testImplementation dep.kotlinTest
+  testImplementation dep.miskAwsDynamodbTesting
+  testImplementation dep.miskTesting
 }
 
 apply from: "$rootDir/gradle-mvn-publish.gradle"

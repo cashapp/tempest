@@ -20,6 +20,7 @@ import app.cash.tempest.musiclibrary.AlbumTrack
 import app.cash.tempest.musiclibrary.MusicDb
 import app.cash.tempest.musiclibrary.MusicDbTestModule
 import app.cash.tempest.musiclibrary.PlaylistInfo
+import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTransactionWriteExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.TransactionCanceledException
@@ -27,9 +28,9 @@ import misk.testing.MiskTest
 import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.time.Duration
 import javax.inject.Inject
-import kotlin.test.assertFailsWith
 
 @MiskTest(startService = true)
 class LogicalDbTransactionTest {
@@ -190,9 +191,10 @@ class LogicalDbTransactionTest {
     // Introduce a race condition.
     musicTable.playlistInfo.save(playlistInfoV2)
 
-    assertFailsWith<TransactionCanceledException> {
+    val exception = assertThrows<AmazonServiceException> {
       musicDb.transactionWrite(writeTransaction)
     }
+    assertThat(exception.errorCode).isEqualTo(TransactionCanceledException::class.simpleName)
   }
 
   @Test
@@ -251,9 +253,10 @@ class LogicalDbTransactionTest {
       )
       .build()
 
-    assertFailsWith<TransactionCanceledException> {
+    val exception = assertThrows<AmazonServiceException> {
       musicDb.transactionWrite(writeTransaction)
     }
+    assertThat(exception.errorCode).isEqualTo(TransactionCanceledException::class.simpleName)
   }
 
   private fun ifPlaylistVersionIs(playlist_version: Long): DynamoDBTransactionWriteExpression {
