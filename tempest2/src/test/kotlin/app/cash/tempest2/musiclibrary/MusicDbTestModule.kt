@@ -20,8 +20,8 @@ import app.cash.tempest2.LogicalDb
 import com.google.inject.Provides
 import com.google.inject.Singleton
 import misk.MiskTestingServiceModule
-import misk.aws2.dynamodb.testing.DockerDynamoDbModule
 import misk.aws2.dynamodb.testing.DynamoDbTable
+import misk.aws2.dynamodb.testing.InProcessDynamoDbModule
 import misk.inject.KAbstractModule
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.model.EnhancedGlobalSecondaryIndex
@@ -34,7 +34,7 @@ class MusicDbTestModule : KAbstractModule() {
   override fun configure() {
     install(MiskTestingServiceModule())
     install(
-      DockerDynamoDbModule(
+      InProcessDynamoDbModule(
         DynamoDbTable("music_items", MusicItem::class) {
           it.globalSecondaryIndices(
             EnhancedGlobalSecondaryIndex.builder()

@@ -25,7 +25,7 @@ import javax.inject.Singleton;
 import kotlin.jvm.internal.Reflection;
 import misk.MiskTestingServiceModule;
 import misk.aws2.dynamodb.testing.DynamoDbTable;
-import misk.aws2.dynamodb.testing.DockerDynamoDbModule;
+import misk.aws2.dynamodb.testing.InProcessDynamoDbModule;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
@@ -34,7 +34,7 @@ public class InteropTestModule extends AbstractModule {
   @Override protected void configure() {
     install(new MiskTestingServiceModule());
     install(
-        new DockerDynamoDbModule(
+        new InProcessDynamoDbModule(
             new DynamoDbTable(
                 "j_alias_items",
                 Reflection.createKotlinClass(AliasItem.class)

@@ -26,8 +26,6 @@ import app.cash.tempest2.musiclibrary.MusicDbTestModule
 import app.cash.tempest2.musiclibrary.albumTitles
 import app.cash.tempest2.musiclibrary.givenAlbums
 import app.cash.tempest2.musiclibrary.trackTitles
-import misk.aws2.dynamodb.testing.DockerDynamoDb
-import misk.testing.MiskExternalDependency
 import misk.testing.MiskTest
 import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThat
@@ -42,9 +40,6 @@ class DynamoDbScannableTest {
 
   @MiskTestModule
   val module = MusicDbTestModule()
-
-  @MiskExternalDependency
-  val dockerDynamoDb = DockerDynamoDb
 
   @Inject lateinit var musicDb: MusicDb
 
