@@ -21,6 +21,7 @@ import app.cash.tempest.musiclibrary.AlbumTrack
 import app.cash.tempest.musiclibrary.MusicDb
 import app.cash.tempest.musiclibrary.MusicDbTestModule
 import app.cash.tempest.musiclibrary.PlaylistInfo
+import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBSaveExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.ComparisonOperator
@@ -29,8 +30,8 @@ import com.amazonaws.services.dynamodbv2.model.ExpectedAttributeValue
 import misk.testing.MiskTest
 import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -75,10 +76,10 @@ class DynamoDbViewTest {
     musicTable.albumInfo.save(albumInfo, ifNotExist())
 
     // This fails because the album info already exists.
-    assertThatExceptionOfType(ConditionalCheckFailedException::class.java)
-      .isThrownBy {
-        musicTable.albumInfo.save(albumInfo, ifNotExist())
-      }
+    val exception = assertThrows<AmazonServiceException> {
+      musicTable.albumInfo.save(albumInfo, ifNotExist())
+    }
+    assertThat(exception.errorCode).isEqualTo(ConditionalCheckFailedException::class.simpleName)
   }
 
   @Test
@@ -107,13 +108,13 @@ class DynamoDbViewTest {
     assertThat(actualPlaylistInfoV2).isEqualTo(playlistInfoV2)
 
     // This fails because playlist_size is already 1.
-    assertThatExceptionOfType(ConditionalCheckFailedException::class.java)
-      .isThrownBy {
-        musicTable.playlistInfo.save(
-          playlistInfoV2,
-          ifPlaylistVersionIs(playlistInfoV1.playlist_version)
-        )
-      }
+    val exception = assertThrows<AmazonServiceException> {
+      musicTable.playlistInfo.save(
+        playlistInfoV2,
+        ifPlaylistVersionIs(playlistInfoV1.playlist_version)
+      )
+    }
+    assertThat(exception.errorCode).isEqualTo(ConditionalCheckFailedException::class.simpleName)
   }
 
   @Test

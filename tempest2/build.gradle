@@ -25,9 +25,12 @@ dependencies {
   testImplementation project(":samples:urlshortener2")
   testImplementation project(":test-utils")
   testImplementation dep.assertj
-  testImplementation dep.miskTesting
   testImplementation dep.junitApi
   testImplementation dep.junitEngine
+  testImplementation dep.kotlinTest
+  testImplementation dep.loggingApi
+  testImplementation dep.miskTesting
+  testImplementation dep.okHttp
 }
 
 apply from: "$rootDir/gradle-mvn-publish.gradle"
