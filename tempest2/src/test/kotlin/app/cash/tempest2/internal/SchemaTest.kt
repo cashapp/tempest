@@ -21,8 +21,6 @@ import app.cash.tempest2.ForIndex
 import app.cash.tempest2.musiclibrary.AlbumInfo
 import app.cash.tempest2.musiclibrary.MusicDb
 import app.cash.tempest2.musiclibrary.MusicDbTestModule
-import misk.aws2.dynamodb.testing.DockerDynamoDb
-import misk.testing.MiskExternalDependency
 import misk.testing.MiskTest
 import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
@@ -35,9 +33,6 @@ class SchemaTest {
 
   @MiskTestModule
   val module = MusicDbTestModule()
-
-  @MiskExternalDependency
-  val dockerDynamoDb = DockerDynamoDb
 
   @Inject lateinit var musicDb: MusicDb
 

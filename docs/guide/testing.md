@@ -1,3 +1,3 @@
-You may test Tempset using [DynamoDBLocal](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html).
+You may test Tempest using [DynamoDBLocal](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html).
 
-Here is how we setup the docker container in our testing environment: [DockerDynamoDb.kt](https://github.com/cashapp/misk/blob/master/misk-aws-dynamodb-testing/src/main/kotlin/misk/aws/dynamodb/testing/DockerDynamoDb.kt).
+Here is how we setup our testing environment: [InProcessDynamoDbModule.kt](https://github.com/cashapp/misk/blob/master/misk-aws2-dynamodb-testing/src/main/kotlin/misk/aws2/dynamodb/testing/InProcessDynamoDbModule.kt).
