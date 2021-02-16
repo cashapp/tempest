@@ -18,24 +18,22 @@ package app.cash.tempest2
 import app.cash.tempest2.musiclibrary.AlbumInfo
 import app.cash.tempest2.musiclibrary.AlbumTrack
 import app.cash.tempest2.musiclibrary.MusicDb
-import app.cash.tempest2.musiclibrary.MusicDbTestModule
 import app.cash.tempest2.musiclibrary.MusicItem
-import misk.testing.MiskTest
-import misk.testing.MiskTestModule
+import app.cash.tempest2.musiclibrary.testDb
+import app.cash.tempest2.testing.logicalDb
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.time.LocalDate
-import javax.inject.Inject
 
-@MiskTest(startService = true)
 class CodecTest {
 
-  @MiskTestModule
-  val module = MusicDbTestModule()
+  @RegisterExtension
+  @JvmField
+  val db = testDb()
 
-  @Inject
-  lateinit var musicDb: MusicDb
+  private val musicDb by lazy { db.logicalDb<MusicDb>() }
 
   @Test
   internal fun itemCodecToDb() {

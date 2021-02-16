@@ -18,6 +18,60 @@ package app.cash.tempest2.musiclibrary
 
 import app.cash.tempest.musiclibrary.Album
 import app.cash.tempest2.Page
+import app.cash.tempest2.testing.JvmDynamoDbServer
+import app.cash.tempest2.testing.TestDynamoDb
+import app.cash.tempest2.testing.TestTable
+import software.amazon.awssdk.enhanced.dynamodb.model.EnhancedGlobalSecondaryIndex
+import software.amazon.awssdk.enhanced.dynamodb.model.EnhancedLocalSecondaryIndex
+import software.amazon.awssdk.services.dynamodb.model.Projection
+import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput
+
+fun testDb() = TestDynamoDb.Builder(JvmDynamoDbServer)
+  .addTable(
+    TestTable.create<MusicItem>("music_items") {
+      it.toBuilder()
+        .globalSecondaryIndices(
+          EnhancedGlobalSecondaryIndex.builder()
+            .indexName("genre_album_index")
+            .projection(
+              Projection.builder()
+                .projectionType("ALL")
+                .build()
+            )
+            .provisionedThroughput(
+              ProvisionedThroughput.builder()
+                .readCapacityUnits(1)
+                .writeCapacityUnits(1)
+                .build()
+            )
+            .build(),
+          EnhancedGlobalSecondaryIndex.builder()
+            .indexName("artist_album_index")
+            .projection(
+              Projection.builder()
+                .projectionType("ALL")
+                .build()
+            )
+            .provisionedThroughput(
+              ProvisionedThroughput.builder()
+                .readCapacityUnits(1)
+                .writeCapacityUnits(1)
+                .build()
+            )
+            .build()
+        )
+        .localSecondaryIndices(
+          EnhancedLocalSecondaryIndex.create(
+            "album_track_title_index",
+            Projection.builder()
+              .projectionType("ALL")
+              .build()
+          )
+        )
+        .build()
+    }
+  )
+  .build()
 
 val Page<*, AlbumTrack>.trackTitles: List<String>
   get() = contents.map { it.track_title }

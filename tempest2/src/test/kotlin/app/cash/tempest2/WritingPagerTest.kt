@@ -19,27 +19,25 @@ package app.cash.tempest2
 import app.cash.tempest.musiclibrary.THE_WALL
 import app.cash.tempest2.musiclibrary.AlbumTrack
 import app.cash.tempest2.musiclibrary.MusicDb
-import app.cash.tempest2.musiclibrary.MusicDbTestModule
 import app.cash.tempest2.musiclibrary.MusicTable
 import app.cash.tempest2.musiclibrary.PlaylistInfo
 import app.cash.tempest2.musiclibrary.givenAlbums
-import misk.testing.MiskTest
-import misk.testing.MiskTestModule
+import app.cash.tempest2.musiclibrary.testDb
+import app.cash.tempest2.testing.logicalDb
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
-import javax.inject.Inject
 
-@MiskTest(startService = true)
 class WritingPagerTest {
 
-  @MiskTestModule
-  val module = MusicDbTestModule()
+  @RegisterExtension
+  @JvmField
+  val db = testDb()
 
-  @Inject lateinit var musicDb: MusicDb
-
-  private val musicTable get() = musicDb.music
+  private val musicDb by lazy { db.logicalDb<MusicDb>() }
+  private val musicTable by lazy { musicDb.music }
 
   @Test
   fun write() {

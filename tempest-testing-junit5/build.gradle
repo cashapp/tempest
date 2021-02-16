@@ -1,0 +1,16 @@
+apply plugin: 'java-library'
+apply plugin: 'kotlin'
+
+dependencies {
+  api project(":tempest-testing")
+  api dep.junitApi
+  implementation project(":tempest-testing-internal")
+  implementation dep.kotlinStdLib
+  implementation dep.guava
+  implementation dep.kotlinReflection
+
+  testImplementation project(":samples:urlshortener")
+  testImplementation project(":tempest-testing-jvm")
+  testImplementation dep.assertj
+  testImplementation dep.junitEngine
+}
