@@ -152,6 +152,7 @@ The following example decomposes the operation into multiple transactions contai
         maxTransactionItems = 25,
         handler = AlbumTrackWritingPagerHandler(playlistToken, table)
       ).execute()
+    }
     
     class AlbumTrackWritingPagerHandler(
       private val playlistToken: String,
