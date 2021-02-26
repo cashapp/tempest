@@ -67,7 +67,7 @@ The following example uses transactions to make sure it only adds valid album tr
       db.transactionWrite(writeSet)
     }
       
-      private fun ifPlaylistVersionIs(playlist_version: Long): DynamoDBTransactionWriteExpression {
+    private fun ifPlaylistVersionIs(playlist_version: Long): DynamoDBTransactionWriteExpression {
       return DynamoDBTransactionWriteExpression()
         .withConditionExpression("playlist_version = :playlist_version")
         .withExpressionAttributeValues(
