@@ -3,10 +3,9 @@ apply plugin: 'kotlin'
 dependencies {
   implementation project(":tempest")
 
-  testImplementation dep.miskAwsDynamodbTesting
+  testImplementation project(":tempest-testing-jvm")
+  testImplementation project(":tempest-testing-junit5")
   testImplementation dep.assertj
-  testImplementation dep.miskTesting
-  testImplementation dep.junitApi
   testImplementation dep.junitEngine
 }
 

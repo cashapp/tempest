@@ -51,6 +51,21 @@ interface TestDynamoDbClient : Service {
       .build()
     return LogicalDb.create(type, enhancedClient)
   }
+
+  fun <DB : LogicalDb> logicalDb(type: Class<DB>): DB {
+    return logicalDb(type.kotlin)
+  }
+
+  fun <DB : LogicalDb> logicalDb(type: Class<DB>, vararg extensions: DynamoDbEnhancedClientExtension): DB {
+    return logicalDb(type.kotlin, extensions.toList())
+  }
+
+  fun <DB : LogicalDb> logicalDb(
+    type: Class<DB>,
+    extensions: List<DynamoDbEnhancedClientExtension>
+  ): DB {
+    return logicalDb(type.kotlin, extensions)
+  }
 }
 
 inline fun <reified DB : LogicalDb> TestDynamoDbClient.logicalDb(vararg extensions: DynamoDbEnhancedClientExtension): DB {
