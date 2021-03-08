@@ -1,0 +1,6 @@
+$dokka.format:gfm
+$dokka.linkExtension:md
+
+app.cash.tempest.musiclibrary
+app.cash.tempest.musiclibrary.java
+app.cash.tempest.reservedwords

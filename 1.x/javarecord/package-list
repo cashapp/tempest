@@ -1,0 +1,5 @@
+$dokka.format:gfm
+$dokka.linkExtension:md
+
+app.cash.tempest.javarecord.musiclibrary
+app.cash.tempest.javarecord.urlshortener

@@ -1,0 +1,1492 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Tempest - Typesafe DynamoDB in Kotlin">
+      
+      
+      
+        <meta name="author" content="Square, Inc.">
+      
+      
+        <link rel="canonical" href="https://cashapp.github.io/tempest/guide/query_scan/">
+      
+      <link rel="shortcut icon" href="../../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.0.5">
+    
+    
+      
+        <title>Query & Scan - Tempest</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.77f3fd56.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.7fa14f5b.min.css">
+        
+          
+          
+          <meta name="theme-color" content="#ffffff">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+      
+    
+    
+    
+      <link rel="stylesheet" href="../../css/app.css">
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="white" data-md-color-accent="green">
+      
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#query" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="https://cashapp.github.io/tempest/" title="Tempest" class="md-header__button md-logo" aria-label="Tempest">
+      
+  <img src="../../img/cashapp.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tempest
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Query & Scan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="md-header__options">
+      
+    </div>
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/cashapp/tempest/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cashapp/tempest
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://cashapp.github.io/tempest/" title="Tempest" class="md-nav__button md-logo" aria-label="Tempest">
+      
+  <img src="../../img/cashapp.png" alt="logo">
+
+    </a>
+    Tempest
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/cashapp/tempest/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cashapp/tempest
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" checked>
+      
+      <label class="md-nav__link" for="__nav_2">
+        Guides
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Guides" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Guides
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/" class="md-nav__link">
+        Getting Started
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data_modeling/" class="md-nav__link">
+        Data Modeling
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../crud/" class="md-nav__link">
+        CRUD
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../optimistic_locking/" class="md-nav__link">
+        Optimistic Locking
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../batch_read_write/" class="md-nav__link">
+        Batch Read & Write
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Query & Scan
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Query & Scan
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#query" class="md-nav__link">
+    Query
+  </a>
+  
+    <nav class="md-nav" aria-label="Query">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-condition" class="md-nav__link">
+    Key Condition
+  </a>
+  
+    <nav class="md-nav" aria-label="Key Condition">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#partition-key-and-entity-type" class="md-nav__link">
+    Partition Key and Entity Type
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#partition-key-and-sort-key-prefix" class="md-nav__link">
+    Partition Key and Sort Key Prefix
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#partition-key-and-sort-key-range" class="md-nav__link">
+    Partition Key and Sort Key Range
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#descending-order" class="md-nav__link">
+    Descending Order
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-expression" class="md-nav__link">
+    Filter Expression
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pagination" class="md-nav__link">
+    Pagination
+  </a>
+  
+    <nav class="md-nav" aria-label="Pagination">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#specifying-the-offset" class="md-nav__link">
+    Specifying the Offset
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scan" class="md-nav__link">
+    Scan
+  </a>
+  
+    <nav class="md-nav" aria-label="Scan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parallel-scan" class="md-nav__link">
+    Parallel Scan
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-expression_1" class="md-nav__link">
+    Filter Expression
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pagination_1" class="md-nav__link">
+    Pagination
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../transaction/" class="md-nav__link">
+        Transaction
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/" class="md-nav__link">
+        Testing
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dynamodb_resources/" class="md-nav__link">
+        DynamoDB Resources
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      <label class="md-nav__link" for="__nav_3">
+        Reference
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_1" type="checkbox" id="__nav_3_1" >
+      
+      <label class="md-nav__link" for="__nav_3_1">
+        For AWS SDK 1.x
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="For AWS SDK 1.x" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_1">
+          <span class="md-nav__icon md-icon"></span>
+          For AWS SDK 1.x
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest/app.cash.tempest/" class="md-nav__link">
+        tempest
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest-testing/app.cash.tempest.testing/" class="md-nav__link">
+        tempest-testing
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest-testing-jvm/app.cash.tempest.testing/" class="md-nav__link">
+        tempest-testing-jvm
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest-testing-docker/app.cash.tempest.testing/" class="md-nav__link">
+        tempest-testing-docker
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest-testing-junit5/app.cash.tempest.testing/" class="md-nav__link">
+        tempest-testing-junit5
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest-testing-junit4/app.cash.tempest.testing/" class="md-nav__link">
+        tempest-testing-junit4
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2" type="checkbox" id="__nav_3_2" >
+      
+      <label class="md-nav__link" for="__nav_3_2">
+        For AWS SDK 2.x
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="For AWS SDK 2.x" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_2">
+          <span class="md-nav__icon md-icon"></span>
+          For AWS SDK 2.x
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest2/app.cash.tempest2/" class="md-nav__link">
+        tempest2
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest2-testing/app.cash.tempest2.testing/" class="md-nav__link">
+        tempest2-testing
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest2-testing-jvm/app.cash.tempest2.testing/" class="md-nav__link">
+        tempest2-testing-jvm
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest2-testing-docker/app.cash.tempest2.testing/" class="md-nav__link">
+        tempest2-testing-docker
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest2-testing-junit5/app.cash.tempest2.testing/" class="md-nav__link">
+        tempest2-testing-junit5
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest2-testing-junit4/app.cash.tempest2.testing/" class="md-nav__link">
+        tempest2-testing-junit4
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        Changelog
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        Contributing
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../code_of_conduct/" class="md-nav__link">
+        Code of Conduct
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../releasing/" class="md-nav__link">
+        Releasing
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#query" class="md-nav__link">
+    Query
+  </a>
+  
+    <nav class="md-nav" aria-label="Query">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-condition" class="md-nav__link">
+    Key Condition
+  </a>
+  
+    <nav class="md-nav" aria-label="Key Condition">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#partition-key-and-entity-type" class="md-nav__link">
+    Partition Key and Entity Type
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#partition-key-and-sort-key-prefix" class="md-nav__link">
+    Partition Key and Sort Key Prefix
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#partition-key-and-sort-key-range" class="md-nav__link">
+    Partition Key and Sort Key Range
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#descending-order" class="md-nav__link">
+    Descending Order
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-expression" class="md-nav__link">
+    Filter Expression
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pagination" class="md-nav__link">
+    Pagination
+  </a>
+  
+    <nav class="md-nav" aria-label="Pagination">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#specifying-the-offset" class="md-nav__link">
+    Specifying the Offset
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scan" class="md-nav__link">
+    Scan
+  </a>
+  
+    <nav class="md-nav" aria-label="Scan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parallel-scan" class="md-nav__link">
+    Parallel Scan
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-expression_1" class="md-nav__link">
+    Filter Expression
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pagination_1" class="md-nav__link">
+    Pagination
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/cashapp/tempest/edit/master/docs/guide/query_scan.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                  <h1>Query & Scan</h1>
+                
+                <h2 id="query">Query<a class="headerlink" href="#query" title="Permanent link">&para;</a></h2>
+<p>In each DynamoDB table and its secondary indexes, items are grouped by partition key and sorted by the sort key.</p>
+<p>To query an index, you must provide the name of the partition key attribute and a single value for that attribute. Query returns all items with that partition key value. Optionally, you can provide a sort key attribute and use a comparison operator to refine the search results.</p>
+<div class="admonition tip">
+<p class="admonition-title">Global secondary index queries cannot fetch attributes from the base table</p>
+<p>A projection is the set of attributes that is copied from a table into a secondary index. The partition key and sort key of the table are always projected into the index; you can project other attributes to support your application&rsquo;s query requirements. When you query an index, Amazon DynamoDB can access any attribute in the projection as if those attributes were in a table of their own.</p>
+</div>
+<p>Let&rsquo;s continue with the music library example.</p>
+<div class="tabbed-set" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Kotlin</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span> <span class="nc">MusicTable</span> <span class="p">:</span> <span class="n">LogicalTable</span><span class="o">&lt;</span><span class="n">MusicItem</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="kd">val</span> <span class="nv">albumTracks</span><span class="p">:</span> <span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;</span>
+  <span class="c1">// Local Secondary Indexes.</span>
+  <span class="kd">val</span> <span class="nv">albumTracksByTitle</span><span class="p">:</span> <span class="n">SecondaryIndex</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">TitleIndexOffset</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;</span>
+<span class="p">}</span>
+
+<span class="kd">data</span> <span class="kd">class</span> <span class="nc">AlbumTrack</span><span class="p">(</span>
+  <span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;partition_key&quot;</span><span class="p">)</span>
+  <span class="kd">val</span> <span class="nv">album_token</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+  <span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;sort_key&quot;</span><span class="p">,</span> <span class="n">prefix</span> <span class="o">=</span> <span class="s">&quot;TRACK_&quot;</span><span class="p">)</span>
+  <span class="kd">val</span> <span class="nv">track_token</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+  <span class="kd">val</span> <span class="nv">track_title</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+  <span class="kd">val</span> <span class="nv">run_length</span><span class="p">:</span> <span class="n">Duration</span>
+<span class="p">)</span> <span class="p">{</span>
+  <span class="kd">data</span> <span class="kd">class</span> <span class="nc">Key</span><span class="p">(</span>
+    <span class="kd">val</span> <span class="nv">album_token</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+    <span class="kd">val</span> <span class="nv">track_token</span><span class="p">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+  <span class="p">)</span>
+
+  <span class="nd">@ForIndex</span><span class="p">(</span><span class="s">&quot;album_track_title_index&quot;</span><span class="p">)</span>
+  <span class="kd">data</span> <span class="kd">class</span> <span class="nc">TitleIndexOffset</span><span class="p">(</span>
+    <span class="kd">val</span> <span class="nv">album_token</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+    <span class="kd">val</span> <span class="nv">track_title</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+    <span class="c1">// To uniquely identify an item in pagination.</span>
+    <span class="kd">val</span> <span class="nv">track_token</span><span class="p">:</span> <span class="kt">String?</span> <span class="o">=</span> <span class="kc">null</span>
+  <span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><label for="__tabbed_1_2">Java</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">MusicTable</span> <span class="kd">extends</span> <span class="n">LogicalTable</span><span class="o">&lt;</span><span class="n">MusicItem</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="nf">albumTracks</span><span class="p">();</span>
+  <span class="c1">// Local Secondary Indexes.</span>
+  <span class="n">SecondaryIndex</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">TitleIndexOffset</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="nf">albumTracksByTitle</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">AlbumTrack</span> <span class="p">{</span>
+  <span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;partition_key&quot;</span><span class="p">)</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">album_token</span><span class="p">;</span>
+  <span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;sort_key&quot;</span><span class="p">,</span> <span class="n">prefix</span> <span class="o">=</span> <span class="s">&quot;TRACK_&quot;</span><span class="p">)</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">track_token</span><span class="p">;</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">track_title</span><span class="p">;</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">Duration</span> <span class="n">run_length</span><span class="p">;</span>
+
+  <span class="kd">public</span> <span class="nf">AlbumTrack</span><span class="p">(</span>
+      <span class="n">String</span> <span class="n">album_token</span><span class="p">,</span>
+      <span class="n">String</span> <span class="n">track_token</span><span class="p">,</span>
+      <span class="n">String</span> <span class="n">track_title</span><span class="p">,</span>
+      <span class="n">Duration</span> <span class="n">run_length</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="na">album_token</span> <span class="o">=</span> <span class="n">album_token</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="na">track_token</span> <span class="o">=</span> <span class="n">track_token</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="na">track_title</span> <span class="o">=</span> <span class="n">track_title</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="na">run_length</span> <span class="o">=</span> <span class="n">run_length</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Key</span> <span class="p">{</span>
+    <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">album_token</span><span class="p">;</span>
+    <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">track_token</span><span class="p">;</span>
+
+    <span class="kd">public</span> <span class="nf">Key</span><span class="p">(</span><span class="n">String</span> <span class="n">album_token</span><span class="p">,</span> <span class="n">String</span> <span class="n">track_token</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">this</span><span class="p">.</span><span class="na">album_token</span> <span class="o">=</span> <span class="n">album_token</span><span class="p">;</span>
+      <span class="k">this</span><span class="p">.</span><span class="na">track_token</span> <span class="o">=</span> <span class="n">track_token</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="kd">public</span> <span class="nf">Key</span><span class="p">(</span><span class="n">String</span> <span class="n">album_token</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">this</span><span class="p">(</span><span class="n">album_token</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="nd">@ForIndex</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;album_track_title_index&quot;</span><span class="p">)</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">TitleIndexOffset</span> <span class="p">{</span>
+    <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">album_token</span><span class="p">;</span>
+    <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">track_title</span><span class="p">;</span>
+    <span class="c1">// To uniquely identify an item in pagination.</span>
+    <span class="nd">@Nullable</span>
+    <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">track_token</span><span class="p">;</span>
+
+    <span class="kd">public</span> <span class="nf">TitleIndexOffset</span><span class="p">(</span><span class="n">String</span> <span class="n">album_token</span><span class="p">,</span> <span class="n">String</span> <span class="n">track_title</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">this</span><span class="p">(</span><span class="n">album_token</span><span class="p">,</span> <span class="n">track_title</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="kd">public</span> <span class="nf">TitleIndexOffset</span><span class="p">(</span><span class="n">String</span> <span class="n">album_token</span><span class="p">,</span> <span class="n">String</span> <span class="n">track_title</span><span class="p">,</span> <span class="n">String</span> <span class="n">track_token</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">this</span><span class="p">.</span><span class="na">album_token</span> <span class="o">=</span> <span class="n">album_token</span><span class="p">;</span>
+      <span class="k">this</span><span class="p">.</span><span class="na">track_title</span> <span class="o">=</span> <span class="n">track_title</span><span class="p">;</span>
+      <span class="k">this</span><span class="p">.</span><span class="na">track_token</span> <span class="o">=</span> <span class="n">track_token</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+<h3 id="key-condition">Key Condition<a class="headerlink" href="#key-condition" title="Permanent link">&para;</a></h3>
+<h4 id="partition-key-and-entity-type">Partition Key and Entity Type<a class="headerlink" href="#partition-key-and-entity-type" title="Permanent link">&para;</a></h4>
+<p>This uses the primary index to find all tracks in the given album, sorted by track number.</p>
+<div class="tabbed-set" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><label for="__tabbed_2_1">Kotlin</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">val</span> <span class="nv">table</span><span class="p">:</span> <span class="n">MusicTable</span>
+
+<span class="kd">fun</span> <span class="nf">loadAlbumTracks</span><span class="p">(</span><span class="n">albumToken</span><span class="p">:</span> <span class="kt">String</span><span class="p">):</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="kd">val</span> <span class="nv">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">.</span><span class="na">query</span><span class="p">(</span>
+    <span class="n">keyCondition</span> <span class="o">=</span> <span class="n">BeginsWith</span><span class="p">(</span>
+      <span class="n">prefix</span> <span class="o">=</span> <span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">)</span>
+    <span class="p">)</span>
+  <span class="p">)</span>
+  <span class="k">return</span> <span class="n">page</span><span class="p">.</span><span class="na">contents</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><label for="__tabbed_2_2">Java</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">final</span> <span class="n">MusicTable</span> <span class="n">table</span><span class="p">;</span>
+
+<span class="kd">public</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="nf">loadAlbumTracks</span><span class="p">(</span><span class="n">String</span> <span class="n">albumToken</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">Page</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="n">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">().</span><span class="na">query</span><span class="p">(</span>
+      <span class="c1">// keyCondition.</span>
+      <span class="k">new</span> <span class="n">BeginsWith</span><span class="o">&lt;&gt;</span><span class="p">(</span>
+          <span class="c1">// prefix.</span>
+          <span class="k">new</span> <span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">)</span>
+      <span class="p">)</span>
+  <span class="p">);</span>
+  <span class="k">return</span> <span class="n">page</span><span class="p">.</span><span class="na">getContents</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+<h4 id="partition-key-and-sort-key-prefix">Partition Key and Sort Key Prefix<a class="headerlink" href="#partition-key-and-sort-key-prefix" title="Permanent link">&para;</a></h4>
+<p>This uses the secondary index to find all tracks in the given album whose title starts with &ldquo;I want &ldquo;, sorted by title.</p>
+<div class="tabbed-set" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><label for="__tabbed_3_1">Kotlin</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">val</span> <span class="nv">table</span><span class="p">:</span> <span class="n">MusicTable</span>
+
+<span class="kd">fun</span> <span class="nf">loadAlbumTracks</span><span class="p">(</span><span class="n">albumToken</span><span class="p">:</span> <span class="kt">String</span><span class="p">):</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="kd">val</span> <span class="nv">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracksByTitle</span><span class="p">.</span><span class="na">query</span><span class="p">(</span>
+    <span class="n">keyCondition</span> <span class="o">=</span> <span class="n">BeginsWith</span><span class="p">(</span>
+      <span class="n">prefix</span> <span class="o">=</span> <span class="n">AlbumTrack</span><span class="p">.</span><span class="na">TitleIndexOffset</span><span class="p">(</span><span class="n">albumToken</span><span class="p">,</span> <span class="n">track_title</span> <span class="o">=</span> <span class="s">&quot;I want &quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+  <span class="p">)</span>
+  <span class="k">return</span> <span class="n">page</span><span class="p">.</span><span class="na">contents</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><label for="__tabbed_3_2">Java</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">final</span> <span class="n">MusicTable</span> <span class="n">table</span><span class="p">;</span>
+
+<span class="kd">public</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="nf">loadAlbumTracks</span><span class="p">(</span><span class="n">String</span> <span class="n">albumToken</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">Page</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">TitleIndexOffset</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="n">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracksByTitle</span><span class="p">().</span><span class="na">query</span><span class="p">(</span>
+      <span class="c1">// keyCondition.</span>
+      <span class="k">new</span> <span class="n">BeginsWith</span><span class="o">&lt;&gt;</span><span class="p">(</span>
+          <span class="c1">// prefix.</span>
+          <span class="k">new</span> <span class="n">AlbumTrack</span><span class="p">.</span><span class="na">TitleIndexOffset</span><span class="p">(</span><span class="n">albumToken</span><span class="p">,</span> <span class="s">&quot;I want &quot;</span><span class="p">)</span>
+      <span class="p">)</span>
+  <span class="p">);</span>
+  <span class="k">return</span> <span class="n">page</span><span class="p">.</span><span class="na">getContents</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+<h4 id="partition-key-and-sort-key-range">Partition Key and Sort Key Range<a class="headerlink" href="#partition-key-and-sort-key-range" title="Permanent link">&para;</a></h4>
+<p>This uses the primary index to find track 5 through 9 in the given album, sorted by track number.</p>
+<div class="tabbed-set" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><label for="__tabbed_4_1">Kotlin</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">val</span> <span class="nv">table</span><span class="p">:</span> <span class="n">MusicTable</span>
+
+<span class="kd">fun</span> <span class="nf">loadAlbumTracks</span><span class="p">(</span><span class="n">albumToken</span><span class="p">:</span> <span class="kt">String</span><span class="p">):</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="kd">val</span> <span class="nv">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">.</span><span class="na">query</span><span class="p">(</span>
+    <span class="n">keyCondition</span> <span class="o">=</span> <span class="n">Between</span><span class="p">(</span>
+      <span class="n">startInclusive</span> <span class="o">=</span> <span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">,</span> <span class="n">track_number</span> <span class="o">=</span> <span class="m">5</span><span class="p">),</span> 
+      <span class="n">endInclusive</span> <span class="o">=</span> <span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">,</span> <span class="n">track_number</span> <span class="o">=</span> <span class="m">9</span><span class="p">))</span>
+  <span class="p">)</span>
+  <span class="k">return</span> <span class="n">page</span><span class="p">.</span><span class="na">contents</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><label for="__tabbed_4_2">Java</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">final</span> <span class="n">MusicTable</span> <span class="n">table</span><span class="p">;</span>
+
+<span class="kd">public</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="nf">loadAlbumTracks</span><span class="p">(</span><span class="n">String</span> <span class="n">albumToken</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">Page</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="n">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">().</span><span class="na">query</span><span class="p">(</span>
+      <span class="c1">// keyCondition.</span>
+      <span class="k">new</span> <span class="n">Between</span><span class="o">&lt;&gt;</span><span class="p">(</span>
+          <span class="c1">// startInclusive.</span>
+          <span class="k">new</span> <span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">,</span> <span class="cm">/* track_number */</span> <span class="mi">5L</span><span class="p">),</span>
+          <span class="c1">// endInclusive.</span>
+          <span class="k">new</span> <span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">,</span> <span class="cm">/* track_number */</span> <span class="mi">9L</span><span class="p">))</span>
+  <span class="p">);</span>
+  <span class="k">return</span> <span class="n">page</span><span class="p">.</span><span class="na">getContents</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+<h3 id="descending-order">Descending Order<a class="headerlink" href="#descending-order" title="Permanent link">&para;</a></h3>
+<p>By default, the sort order is ascending. To reverse the order, set the <code>asc</code> parameter to <code>false</code>.</p>
+<div class="tabbed-set" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><label for="__tabbed_5_1">Kotlin</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">val</span> <span class="nv">table</span><span class="p">:</span> <span class="n">MusicTable</span>
+
+<span class="kd">fun</span> <span class="nf">loadAlbumTracks</span><span class="p">(</span><span class="n">albumToken</span><span class="p">:</span> <span class="kt">String</span><span class="p">):</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="kd">val</span> <span class="nv">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">.</span><span class="na">query</span><span class="p">(</span>
+    <span class="n">keyCondition</span> <span class="o">=</span> <span class="n">BeginsWith</span><span class="p">(</span>
+      <span class="n">prefix</span> <span class="o">=</span> <span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">)</span>
+    <span class="p">),</span>
+    <span class="n">asc</span> <span class="o">=</span> <span class="kc">false</span>
+  <span class="p">)</span>
+  <span class="k">return</span> <span class="n">page</span><span class="p">.</span><span class="na">contents</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><label for="__tabbed_5_2">Java</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">final</span> <span class="n">MusicTable</span> <span class="n">table</span><span class="p">;</span>
+
+<span class="kd">public</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="nf">loadAlbumTracks</span><span class="p">(</span><span class="n">String</span> <span class="n">albumToken</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">Page</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="n">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">().</span><span class="na">query</span><span class="p">(</span>
+      <span class="c1">// keyCondition.</span>
+      <span class="k">new</span> <span class="n">BeginsWith</span><span class="o">&lt;&gt;</span><span class="p">(</span>
+          <span class="c1">// prefix.</span>
+          <span class="k">new</span> <span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">)</span>
+      <span class="p">),</span>
+      <span class="c1">// config.</span>
+      <span class="k">new</span> <span class="n">QueryConfig</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+          <span class="p">.</span><span class="na">asc</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span>
+          <span class="p">.</span><span class="na">build</span><span class="p">()</span>
+  <span class="p">);</span>
+  <span class="k">return</span> <span class="n">page</span><span class="p">.</span><span class="na">getContents</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+<h3 id="filter-expression">Filter Expression<a class="headerlink" href="#filter-expression" title="Permanent link">&para;</a></h3>
+<p>If you need to further refine the Query results, you can optionally provide a filter expression. A filter expression determines which items within the Query results should be returned to you. All of the other results are discarded.</p>
+<div class="admonition tip">
+<p class="admonition-title">Filter expressions do not save cost</p>
+<p>A filter expression is applied after a Query finishes, but before the results are returned. Therefore, a Query consumes the same amount of read capacity, regardless of whether a filter expression is present.</p>
+<p>A Query operation can retrieve a maximum of 1 MB of data. This limit applies before the filter expression is evaluated.</p>
+<p>A filter expression cannot contain partition key or sort key attributes. You need to specify those attributes in the key condition expression, not the filter expression.</p>
+</div>
+<p>This find all tracks in the given album that last longer than 3 minutes, sorted by track number.</p>
+<div class="tabbed-set" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><label for="__tabbed_6_1">Kotlin</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">val</span> <span class="nv">table</span><span class="p">:</span> <span class="n">MusicTable</span>
+
+<span class="kd">fun</span> <span class="nf">loadAlbumTracks</span><span class="p">(</span><span class="n">albumToken</span><span class="p">:</span> <span class="kt">String</span><span class="p">):</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="kd">val</span> <span class="nv">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">.</span><span class="na">query</span><span class="p">(</span>
+    <span class="n">keyCondition</span> <span class="o">=</span> <span class="n">BeginsWith</span><span class="p">(</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">)),</span>
+    <span class="n">filterExpression</span> <span class="o">=</span> <span class="n">runLengthLongerThan</span><span class="p">(</span><span class="n">Duration</span><span class="p">.</span><span class="na">ofMinutes</span><span class="p">(</span><span class="m">3</span><span class="p">))</span>
+  <span class="p">)</span>
+  <span class="k">return</span> <span class="n">page</span><span class="p">.</span><span class="na">contents</span>
+<span class="p">}</span>
+
+<span class="kd">private</span> <span class="kd">fun</span> <span class="nf">runLengthLongerThan</span><span class="p">(</span><span class="n">duration</span><span class="p">:</span> <span class="n">Duration</span><span class="p">):</span> <span class="n">FilterExpression</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="n">FilterExpression</span><span class="p">(</span>
+    <span class="s">&quot;run_length &gt; :duration&quot;</span><span class="p">,</span>
+    <span class="n">mapOf</span><span class="p">(</span>
+      <span class="s">&quot;:duration&quot;</span> <span class="n">to</span> <span class="n">AttributeValue</span><span class="p">().</span><span class="na">withS</span><span class="p">(</span><span class="n">duration</span><span class="p">.</span><span class="na">toString</span><span class="p">())</span>
+    <span class="p">)</span>
+  <span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><label for="__tabbed_6_2">Java</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">final</span> <span class="n">MusicTable</span> <span class="n">table</span><span class="p">;</span>
+
+<span class="kd">public</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="nf">loadAlbumTracks</span><span class="p">(</span><span class="n">String</span> <span class="n">albumToken</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">Page</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="n">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">().</span><span class="na">query</span><span class="p">(</span>
+      <span class="c1">// keyCondition.</span>
+      <span class="k">new</span> <span class="n">BeginsWith</span><span class="o">&lt;&gt;</span><span class="p">(</span>
+          <span class="c1">// prefix.</span>
+          <span class="k">new</span> <span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">)</span>
+      <span class="p">),</span>
+      <span class="c1">// config.</span>
+      <span class="k">new</span> <span class="n">QueryConfig</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+          <span class="p">.</span><span class="na">filterExpression</span><span class="p">(</span><span class="n">runLengthLongerThan</span><span class="p">(</span><span class="n">Duration</span><span class="p">.</span><span class="na">ofMinutes</span><span class="p">(</span><span class="mi">3</span><span class="p">)))</span>
+          <span class="p">.</span><span class="na">build</span><span class="p">()</span>
+  <span class="p">);</span>
+  <span class="k">return</span> <span class="n">page</span><span class="p">.</span><span class="na">getContents</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">private</span> <span class="n">FilterExpression</span> <span class="nf">runLengthLongerThan</span><span class="p">(</span><span class="n">Duration</span> <span class="n">duration</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="k">new</span> <span class="n">FilterExpression</span><span class="p">(</span>
+      <span class="s">&quot;run_length &gt; :duration&quot;</span><span class="p">,</span>
+      <span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">&quot;:duration&quot;</span><span class="p">,</span> <span class="k">new</span> <span class="n">AttributeValue</span><span class="p">().</span><span class="na">withS</span><span class="p">(</span><span class="n">duration</span><span class="p">.</span><span class="na">toString</span><span class="p">()))</span>
+  <span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+<h3 id="pagination">Pagination<a class="headerlink" href="#pagination" title="Permanent link">&para;</a></h3>
+<div class="tabbed-set" data-tabs="7:2"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><label for="__tabbed_7_1">Kotlin</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">val</span> <span class="nv">table</span><span class="p">:</span> <span class="n">MusicTable</span>
+
+<span class="kd">fun</span> <span class="nf">loadAlbumTracks</span><span class="p">(</span><span class="n">albumToken</span><span class="p">:</span> <span class="kt">String</span><span class="p">):</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="kd">val</span> <span class="nv">tracks</span> <span class="o">=</span> <span class="n">mutableListOf</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span><span class="p">()</span>
+  <span class="kd">var</span> <span class="nv">page</span><span class="p">:</span> <span class="n">Page</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;?</span> <span class="o">=</span> <span class="kc">null</span>
+  <span class="k">do</span> <span class="p">{</span>
+    <span class="n">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">.</span><span class="na">query</span><span class="p">(</span>
+      <span class="n">keyCondition</span> <span class="o">=</span> <span class="n">BeginsWith</span><span class="p">(</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">)),</span>
+      <span class="n">pageSize</span> <span class="o">=</span> <span class="m">10</span><span class="p">,</span>
+      <span class="n">initialOffset</span> <span class="o">=</span> <span class="n">page</span><span class="o">?.</span><span class="na">offset</span>
+    <span class="p">)</span>
+    <span class="n">tracks</span><span class="p">.</span><span class="na">addAll</span><span class="p">(</span><span class="n">page</span><span class="p">.</span><span class="na">contents</span><span class="p">)</span>
+  <span class="p">}</span> <span class="k">while</span><span class="p">(</span><span class="n">page</span><span class="o">?.</span><span class="na">hasMorePages</span> <span class="o">==</span> <span class="kc">true</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">tracks</span><span class="p">.</span><span class="na">toList</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_7_2" name="__tabbed_7" type="radio" /><label for="__tabbed_7_2">Java</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">final</span> <span class="n">MusicTable</span> <span class="n">table</span><span class="p">;</span>
+
+<span class="kd">public</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="nf">loadAlbumTracks</span><span class="p">(</span><span class="n">String</span> <span class="n">albumToken</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="n">tracks</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;&gt;</span><span class="p">();</span>
+  <span class="n">Page</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="n">page</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+  <span class="k">do</span> <span class="p">{</span>
+    <span class="n">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">().</span><span class="na">query</span><span class="p">(</span>
+        <span class="c1">// keyCondition.</span>
+        <span class="k">new</span> <span class="n">BeginsWith</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="k">new</span> <span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">)),</span>
+        <span class="c1">// config.</span>
+        <span class="k">new</span> <span class="n">QueryConfig</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+            <span class="p">.</span><span class="na">pageSize</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+            <span class="p">.</span><span class="na">build</span><span class="p">(),</span>
+        <span class="c1">// initialOffset.</span>
+        <span class="n">page</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">page</span><span class="p">.</span><span class="na">getOffset</span><span class="p">()</span> <span class="p">:</span> <span class="kc">null</span>
+    <span class="p">);</span>
+    <span class="n">tracks</span><span class="p">.</span><span class="na">addAll</span><span class="p">(</span><span class="n">page</span><span class="p">.</span><span class="na">getContents</span><span class="p">());</span>
+  <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">page</span><span class="p">.</span><span class="na">getHasMorePages</span><span class="p">());</span>
+  <span class="k">return</span> <span class="n">tracks</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+<h4 id="specifying-the-offset">Specifying the Offset<a class="headerlink" href="#specifying-the-offset" title="Permanent link">&para;</a></h4>
+<div class="tabbed-set" data-tabs="8:2"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio" /><label for="__tabbed_8_1">Kotlin</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">val</span> <span class="nv">table</span><span class="p">:</span> <span class="n">MusicTable</span>
+
+<span class="kd">fun</span> <span class="nf">loadAlbumTracksAfterTrack</span><span class="p">(</span><span class="n">albumToken</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span> <span class="n">trackToken</span><span class="p">:</span> <span class="kt">String</span><span class="p">):</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="kd">val</span> <span class="nv">tracks</span> <span class="o">=</span> <span class="n">mutableListOf</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span><span class="p">()</span>
+  <span class="kd">var</span> <span class="nv">page</span><span class="p">:</span> <span class="n">Page</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;?</span> <span class="o">=</span> <span class="kc">null</span>
+  <span class="kd">val</span> <span class="nv">offset</span> <span class="o">=</span> <span class="n">Offset</span><span class="p">(</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">trackToken</span><span class="p">))</span>
+  <span class="k">do</span> <span class="p">{</span>
+    <span class="n">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">.</span><span class="na">query</span><span class="p">(</span>
+      <span class="n">keyCondition</span> <span class="o">=</span> <span class="n">BeginsWith</span><span class="p">(</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">)),</span>
+      <span class="n">pageSize</span> <span class="o">=</span> <span class="m">10</span><span class="p">,</span>
+      <span class="n">initialOffset</span> <span class="o">=</span> <span class="n">page</span><span class="o">?.</span><span class="na">offset</span> <span class="o">?:</span> <span class="n">offset</span>
+    <span class="p">)</span>
+    <span class="n">tracks</span><span class="p">.</span><span class="na">addAll</span><span class="p">(</span><span class="n">page</span><span class="p">.</span><span class="na">contents</span><span class="p">)</span>
+  <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">page</span><span class="o">?.</span><span class="na">hasMorePages</span> <span class="o">==</span> <span class="kc">true</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">tracks</span><span class="p">.</span><span class="na">toList</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_8_2" name="__tabbed_8" type="radio" /><label for="__tabbed_8_2">Java</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">final</span> <span class="n">MusicTable</span> <span class="n">table</span><span class="p">;</span>
+
+<span class="kd">public</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="nf">loadAlbumTracksAfterTrack</span><span class="p">(</span><span class="n">String</span> <span class="n">albumToken</span><span class="p">,</span> <span class="n">String</span> <span class="n">trackToken</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="n">tracks</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;&gt;</span><span class="p">();</span>
+  <span class="n">Page</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="n">page</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+  <span class="n">Offset</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="o">&gt;</span> <span class="n">firstOffset</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Offset</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="k">new</span> <span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">,</span> <span class="n">trackToken</span><span class="p">));</span>
+
+  <span class="k">do</span> <span class="p">{</span>
+    <span class="n">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">().</span><span class="na">query</span><span class="p">(</span>
+        <span class="c1">// keyCondition.</span>
+        <span class="k">new</span> <span class="n">BeginsWith</span><span class="o">&lt;&gt;</span><span class="p">(</span><span class="k">new</span> <span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">)),</span>
+        <span class="c1">// config.</span>
+        <span class="k">new</span> <span class="n">QueryConfig</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+                <span class="p">.</span><span class="na">pageSize</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+                <span class="p">.</span><span class="na">build</span><span class="p">(),</span>
+        <span class="c1">// initialOffset.</span>
+        <span class="n">page</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">page</span><span class="p">.</span><span class="na">getOffset</span><span class="p">()</span> <span class="p">:</span> <span class="n">firstOffset</span>
+    <span class="p">);</span>
+    <span class="n">tracks</span><span class="p">.</span><span class="na">addAll</span><span class="p">(</span><span class="n">page</span><span class="p">.</span><span class="na">getContents</span><span class="p">());</span>
+  <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">page</span><span class="p">.</span><span class="na">getHasMorePages</span><span class="p">());</span>
+  <span class="k">return</span> <span class="n">tracks</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+<h2 id="scan">Scan<a class="headerlink" href="#scan" title="Permanent link">&para;</a></h2>
+<p>A Scan operation in Amazon DynamoDB reads every item in a table or a secondary index.</p>
+<p>By default, the Scan operation processes data sequentially. Amazon DynamoDB returns data to the
+application in 1 MB increments, and an application performs additional Scan operations to
+retrieve the next 1 MB of data.</p>
+<div class="tabbed-set" data-tabs="9:2"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><label for="__tabbed_9_1">Kotlin</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">val</span> <span class="nv">table</span><span class="p">:</span> <span class="n">MusicTable</span>
+
+<span class="kd">fun</span> <span class="nf">loadAllAlbumTracks</span><span class="p">():</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="kd">val</span> <span class="nv">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">.</span><span class="na">scan</span><span class="p">()</span>
+  <span class="k">return</span> <span class="n">page</span><span class="p">.</span><span class="na">contents</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_9_2" name="__tabbed_9" type="radio" /><label for="__tabbed_9_2">Java</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">final</span> <span class="n">MusicTable</span> <span class="n">table</span><span class="p">;</span>
+
+<span class="kd">public</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="nf">loadAllAlbumTracks</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">Page</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="n">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">().</span><span class="na">scan</span><span class="p">();</span>
+  <span class="k">return</span> <span class="n">page</span><span class="p">.</span><span class="na">getContents</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+<h3 id="parallel-scan">Parallel Scan<a class="headerlink" href="#parallel-scan" title="Permanent link">&para;</a></h3>
+<p>The larger the table or index being scanned, the more time the Scan takes to complete. In
+addition, a sequential Scan might not always be able to fully use the provisioned read throughput
+capacity: Even though DynamoDB distributes a large table&rsquo;s data across multiple physical
+partitions, a Scan operation can only read one partition at a time. For this reason, the
+throughput of a Scan is constrained by the maximum throughput of a single partition.</p>
+<p>To address these issues, the Scan operation can logically divide a table or secondary index into
+multiple segments, with multiple application workers scanning the segments in parallel. Each
+worker can be a thread (in programming languages that support multithreading) or an operating
+system process. To perform a parallel scan, each worker issues its own Scan request with an
+unique <code>WorkerId</code>.</p>
+<div class="tabbed-set" data-tabs="10:2"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><label for="__tabbed_10_1">Kotlin</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">val</span> <span class="nv">table</span><span class="p">:</span> <span class="n">MusicTable</span>
+
+<span class="kd">fun</span> <span class="nf">loadAllAlbumTracks</span><span class="p">():</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">runBlocking</span> <span class="p">{</span>
+  <span class="kd">val</span> <span class="nv">segment1</span> <span class="o">=</span> <span class="n">async</span> <span class="p">{</span> <span class="n">loadSegment</span><span class="p">(</span><span class="m">1</span><span class="p">)</span> <span class="p">}</span>
+  <span class="kd">val</span> <span class="nv">segment2</span> <span class="o">=</span> <span class="n">async</span> <span class="p">{</span> <span class="n">loadSegment</span><span class="p">(</span><span class="m">2</span><span class="p">)</span> <span class="p">}</span>
+  <span class="n">segment1</span><span class="p">.</span><span class="na">await</span><span class="p">()</span> <span class="o">+</span> <span class="n">segment2</span><span class="p">.</span><span class="na">await</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="kd">private</span> <span class="kd">fun</span> <span class="nf">loadSegment</span><span class="p">(</span><span class="n">segment</span><span class="p">:</span> <span class="kt">Int</span><span class="p">):</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="kd">val</span> <span class="nv">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">.</span><span class="na">scan</span><span class="p">(</span>
+    <span class="n">workerId</span> <span class="o">=</span> <span class="n">WorkerId</span><span class="p">(</span><span class="n">segment</span><span class="p">,</span> <span class="n">totalSegments</span> <span class="o">=</span> <span class="m">2</span><span class="p">)</span>
+  <span class="p">)</span>
+  <span class="k">return</span> <span class="n">page</span><span class="p">.</span><span class="na">contents</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_10_2" name="__tabbed_10" type="radio" /><label for="__tabbed_10_2">Java</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">private</span> <span class="kd">final</span> <span class="n">MusicTable</span> <span class="n">table</span><span class="p">;</span>
+<span class="kd">private</span> <span class="kd">final</span> <span class="n">ExecutorService</span> <span class="n">executor</span><span class="p">;</span>
+
+<span class="kd">public</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="nf">loadAllAlbumTracks</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">Future</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;&gt;</span> <span class="n">segment1</span> <span class="o">=</span> <span class="n">executor</span><span class="p">.</span><span class="na">submit</span><span class="p">(()</span> <span class="o">-&gt;</span> <span class="n">loadSegment</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+  <span class="n">Future</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;&gt;</span> <span class="n">segment2</span> <span class="o">=</span> <span class="n">executor</span><span class="p">.</span><span class="na">submit</span><span class="p">(()</span> <span class="o">-&gt;</span> <span class="n">loadSegment</span><span class="p">(</span><span class="mi">2</span><span class="p">));</span>
+  <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="n">results</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;&gt;</span><span class="p">();</span>
+  <span class="k">try</span> <span class="p">{</span>
+    <span class="n">results</span><span class="p">.</span><span class="na">addAll</span><span class="p">(</span><span class="n">segment1</span><span class="p">.</span><span class="na">get</span><span class="p">());</span>
+    <span class="n">results</span><span class="p">.</span><span class="na">addAll</span><span class="p">(</span><span class="n">segment2</span><span class="p">.</span><span class="na">get</span><span class="p">());</span>
+  <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">InterruptedException</span> <span class="o">|</span> <span class="n">ExecutionException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">throw</span> <span class="k">new</span> <span class="n">IllegalStateException</span><span class="p">(</span><span class="s">&quot;Failed to load tracks&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">results</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">private</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="nf">loadSegment</span><span class="p">(</span><span class="kt">int</span> <span class="n">segment</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">Page</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="n">page</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">().</span><span class="na">scan</span><span class="p">(</span>
+      <span class="k">new</span> <span class="n">ScanConfig</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+          <span class="p">.</span><span class="na">workerId</span><span class="p">(</span><span class="k">new</span> <span class="n">WorkerId</span><span class="p">(</span><span class="n">segment</span><span class="p">,</span> <span class="cm">/* totalSegments */</span> <span class="mi">2</span><span class="p">))</span>
+          <span class="p">.</span><span class="na">build</span><span class="p">()</span>
+  <span class="p">);</span>
+  <span class="k">return</span> <span class="n">page</span><span class="p">.</span><span class="na">getContents</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+<h3 id="filter-expression_1">Filter Expression<a class="headerlink" href="#filter-expression_1" title="Permanent link">&para;</a></h3>
+<p>See query filter expression above.</p>
+<h3 id="pagination_1">Pagination<a class="headerlink" href="#pagination_1" title="Permanent link">&para;</a></h3>
+<p>See query pagination above.</p>
+<hr />
+<p>Check out the code samples on Github:</p>
+<ul>
+<li>Music Library (<a href="https://github.com/cashapp/tempest/tree/master/samples/musiclibrary/src/main/kotlin/app/cash/tempest/musiclibrary">.kt</a>, <a href="https://github.com/cashapp/tempest/tree/master/samples/musiclibrary/src/main/java/app/cash/tempest/musiclibrary/java">.java</a>)</li>
+<li>Query &amp; Scan (<a href="https://github.com/cashapp/tempest/blob/master/samples/guides/src/main/kotlin/app/cash/tempest/guides/QueryNScan.kt">.kt</a>, <a href="https://github.com/cashapp/tempest/blob/master/samples/guides/src/main/java/app/cash/tempest/guides/java/QueryNScan.java">.java</a>)</li>
+</ul>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        <a href="../batch_read_write/" class="md-footer__link md-footer__link--prev" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Batch Read & Write
+            </div>
+          </div>
+        </a>
+      
+      
+        <a href="../transaction/" class="md-footer__link md-footer__link--next" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Transaction
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2021 Square, Inc.
+          </div>
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+        
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../../assets/javascripts/workers/search.fb4a9340.min.js", "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.5cf3e710.min.js"></script>
+      
+        <script src="../../script/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,5 @@
+$dokka.format:gfm
+$dokka.linkExtension:md
+
+app.cash.tempest2.urlshortener
+app.cash.tempest2.urlshortener.java

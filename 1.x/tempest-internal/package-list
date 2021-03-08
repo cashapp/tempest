@@ -1,0 +1,4 @@
+$dokka.format:gfm
+$dokka.linkExtension:md
+$dokka.location:app.cash.tempest.internal$declaredMembers#kotlin.reflect.KClass((kotlin.Any))app.cash.tempest.internal/kotlin.reflect.-k-class/declared-members.md
+app.cash.tempest.internal

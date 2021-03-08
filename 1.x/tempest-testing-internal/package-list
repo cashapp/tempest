@@ -1,0 +1,14 @@
+$dokka.format:gfm
+$dokka.linkExtension:md
+$dokka.location:app.cash.tempest.testing.internal$createTable(com.amazonaws.services.dynamodbv2.AmazonDynamoDB, app.cash.tempest.testing.TestTable)app.cash.tempest.testing.internal/com.amazonaws.services.dynamodbv2.-amazon-dynamo-d-b/create-table.md
+$dokka.location:app.cash.tempest.testing.internal$debug(mu.KLogger, kotlin.Array((kotlin.Pair((kotlin.String, kotlin.Any)))), kotlin.Function0((kotlin.Any)))app.cash.tempest.testing.internal/mu.-k-logger/debug.md
+$dokka.location:app.cash.tempest.testing.internal$debug(mu.KLogger, kotlin.Throwable, kotlin.Array((kotlin.Pair((kotlin.String, kotlin.Any)))), kotlin.Function0((kotlin.Any)))app.cash.tempest.testing.internal/mu.-k-logger/debug.md
+$dokka.location:app.cash.tempest.testing.internal$error(mu.KLogger, kotlin.Array((kotlin.Pair((kotlin.String, kotlin.Any)))), kotlin.Function0((kotlin.Any)))app.cash.tempest.testing.internal/mu.-k-logger/error.md
+$dokka.location:app.cash.tempest.testing.internal$error(mu.KLogger, kotlin.Throwable, kotlin.Array((kotlin.Pair((kotlin.String, kotlin.Any)))), kotlin.Function0((kotlin.Any)))app.cash.tempest.testing.internal/mu.-k-logger/error.md
+$dokka.location:app.cash.tempest.testing.internal$info(mu.KLogger, kotlin.Array((kotlin.Pair((kotlin.String, kotlin.Any)))), kotlin.Function0((kotlin.Any)))app.cash.tempest.testing.internal/mu.-k-logger/info.md
+$dokka.location:app.cash.tempest.testing.internal$info(mu.KLogger, kotlin.Throwable, kotlin.Array((kotlin.Pair((kotlin.String, kotlin.Any)))), kotlin.Function0((kotlin.Any)))app.cash.tempest.testing.internal/mu.-k-logger/info.md
+$dokka.location:app.cash.tempest.testing.internal$log(mu.KLogger, org.slf4j.event.Level, kotlin.Array((kotlin.Pair((kotlin.String, kotlin.Any)))), kotlin.Function0((kotlin.Any)))app.cash.tempest.testing.internal/mu.-k-logger/log.md
+$dokka.location:app.cash.tempest.testing.internal$log(mu.KLogger, org.slf4j.event.Level, kotlin.Throwable, kotlin.Array((kotlin.Pair((kotlin.String, kotlin.Any)))), kotlin.Function0((kotlin.Any)))app.cash.tempest.testing.internal/mu.-k-logger/log.md
+$dokka.location:app.cash.tempest.testing.internal$warn(mu.KLogger, kotlin.Array((kotlin.Pair((kotlin.String, kotlin.Any)))), kotlin.Function0((kotlin.Any)))app.cash.tempest.testing.internal/mu.-k-logger/warn.md
+$dokka.location:app.cash.tempest.testing.internal$warn(mu.KLogger, kotlin.Throwable, kotlin.Array((kotlin.Pair((kotlin.String, kotlin.Any)))), kotlin.Function0((kotlin.Any)))app.cash.tempest.testing.internal/mu.-k-logger/warn.md
+app.cash.tempest.testing.internal

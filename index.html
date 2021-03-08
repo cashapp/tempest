@@ -1,0 +1,1315 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Tempest - Typesafe DynamoDB in Kotlin">
+      
+      
+      
+        <meta name="author" content="Square, Inc.">
+      
+      
+        <link rel="canonical" href="https://cashapp.github.io/tempest/">
+      
+      <link rel="shortcut icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.0.5">
+    
+    
+      
+        <title>Tempest</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.77f3fd56.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.7fa14f5b.min.css">
+        
+          
+          
+          <meta name="theme-color" content="#ffffff">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+      
+    
+    
+    
+      <link rel="stylesheet" href="css/app.css">
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="white" data-md-color-accent="green">
+      
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tempest" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="https://cashapp.github.io/tempest/" title="Tempest" class="md-header__button md-logo" aria-label="Tempest">
+      
+  <img src="img/cashapp.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tempest
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Overview
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="md-header__options">
+      
+    </div>
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/cashapp/tempest/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cashapp/tempest
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://cashapp.github.io/tempest/" title="Tempest" class="md-nav__button md-logo" aria-label="Tempest">
+      
+  <img src="img/cashapp.png" alt="logo">
+
+    </a>
+    Tempest
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/cashapp/tempest/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cashapp/tempest
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Overview
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        Overview
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#efficient-dynamodb" class="md-nav__link">
+    Efficient DynamoDB
+  </a>
+  
+    <nav class="md-nav" aria-label="Efficient DynamoDB">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    Example
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-tempest" class="md-nav__link">
+    Why Tempest?
+  </a>
+  
+    <nav class="md-nav" aria-label="Why Tempest?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dynamodbmapper-api" class="md-nav__link">
+    DynamoDBMapper API
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tempest-api" class="md-nav__link">
+    Tempest API
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get-tempest" class="md-nav__link">
+    Get Tempest
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    License
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      <label class="md-nav__link" for="__nav_2">
+        Guides
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Guides" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Guides
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="guide/getting_started/" class="md-nav__link">
+        Getting Started
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="guide/data_modeling/" class="md-nav__link">
+        Data Modeling
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="guide/crud/" class="md-nav__link">
+        CRUD
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="guide/optimistic_locking/" class="md-nav__link">
+        Optimistic Locking
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="guide/batch_read_write/" class="md-nav__link">
+        Batch Read & Write
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="guide/query_scan/" class="md-nav__link">
+        Query & Scan
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="guide/transaction/" class="md-nav__link">
+        Transaction
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="guide/testing/" class="md-nav__link">
+        Testing
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="guide/dynamodb_resources/" class="md-nav__link">
+        DynamoDB Resources
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      <label class="md-nav__link" for="__nav_3">
+        Reference
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_1" type="checkbox" id="__nav_3_1" >
+      
+      <label class="md-nav__link" for="__nav_3_1">
+        For AWS SDK 1.x
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="For AWS SDK 1.x" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_1">
+          <span class="md-nav__icon md-icon"></span>
+          For AWS SDK 1.x
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="1.x/tempest/app.cash.tempest/" class="md-nav__link">
+        tempest
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="1.x/tempest-testing/app.cash.tempest.testing/" class="md-nav__link">
+        tempest-testing
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="1.x/tempest-testing-jvm/app.cash.tempest.testing/" class="md-nav__link">
+        tempest-testing-jvm
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="1.x/tempest-testing-docker/app.cash.tempest.testing/" class="md-nav__link">
+        tempest-testing-docker
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="1.x/tempest-testing-junit5/app.cash.tempest.testing/" class="md-nav__link">
+        tempest-testing-junit5
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="1.x/tempest-testing-junit4/app.cash.tempest.testing/" class="md-nav__link">
+        tempest-testing-junit4
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2" type="checkbox" id="__nav_3_2" >
+      
+      <label class="md-nav__link" for="__nav_3_2">
+        For AWS SDK 2.x
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="For AWS SDK 2.x" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_2">
+          <span class="md-nav__icon md-icon"></span>
+          For AWS SDK 2.x
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="1.x/tempest2/app.cash.tempest2/" class="md-nav__link">
+        tempest2
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="1.x/tempest2-testing/app.cash.tempest2.testing/" class="md-nav__link">
+        tempest2-testing
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="1.x/tempest2-testing-jvm/app.cash.tempest2.testing/" class="md-nav__link">
+        tempest2-testing-jvm
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="1.x/tempest2-testing-docker/app.cash.tempest2.testing/" class="md-nav__link">
+        tempest2-testing-docker
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="1.x/tempest2-testing-junit5/app.cash.tempest2.testing/" class="md-nav__link">
+        tempest2-testing-junit5
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="1.x/tempest2-testing-junit4/app.cash.tempest2.testing/" class="md-nav__link">
+        tempest2-testing-junit4
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="changelog/" class="md-nav__link">
+        Changelog
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="contributing/" class="md-nav__link">
+        Contributing
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="code_of_conduct/" class="md-nav__link">
+        Code of Conduct
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="releasing/" class="md-nav__link">
+        Releasing
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#efficient-dynamodb" class="md-nav__link">
+    Efficient DynamoDB
+  </a>
+  
+    <nav class="md-nav" aria-label="Efficient DynamoDB">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    Example
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-tempest" class="md-nav__link">
+    Why Tempest?
+  </a>
+  
+    <nav class="md-nav" aria-label="Why Tempest?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dynamodbmapper-api" class="md-nav__link">
+    DynamoDBMapper API
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tempest-api" class="md-nav__link">
+    Tempest API
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get-tempest" class="md-nav__link">
+    Get Tempest
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    License
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/cashapp/tempest/edit/master/docs/index.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                <h1 id="tempest">Tempest<a class="headerlink" href="#tempest" title="Permanent link">&para;</a></h1>
+<p>Typesafe DynamoDB for Kotlin and Java.</p>
+<h2 id="efficient-dynamodb">Efficient DynamoDB<a class="headerlink" href="#efficient-dynamodb" title="Permanent link">&para;</a></h2>
+<p>DynamoDB applications perform best (and cost the least to operate!) when data is organized for locality:</p>
+<ul>
+<li><strong>Multiple types per table</strong>: The application can store different entity types in a single table. DynamoDB schemas are flexible.</li>
+<li><strong>Related entities are stored together</strong>: Entities that are accessed together should be stored together. This makes it possible to answer common queries in as few requests as possible, <a href="https://www.alexdebrie.com/posts/dynamodb-single-table/#the-solution-pre-join-your-data-into-item-collections">ideally one</a>.</li>
+</ul>
+<h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
+<p>Let&rsquo;s build a music library with the following features:</p>
+<ul>
+<li>Fetching multiple albums, each of which contains multiple tracks.</li>
+<li>Fetching individual tracks.</li>
+</ul>
+<p>We express it like this in code:</p>
+<div class="tabbed-set" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Kotlin</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span> <span class="nc">MusicLibrary</span> <span class="p">{</span>
+  <span class="kd">fun</span> <span class="nf">getAlbum</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n">AlbumKey</span><span class="p">):</span> <span class="n">Album</span>
+  <span class="kd">fun</span> <span class="nf">getTrack</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n">TrackKey</span><span class="p">):</span> <span class="n">Track</span>
+<span class="p">}</span>
+
+<span class="kd">data</span> <span class="kd">class</span> <span class="nc">Album</span><span class="p">(</span>
+  <span class="kd">val</span> <span class="nv">album_title</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+  <span class="kd">val</span> <span class="nv">album_artist</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+  <span class="kd">val</span> <span class="nv">release_date</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+  <span class="kd">val</span> <span class="nv">genre</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+  <span class="kd">val</span> <span class="nv">tracks</span><span class="p">:</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Track</span><span class="o">&gt;</span>
+<span class="p">)</span>
+
+<span class="kd">data</span> <span class="kd">class</span> <span class="nc">Track</span><span class="p">(</span>
+  <span class="kd">val</span> <span class="nv">track_title</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+  <span class="kd">val</span> <span class="nv">run_length</span><span class="p">:</span> <span class="kt">String</span>
+<span class="p">)</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><label for="__tabbed_1_2">Java</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">MusicLibrary</span> <span class="p">{</span>
+  <span class="n">Album</span> <span class="nf">getAlbum</span><span class="p">(</span><span class="n">AlbumKey</span> <span class="n">key</span><span class="p">);</span>
+  <span class="n">Track</span> <span class="nf">getTrack</span><span class="p">(</span><span class="n">TrackKey</span> <span class="n">key</span><span class="p">);</span> 
+<span class="p">}</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Album</span> <span class="p">{</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">album_title</span><span class="p">;</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">album_artist</span><span class="p">;</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">release_date</span><span class="p">;</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">genre</span><span class="p">;</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Track</span><span class="o">&gt;</span> <span class="n">tracks</span><span class="p">;</span> 
+<span class="p">}</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nf">Track</span><span class="p">(</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">track_title</span><span class="p">;</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">run_length</span><span class="p">;</span>
+<span class="p">)</span>
+</code></pre></div>
+</div>
+</div>
+<p>We optimize for this access pattern by putting albums and tracks in the same table:</p>
+<table>
+  <tbody>
+    <tr>
+      <td colspan=2 align="center">Primary Key</td>
+      <td rowspan=2 colspan=4 align="center" valign="top">Attributes</td>
+    </tr>
+    <tr>
+      <td><strong>partition_key</strong></td>
+      <td><strong>sort_key</strong></td>
+    </tr>
+    <tr>
+      <!-- Note: It is important to declare both vertical-align and valign here. 
+           while valign only works in Github's formatting for README.md. -->
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_1</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">INFO</td>
+      <td><strong>album_title</strong></td>
+      <td><strong>album_artiest</strong></td>
+      <td><strong>release_date</strong></td>
+      <td><strong>genre</strong></td>
+    </tr>
+    <tr>
+      <td>The Dark Side of the Moon</td>
+      <td>Pink Floyd</td>
+      <td>1973-03-01</td>
+      <td>Progressive rock</td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_1</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">TRACK_1</td>
+      <td><strong>track_title</strong></td>
+      <td><strong>run_length</strong></td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td>Speak to Me</td>
+      <td>PT1M13S</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_1</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">TRACK_2</td>
+      <td><strong>track_title</strong></td>
+      <td><strong>run_length</strong></td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td>Breathe</td>
+      <td>PT2M43S</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_1</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">TRACK_3</td>
+      <td><strong>track_title</strong></td>
+      <td><strong>run_length</strong></td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td>On the Run</td>
+      <td>PT3M36S</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan=6>...</td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_2</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">INFO</td>
+      <td><strong>album_title</strong></td>
+      <td><strong>album_artiest</strong></td>
+      <td><strong>release_date</strong></td>
+      <td><strong>genre</strong></td>
+    </tr>
+    <tr>
+      <td>The Wall</td>
+      <td>Pink Floyd</td>
+      <td>1979-11-30</td>
+      <td>Progressive rock</td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_2</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">TRACK_1</td>
+      <td><strong>track_title</strong></td>
+      <td><strong>run_length</strong></td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td>In the Flesh?</td>
+      <td>PT3M20S</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan=6>...</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This table uses a <a href="https://aws.amazon.com/blogs/database/choosing-the-right-dynamodb-partition-key/">composite primary key</a>, <code>(parition_key, sort_key)</code>, to identify each item.</p>
+<ul>
+<li>The key <code>("ALBUM_1", "INFO")</code> identifies <code>ALBUM_1</code>&lsquo;s metadata.</li>
+<li>The key <code>("ALBUM_1", "TRACK_1")</code> identifies <code>ALBUM_1</code>&lsquo;s first track.</li>
+</ul>
+<p>This table stores tracks belonging to the same album together and sorts them by the track number. The application needs only one request to DynamoDB to get the album and its tracks.</p>
+<div class="highlight"><pre><span></span><code>aws dynamodb query \
+    --table-name music_library_items \
+    --key-conditions &#39;{ 
+        &quot;PK&quot;: { 
+            &quot;ComparisonOperator&quot;: &quot;EQ&quot;,
+            &quot;AttributeValueList&quot;: [ { &quot;S&quot;: &quot;ALBUM_1&quot; } ]
+        } 
+    }&#39;
+</code></pre></div>
+<h2 id="why-tempest">Why Tempest?<a class="headerlink" href="#why-tempest" title="Permanent link">&para;</a></h2>
+<p>For locality, we smashed together several entity types in the same table. This improves performance! But it breaks type safety in DynamoDBMapper.</p>
+<h3 id="dynamodbmapper-api">DynamoDBMapper API<a class="headerlink" href="#dynamodbmapper-api" title="Permanent link">&para;</a></h3>
+<p><a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.html"><code>DynamoDBMapper</code></a>, the official Java API, forces you to write weakly-typed code that models the actual persistence type.</p>
+<div class="tabbed-set" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><label for="__tabbed_2_1">Kotlin</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="c1">// NOTE: This is not Tempest! It is an example used for comparison.</span>
+<span class="nd">@DynamoDBTable</span><span class="p">(</span><span class="n">tableName</span> <span class="o">=</span> <span class="s">&quot;music_library_items&quot;</span><span class="p">)</span>
+<span class="kd">class</span> <span class="nc">MusicLibraryItem</span> <span class="p">{</span>
+  <span class="c1">// All Items.</span>
+  <span class="nd">@DynamoDBHashKey</span>
+  <span class="kd">var</span> <span class="nv">partition_key</span><span class="p">:</span> <span class="kt">String?</span> <span class="o">=</span> <span class="kc">null</span>
+  <span class="nd">@DynamoDBRangeKey</span>
+  <span class="kd">var</span> <span class="nv">sort_key</span><span class="p">:</span> <span class="kt">String?</span> <span class="o">=</span> <span class="kc">null</span>
+
+  <span class="c1">// AlbumInfo.</span>
+  <span class="nd">@DynamoDBAttribute</span>
+  <span class="kd">var</span> <span class="nv">album_title</span><span class="p">:</span> <span class="kt">String?</span> <span class="o">=</span> <span class="kc">null</span>
+  <span class="nd">@DynamoDBAttribute</span>
+  <span class="kd">var</span> <span class="nv">album_artist</span><span class="p">:</span> <span class="kt">String?</span> <span class="o">=</span> <span class="kc">null</span>
+  <span class="nd">@DynamoDBAttribute</span>
+  <span class="kd">var</span> <span class="nv">release_date</span><span class="p">:</span> <span class="kt">String?</span> <span class="o">=</span> <span class="kc">null</span>
+  <span class="nd">@DynamoDBAttribute</span>
+  <span class="kd">var</span> <span class="nv">genre</span><span class="p">:</span> <span class="kt">String?</span> <span class="o">=</span> <span class="kc">null</span>
+
+  <span class="c1">// AlbumTrack.</span>
+  <span class="nd">@DynamoDBAttribute</span>
+  <span class="kd">var</span> <span class="nv">track_title</span><span class="p">:</span> <span class="kt">String?</span> <span class="o">=</span> <span class="kc">null</span>
+  <span class="nd">@DynamoDBAttribute</span>
+  <span class="kd">var</span> <span class="nv">run_length</span><span class="p">:</span> <span class="kt">String?</span> <span class="o">=</span> <span class="kc">null</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><label for="__tabbed_2_2">Java</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="c1">// NOTE: This is not Tempest! It is an example used for comparison.</span>
+<span class="nd">@DynamoDBTable</span><span class="p">(</span><span class="n">tableName</span> <span class="o">=</span> <span class="s">&quot;music_library_items&quot;</span><span class="p">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">MusicLibraryItem</span> <span class="p">{</span>
+  <span class="c1">// All Items.</span>
+  <span class="nd">@DynamoDBHashKey</span>
+  <span class="kd">public</span> <span class="n">String</span> <span class="n">partition_key</span><span class="p">;</span>
+  <span class="nd">@DynamoDBRangeKey</span>
+  <span class="kd">public</span> <span class="n">String</span> <span class="n">sort_key</span><span class="p">;</span>
+
+  <span class="c1">// AlbumInfo.</span>
+  <span class="nd">@DynamoDBAttribute</span>
+  <span class="kd">public</span> <span class="n">String</span> <span class="n">album_title</span><span class="p">;</span>
+  <span class="nd">@DynamoDBAttribute</span>
+  <span class="kd">public</span> <span class="n">String</span> <span class="n">album_artist</span><span class="p">;</span>
+  <span class="nd">@DynamoDBAttribute</span>
+  <span class="kd">public</span> <span class="n">String</span> <span class="n">release_date</span><span class="p">;</span>
+  <span class="nd">@DynamoDBAttribute</span>
+  <span class="kd">public</span> <span class="n">String</span> <span class="n">genre</span><span class="p">;</span>
+
+  <span class="c1">// AlbumTrack.</span>
+  <span class="nd">@DynamoDBAttribute</span>
+  <span class="kd">public</span> <span class="n">String</span> <span class="n">track_title</span><span class="p">;</span>
+  <span class="nd">@DynamoDBAttribute</span>
+  <span class="kd">public</span> <span class="n">String</span> <span class="n">run_length</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+<p>Note that <code>MusicLibraryItem</code> is a union type of all the entity types: <code>AlbumInfo</code> and <code>AlbumTrack</code>. Because all of its attributes are nullable and mutable, code that interacts with it is brittle and error prone.</p>
+<h3 id="tempest-api">Tempest API<a class="headerlink" href="#tempest-api" title="Permanent link">&para;</a></h3>
+<p>Tempest restores maintainability without losing locality. It lets you declare strongly-typed key and item classes for each logical type in the domain layer.</p>
+<div class="tabbed-set" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><label for="__tabbed_3_1">Kotlin</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">data</span> <span class="kd">class</span> <span class="nc">AlbumInfo</span><span class="p">(</span>
+  <span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;partition_key&quot;</span><span class="p">)</span>
+  <span class="kd">val</span> <span class="nv">album_token</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+  <span class="kd">val</span> <span class="nv">album_title</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+  <span class="kd">val</span> <span class="nv">album_artist</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+  <span class="kd">val</span> <span class="nv">release_date</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+  <span class="kd">val</span> <span class="nv">genre_name</span><span class="p">:</span> <span class="kt">String</span>
+<span class="p">)</span> <span class="p">{</span>
+  <span class="nd">@Attribute</span><span class="p">(</span><span class="n">prefix</span> <span class="o">=</span> <span class="s">&quot;INFO_&quot;</span><span class="p">)</span>
+  <span class="kd">val</span> <span class="nv">sort_key</span><span class="p">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+
+  <span class="kd">data</span> <span class="kd">class</span> <span class="nc">Key</span><span class="p">(</span>
+    <span class="kd">val</span> <span class="nv">album_token</span><span class="p">:</span> <span class="kt">String</span>
+  <span class="p">)</span> <span class="p">{</span>
+    <span class="kd">val</span> <span class="nv">sort_key</span><span class="p">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">data</span> <span class="kd">class</span> <span class="nc">AlbumTrack</span><span class="p">(</span>
+  <span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;partition_key&quot;</span><span class="p">)</span>
+  <span class="kd">val</span> <span class="nv">album_token</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+  <span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;sort_key&quot;</span><span class="p">,</span> <span class="n">prefix</span> <span class="o">=</span> <span class="s">&quot;TRACK_&quot;</span><span class="p">)</span>
+  <span class="kd">val</span> <span class="nv">track_token</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+  <span class="kd">val</span> <span class="nv">track_title</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+  <span class="kd">val</span> <span class="nv">run_length</span><span class="p">:</span> <span class="kt">String</span>
+<span class="p">)</span> <span class="p">{</span>
+  <span class="kd">data</span> <span class="kd">class</span> <span class="nc">Key</span><span class="p">(</span>
+    <span class="kd">val</span> <span class="nv">album_token</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+    <span class="kd">val</span> <span class="nv">track_token</span><span class="p">:</span> <span class="kt">String</span>
+  <span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><label for="__tabbed_3_2">Java</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AlbumInfo</span> <span class="p">{</span>
+  <span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;partition_key&quot;</span><span class="p">)</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">album_token</span><span class="p">;</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">album_title</span><span class="p">;</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">artist_name</span><span class="p">;</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">release_date</span><span class="p">;</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">genre_name</span><span class="p">;</span>
+
+  <span class="nd">@Attribute</span><span class="p">(</span><span class="n">prefix</span> <span class="o">=</span> <span class="s">&quot;INFO_&quot;</span><span class="p">)</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">sort_key</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="p">;</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Key</span> <span class="p">{</span>
+    <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">album_token</span><span class="p">;</span>
+    <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">sort_key</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">AlbumTrack</span> <span class="p">{</span>
+  <span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;partition_key&quot;</span><span class="p">)</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">album_token</span><span class="p">;</span>
+  <span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;sort_key&quot;</span><span class="p">,</span> <span class="n">prefix</span> <span class="o">=</span> <span class="s">&quot;TRACK_&quot;</span><span class="p">)</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">track_token</span><span class="p">;</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">track_title</span><span class="p">;</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">run_length</span><span class="p">;</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Key</span> <span class="p">{</span>
+    <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">album_token</span><span class="p">;</span>
+    <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">track_token</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+<p>You build business logic with logical types. Tempest handles mapping them to the underlying persistence type.</p>
+<div class="tabbed-set" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><label for="__tabbed_4_1">Kotlin</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span> <span class="nc">MusicLibraryTable</span> <span class="p">:</span> <span class="n">LogicalTable</span><span class="o">&lt;</span><span class="n">MusicLibraryItem</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="kd">val</span> <span class="nv">albumInfo</span><span class="p">:</span> <span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span> <span class="n">AlbumInfo</span><span class="o">&gt;</span>
+  <span class="kd">val</span> <span class="nv">albumTracks</span><span class="p">:</span> <span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;</span>
+<span class="p">}</span>
+
+<span class="kd">private</span> <span class="kd">val</span> <span class="nv">musicLibrary</span><span class="p">:</span> <span class="n">MusicLibraryTable</span>
+
+<span class="c1">// Load.</span>
+<span class="kd">fun</span> <span class="nf">getAlbumTitle</span><span class="p">(</span><span class="n">albumToken</span><span class="p">:</span> <span class="kt">String</span><span class="p">):</span> <span class="kt">String?</span> <span class="p">{</span>
+  <span class="kd">val</span> <span class="nv">key</span> <span class="o">=</span> <span class="n">AlbumInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">)</span>
+  <span class="kd">val</span> <span class="nv">albumInfo</span> <span class="o">=</span> <span class="n">musicLibrary</span><span class="p">.</span><span class="na">albumInfo</span><span class="p">.</span><span class="na">load</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">?:</span> <span class="k">return</span> <span class="kc">null</span>
+  <span class="k">return</span> <span class="n">albumInfo</span><span class="p">.</span><span class="na">album_title</span>
+<span class="p">}</span>
+
+<span class="c1">// Update.</span>
+<span class="kd">fun</span> <span class="nf">addAlbumTrack</span><span class="p">(</span>
+  <span class="n">albumToken</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span> 
+  <span class="n">track_token</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span> 
+  <span class="n">track_title</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span> 
+  <span class="n">run_length</span><span class="p">:</span> <span class="kt">String</span>
+<span class="p">)</span> <span class="p">{</span>
+  <span class="kd">val</span> <span class="nv">newAlbumTrack</span> <span class="o">=</span> <span class="n">AlbumTrack</span><span class="p">(</span><span class="n">albumToken</span><span class="p">,</span> <span class="n">track_token</span><span class="p">,</span> <span class="n">track_title</span><span class="p">,</span> <span class="n">run_length</span><span class="p">)</span>
+  <span class="n">musicLibrary</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">.</span><span class="na">save</span><span class="p">(</span><span class="n">newAlbumTrack</span><span class="p">)</span>
+<span class="p">}</span> 
+
+<span class="c1">// Query.</span>
+<span class="kd">fun</span> <span class="nf">getAlbumTrackTitles</span><span class="p">(</span><span class="n">albumToken</span><span class="p">:</span> <span class="kt">String</span><span class="p">):</span> <span class="n">List</span><span class="o">&lt;</span><span class="kt">String</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="kd">val</span> <span class="nv">page</span> <span class="o">=</span> <span class="n">musicLibrary</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">.</span><span class="na">query</span><span class="p">(</span>
+    <span class="n">keyCondition</span> <span class="o">=</span> <span class="n">BeginsWith</span><span class="p">(</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">))</span>
+  <span class="p">)</span>
+  <span class="k">return</span> <span class="n">page</span><span class="p">.</span><span class="na">contents</span><span class="p">.</span><span class="na">map</span> <span class="p">{</span> <span class="nb">it</span><span class="p">.</span><span class="na">track_title</span> <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><label for="__tabbed_4_2">Java</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">MusicLibraryTable</span> <span class="kd">extends</span> <span class="n">LogicalTable</span><span class="o">&lt;</span><span class="n">MusicLibraryItem</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span> <span class="n">AlbumInfo</span><span class="o">&gt;</span> <span class="nf">albumInfo</span><span class="p">();</span>
+  <span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="nf">albumTracks</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">private</span> <span class="n">MusicLibraryTable</span> <span class="n">musicLibrary</span><span class="p">;</span> 
+
+<span class="c1">// Load.</span>
+<span class="nd">@Nullable</span>
+<span class="kd">public</span> <span class="n">String</span> <span class="nf">getAlbumTitle</span><span class="p">(</span><span class="n">String</span> <span class="n">albumToken</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">AlbumInfo</span> <span class="n">albumInfo</span> <span class="o">=</span> <span class="n">table</span><span class="p">.</span><span class="na">albumInfo</span><span class="p">().</span><span class="na">load</span><span class="p">(</span><span class="k">new</span> <span class="n">AlbumInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">));</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">albumInfo</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">albumInfo</span><span class="p">.</span><span class="na">album_title</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// Update.</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">addAlbumTrack</span><span class="p">(</span>
+  <span class="n">String</span> <span class="n">albumToken</span><span class="p">,</span> 
+  <span class="n">String</span> <span class="n">track_token</span><span class="p">,</span> 
+  <span class="n">String</span> <span class="n">track_title</span><span class="p">,</span> 
+  <span class="n">String</span> <span class="n">run_length</span>
+<span class="p">)</span> <span class="p">{</span>
+  <span class="n">AlbumTrack</span> <span class="n">newAlbumTrack</span> <span class="o">=</span> <span class="k">new</span> <span class="n">AlbumTrack</span><span class="p">(</span><span class="n">albumToken</span><span class="p">,</span> <span class="n">track_token</span><span class="p">,</span> <span class="n">track_title</span><span class="p">,</span> <span class="n">run_length</span><span class="p">);</span>
+  <span class="n">musicLibrary</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">().</span><span class="na">save</span><span class="p">(</span><span class="n">newAlbumTrack</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// Query.</span>
+<span class="kd">public</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="nf">getAlbumTrackTitles</span><span class="p">(</span><span class="n">String</span> <span class="n">albumToken</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">Page</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span> <span class="n">AlbumTrack</span><span class="o">&gt;</span> <span class="n">page</span> <span class="o">=</span> <span class="n">musicLibrary</span><span class="p">.</span><span class="na">albumTracks</span><span class="p">().</span><span class="na">query</span><span class="p">(</span>
+      <span class="c1">// keyCondition.</span>
+      <span class="k">new</span> <span class="n">BeginsWith</span><span class="o">&lt;&gt;</span><span class="p">(</span>
+          <span class="c1">// prefix.</span>
+          <span class="k">new</span> <span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="n">albumToken</span><span class="p">)</span>
+      <span class="p">)</span>
+  <span class="p">);</span>
+  <span class="k">return</span> <span class="n">page</span><span class="p">.</span><span class="na">getContents</span><span class="p">().</span><span class="na">stream</span><span class="p">().</span><span class="na">map</span><span class="p">(</span><span class="n">track</span> <span class="o">-&gt;</span> <span class="n">track</span><span class="p">.</span><span class="na">track_title</span><span class="p">).</span><span class="na">collect</span><span class="p">(</span><span class="n">Collectors</span><span class="p">.</span><span class="na">toList</span><span class="p">());</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+<h2 id="get-tempest">Get Tempest<a class="headerlink" href="#get-tempest" title="Permanent link">&para;</a></h2>
+<p>For AWS SDK 1.x:</p>
+<div class="highlight"><pre><span></span><code><span class="n">implementation</span> <span class="s2">&quot;app.cash.tempest:tempest:1.4.0&quot;</span>
+</code></pre></div>
+<p>For AWS SDK 2.x:</p>
+<div class="highlight"><pre><span></span><code><span class="n">implementation</span> <span class="s2">&quot;app.cash.tempest:tempest2:1.4.0&quot;</span>
+</code></pre></div>
+<h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code>Copyright 2020 Square, Inc.
+
+Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre></div>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+      
+        <a href="guide/getting_started/" class="md-footer__link md-footer__link--next" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Getting Started
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2021 Square, Inc.
+          </div>
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+        
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "assets/javascripts/workers/search.fb4a9340.min.js", "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.5cf3e710.min.js"></script>
+      
+        <script src="script/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>
