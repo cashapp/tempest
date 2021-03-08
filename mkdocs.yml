@@ -4,7 +4,7 @@ repo_name: cashapp/tempest
 repo_url: https://github.com/cashapp/tempest
 site_description: "Tempest - Typesafe DynamoDB in Kotlin"
 site_author: Square, Inc.
-copyright: 'Copyright &copy; 2020 Square, Inc.'
+copyright: 'Copyright &copy; 2021 Square, Inc.'
 remote_branch: gh-pages
 
 theme:
@@ -67,8 +67,20 @@ nav:
       - 'DynamoDB Resources': guide/dynamodb_resources.md
 
   - 'Reference':
-      - 'For AWS SDK 1.x': 1.x/tempest/app.cash.tempest/index.md
-      - 'For AWS SDK 2.x': 1.x/tempest2/app.cash.tempest2/index.md
+      - 'For AWS SDK 1.x':
+          - 'tempest': 1.x/tempest/app.cash.tempest/index.md
+          - 'tempest-testing': 1.x/tempest-testing/app.cash.tempest.testing/index.md
+          - 'tempest-testing-jvm': 1.x/tempest-testing-jvm/app.cash.tempest.testing/index.md
+          - 'tempest-testing-docker': 1.x/tempest-testing-docker/app.cash.tempest.testing/index.md
+          - 'tempest-testing-junit5': 1.x/tempest-testing-junit5/app.cash.tempest.testing/index.md
+          - 'tempest-testing-junit4': 1.x/tempest-testing-junit4/app.cash.tempest.testing/index.md
+      - 'For AWS SDK 2.x':
+          - 'tempest2': 1.x/tempest2/app.cash.tempest2/index.md
+          - 'tempest2-testing': 1.x/tempest2-testing/app.cash.tempest2.testing/index.md
+          - 'tempest2-testing-jvm': 1.x/tempest2-testing-jvm/app.cash.tempest2.testing/index.md
+          - 'tempest2-testing-docker': 1.x/tempest2-testing-docker/app.cash.tempest2.testing/index.md
+          - 'tempest2-testing-junit5': 1.x/tempest2-testing-junit5/app.cash.tempest2.testing/index.md
+          - 'tempest2-testing-junit4': 1.x/tempest2-testing-junit4/app.cash.tempest2.testing/index.md
 
   - 'Changelog': changelog.md
   - 'Contributing': contributing.md

@@ -23,8 +23,8 @@ import org.junit.rules.ExternalResource
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * This JUnit rule spins up a DynamoDB server in tests. It keeps the server running until the
- * process exits and shares it across tests.
+ * This JUnit rule spins up a DynamoDB server in tests. It shares the server across tests and
+ * keeps the server running until the process exits.
  */
 class TestDynamoDb private constructor(
   private val client: TestDynamoDbClient,
