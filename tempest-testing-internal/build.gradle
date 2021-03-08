@@ -1,0 +1,13 @@
+apply plugin: 'java-library'
+apply plugin: 'kotlin'
+
+dependencies {
+  api project(":tempest-testing")
+  api dep.loggingApi
+  implementation dep.log4jCore
+  implementation dep.kotlinStdLib
+
+  testImplementation dep.assertj
+  testImplementation dep.junitApi
+  testImplementation dep.junitEngine
+}

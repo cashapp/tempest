@@ -1,0 +1,13 @@
+apply plugin: 'java-library'
+apply plugin: 'kotlin'
+
+dependencies {
+  api project(":tempest2-testing")
+  implementation project(":tempest2-testing-internal")
+  implementation dep.awsDynamodbLocal
+  implementation dep.kotlinStdLib
+
+  testImplementation dep.assertj
+  testImplementation dep.junitApi
+  testImplementation dep.junitEngine
+}

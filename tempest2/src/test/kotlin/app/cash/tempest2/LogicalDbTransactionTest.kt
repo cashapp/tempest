@@ -18,28 +18,26 @@ package app.cash.tempest2
 
 import app.cash.tempest2.musiclibrary.AlbumTrack
 import app.cash.tempest2.musiclibrary.MusicDb
-import app.cash.tempest2.musiclibrary.MusicDbTestModule
 import app.cash.tempest2.musiclibrary.PlaylistInfo
-import misk.testing.MiskTest
-import misk.testing.MiskTestModule
+import app.cash.tempest2.musiclibrary.testDb
+import app.cash.tempest2.testing.logicalDb
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException
 import java.time.Duration
-import javax.inject.Inject
-import kotlin.test.assertFailsWith
 
-@MiskTest(startService = true)
 class LogicalDbTransactionTest {
 
-  @MiskTestModule
-  val module = MusicDbTestModule()
+  @RegisterExtension
+  @JvmField
+  val db = testDb()
 
-  @Inject lateinit var musicDb: MusicDb
-
-  private val musicTable get() = musicDb.music
+  private val musicDb by lazy { db.logicalDb<MusicDb>() }
+  private val musicTable by lazy { musicDb.music }
 
   @Test
   fun transactionLoad() {
@@ -190,9 +188,10 @@ class LogicalDbTransactionTest {
     // Introduce a race condition.
     musicTable.playlistInfo.save(playlistInfoV2)
 
-    assertFailsWith<TransactionCanceledException> {
-      musicDb.transactionWrite(writeTransaction)
-    }
+    assertThatExceptionOfType(TransactionCanceledException::class.java)
+      .isThrownBy {
+        musicDb.transactionWrite(writeTransaction)
+      }
   }
 
   @Test
@@ -251,9 +250,10 @@ class LogicalDbTransactionTest {
       )
       .build()
 
-    assertFailsWith<TransactionCanceledException> {
-      musicDb.transactionWrite(writeTransaction)
-    }
+    assertThatExceptionOfType(TransactionCanceledException::class.java)
+      .isThrownBy {
+        musicDb.transactionWrite(writeTransaction)
+      }
   }
 
   private fun ifPlaylistVersionIs(playlist_version: Long): Expression {

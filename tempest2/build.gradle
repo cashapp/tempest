@@ -11,14 +11,12 @@ dependencies {
   implementation dep.kotlinStdLib
 
   testImplementation project(":samples:musiclibrary2")
+  testImplementation project(":samples:musiclibrary-testing")
   testImplementation project(":samples:urlshortener2")
-  testImplementation project(":test-utils")
+  testImplementation project(":tempest2-testing-jvm")
+  testImplementation project(":tempest2-testing-junit5")
   testImplementation dep.assertj
-  testImplementation dep.junitApi
   testImplementation dep.junitEngine
-  testImplementation dep.kotlinTest
-  testImplementation dep.miskAws2DynamodbTesting
-  testImplementation dep.miskTesting
 }
 
 apply from: "$rootDir/gradle-mvn-publish.gradle"

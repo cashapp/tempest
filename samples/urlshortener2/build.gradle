@@ -6,7 +6,6 @@ dependencies {
   implementation dep.clikt
 
   testImplementation dep.assertj
-  testImplementation dep.miskTesting
   testImplementation dep.junitApi
   testImplementation dep.junitEngine
 }

@@ -17,6 +17,24 @@
 package app.cash.tempest.musiclibrary
 
 import app.cash.tempest.Page
+import app.cash.tempest.reservedwords.ReservedWordsItem
+import app.cash.tempest.testing.JvmDynamoDbServer
+import app.cash.tempest.testing.TestDynamoDb
+import app.cash.tempest.testing.TestTable
+import com.amazonaws.services.dynamodbv2.model.Projection
+import com.amazonaws.services.dynamodbv2.model.ProjectionType
+
+fun testDb() = TestDynamoDb.Builder(JvmDynamoDbServer.Factory)
+  .addTable(
+    TestTable.create<MusicItem> {
+      for (gsi in it.globalSecondaryIndexes) {
+        gsi.withProjection(Projection().withProjectionType(ProjectionType.ALL))
+      }
+      it
+    }
+  )
+  .addTable(TestTable.create<ReservedWordsItem>())
+  .build()
 
 val Page<*, AlbumTrack>.trackTitles: List<String>
   get() = contents.map { it.track_title }

@@ -11,14 +11,12 @@ dependencies {
   implementation dep.okio
 
   testImplementation project(":samples:musiclibrary")
+  testImplementation project(":samples:musiclibrary-testing")
   testImplementation project(":samples:urlshortener")
-  testImplementation project(":test-utils")
+  testImplementation project(":tempest-testing-jvm")
+  testImplementation project(":tempest-testing-junit5")
   testImplementation dep.assertj
-  testImplementation dep.junitApi
   testImplementation dep.junitEngine
-  testImplementation dep.kotlinTest
-  testImplementation dep.miskAwsDynamodbTesting
-  testImplementation dep.miskTesting
 }
 
 apply from: "$rootDir/gradle-mvn-publish.gradle"

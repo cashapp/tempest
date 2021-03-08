@@ -18,23 +18,22 @@ package app.cash.tempest2
 
 import app.cash.tempest2.musiclibrary.AlbumTrack
 import app.cash.tempest2.musiclibrary.MusicDb
-import app.cash.tempest2.musiclibrary.MusicDbTestModule
 import app.cash.tempest2.musiclibrary.PlaylistInfo
-import misk.testing.MiskTest
-import misk.testing.MiskTestModule
+import app.cash.tempest2.musiclibrary.testDb
+import app.cash.tempest2.testing.logicalDb
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.time.Duration
-import javax.inject.Inject
 
-@MiskTest(startService = true)
 class LogicalDbBatchTest {
-  @MiskTestModule
-  val module = MusicDbTestModule()
 
-  @Inject lateinit var musicDb: MusicDb
+  @RegisterExtension
+  @JvmField
+  val db = testDb()
 
-  private val musicTable get() = musicDb.music
+  private val musicDb by lazy { db.logicalDb<MusicDb>() }
+  private val musicTable by lazy { musicDb.music }
 
   @Test
   fun batchLoad() {

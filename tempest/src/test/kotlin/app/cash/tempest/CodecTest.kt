@@ -18,28 +18,26 @@ package app.cash.tempest
 import app.cash.tempest.musiclibrary.AlbumInfo
 import app.cash.tempest.musiclibrary.AlbumTrack
 import app.cash.tempest.musiclibrary.MusicDb
-import app.cash.tempest.musiclibrary.MusicDbTestModule
 import app.cash.tempest.musiclibrary.MusicItem
-import misk.testing.MiskTest
-import misk.testing.MiskTestModule
+import app.cash.tempest.musiclibrary.testDb
+import app.cash.tempest.testing.logicalDb
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.time.LocalDate
-import javax.inject.Inject
 
-@MiskTest(startService = true)
 class CodecTest {
 
-  @MiskTestModule
-  val module = MusicDbTestModule()
+  @RegisterExtension
+  @JvmField
+  val db = testDb()
 
-  @Inject
-  lateinit var musicDb: MusicDb
+  private val musicTable by lazy { db.logicalDb<MusicDb>().music }
 
   @Test
   internal fun itemCodecToDb() {
-    val albumInfoCodec = musicDb.music.codec(AlbumInfo::class)
+    val albumInfoCodec = musicTable.codec(AlbumInfo::class)
 
     val albumInfo = AlbumInfo(
       "ALBUM_1",
@@ -64,7 +62,7 @@ class CodecTest {
 
   @Test
   internal fun itemCodecToApp() {
-    val albumInfoCodec = musicDb.music.codec(AlbumInfo::class)
+    val albumInfoCodec = musicTable.codec(AlbumInfo::class)
 
     val musicItem = MusicItem().apply {
       partition_key = "ALBUM_1"
@@ -89,7 +87,7 @@ class CodecTest {
 
   @Test
   internal fun keyCodecToDb() {
-    val albumKeyCodec = musicDb.music.codec(AlbumTrack.Key::class)
+    val albumKeyCodec = musicTable.codec(AlbumTrack.Key::class)
 
     val albumTrackKey = AlbumTrack.Key(
       album_token = "ALBUM_1",
@@ -113,7 +111,7 @@ class CodecTest {
       sort_key = "TRACK_0000000000000001"
     }
 
-    val albumKeyCodec = musicDb.music.codec(AlbumTrack.Key::class)
+    val albumKeyCodec = musicTable.codec(AlbumTrack.Key::class)
 
     val albumTrackKey = albumKeyCodec.toApp(musicItem)
     assertThat(albumTrackKey).isEqualTo(
@@ -127,11 +125,11 @@ class CodecTest {
   @Test
   internal fun unexpectedType() {
     assertThatIllegalArgumentException().isThrownBy {
-      musicDb.music.codec(AlbumColor::class)
+      musicTable.codec(AlbumColor::class)
     }.withMessageContaining("unexpected type")
 
     assertThatIllegalArgumentException().isThrownBy {
-      musicDb.music.codec(AlbumColor.Key::class)
+      musicTable.codec(AlbumColor.Key::class)
     }.withMessageContaining("unexpected type")
   }
 }

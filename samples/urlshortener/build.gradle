@@ -5,9 +5,7 @@ dependencies {
   implementation dep.kotlinStdLib
   implementation dep.clikt
 
-  testImplementation dep.miskAwsDynamodbTesting
   testImplementation dep.assertj
-  testImplementation dep.miskTesting
   testImplementation dep.junitApi
   testImplementation dep.junitEngine
 }

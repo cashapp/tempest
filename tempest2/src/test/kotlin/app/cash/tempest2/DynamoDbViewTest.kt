@@ -19,27 +19,25 @@ package app.cash.tempest2
 import app.cash.tempest2.musiclibrary.AlbumInfo
 import app.cash.tempest2.musiclibrary.AlbumTrack
 import app.cash.tempest2.musiclibrary.MusicDb
-import app.cash.tempest2.musiclibrary.MusicDbTestModule
 import app.cash.tempest2.musiclibrary.PlaylistInfo
-import misk.testing.MiskTest
-import misk.testing.MiskTestModule
+import app.cash.tempest2.musiclibrary.testDb
+import app.cash.tempest2.testing.logicalDb
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException
 import java.time.LocalDate
-import javax.inject.Inject
 
-@MiskTest(startService = true)
 class DynamoDbViewTest {
-  @MiskTestModule
-  val module = MusicDbTestModule()
 
-  @Inject lateinit var musicDb: MusicDb
+  @RegisterExtension
+  @JvmField
+  val db = testDb()
 
-  private val musicTable get() = musicDb.music
+  private val musicTable by lazy { db.logicalDb<MusicDb>().music }
 
   @Test
   fun loadAfterSave() {

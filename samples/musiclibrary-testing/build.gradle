@@ -1,0 +1,12 @@
+apply plugin: 'java-library'
+apply plugin: 'kotlin'
+
+dependencies {
+  api dep.findbugsJsr305
+  implementation dep.kotlinReflection
+  implementation dep.kotlinStdLib
+
+  testImplementation dep.assertj
+  testImplementation dep.junitApi
+  testImplementation dep.junitEngine
+}

@@ -21,33 +21,29 @@ import app.cash.tempest.musiclibrary.AlbumInfo
 import app.cash.tempest.musiclibrary.AlbumTrack
 import app.cash.tempest.musiclibrary.LOCKDOWN_SINGLE
 import app.cash.tempest.musiclibrary.MusicDb
-import app.cash.tempest.musiclibrary.MusicDbTestModule
 import app.cash.tempest.musiclibrary.THE_DARK_SIDE_OF_THE_MOON
 import app.cash.tempest.musiclibrary.THE_WALL
 import app.cash.tempest.musiclibrary.WHAT_YOU_DO_TO_ME_SINGLE
 import app.cash.tempest.musiclibrary.albumTitles
 import app.cash.tempest.musiclibrary.givenAlbums
+import app.cash.tempest.musiclibrary.testDb
 import app.cash.tempest.musiclibrary.trackTitles
 import app.cash.tempest.reservedwords.ReservedWordObject
 import app.cash.tempest.reservedwords.ReservedWordsDb
+import app.cash.tempest.testing.logicalDb
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
-import misk.testing.MiskTest
-import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.time.Duration
-import javax.inject.Inject
 
-@MiskTest(startService = true)
 class DynamoDbQueryableTest {
-  @MiskTestModule
-  val module = MusicDbTestModule()
+  @RegisterExtension
+  @JvmField
+  val db = testDb()
 
-  @Inject lateinit var musicDb: MusicDb
-  @Inject lateinit var reservedWordsDb: ReservedWordsDb
-
-  private val musicTable get() = musicDb.music
-  private val reservedWordsTable get() = reservedWordsDb.table
+  private val musicTable by lazy { db.logicalDb<MusicDb>().music }
+  private val reservedWordsTable by lazy { db.logicalDb<ReservedWordsDb>().table }
 
   @Test
   fun primaryIndexBetween() {

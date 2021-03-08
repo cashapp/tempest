@@ -16,23 +16,20 @@
 
 package app.cash.tempest.interop
 
+import app.cash.tempest.testing.logicalDb
 import app.cash.tempest.urlshortener.java.Alias
 import app.cash.tempest.urlshortener.java.AliasDb
-import app.cash.tempest.urlshortener.java.AliasTable
-import misk.testing.MiskTest
-import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import javax.inject.Inject
+import org.junit.jupiter.api.extension.RegisterExtension
 
-@MiskTest(startService = true)
 class JavaInteropTest {
 
-  @MiskTestModule
-  val module = InteropTestModule()
+  @RegisterExtension
+  @JvmField
+  val db = InteropTestUtils.testDb()
 
-  @Inject lateinit var aliasDb: AliasDb
-  val aliasTable: AliasTable get() = aliasDb.aliasTable()
+  private val aliasTable by lazy { db.logicalDb<AliasDb>().aliasTable() }
 
   @Test
   fun javaLogicalTypeJavaItemType() {

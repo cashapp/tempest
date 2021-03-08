@@ -18,29 +18,26 @@ package app.cash.tempest
 
 import app.cash.tempest.musiclibrary.AlbumTrack
 import app.cash.tempest.musiclibrary.MusicDb
-import app.cash.tempest.musiclibrary.MusicDbTestModule
 import app.cash.tempest.musiclibrary.PlaylistInfo
-import com.amazonaws.AmazonServiceException
+import app.cash.tempest.musiclibrary.testDb
+import app.cash.tempest.testing.logicalDb
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTransactionWriteExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.TransactionCanceledException
-import misk.testing.MiskTest
-import misk.testing.MiskTestModule
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.time.Duration
-import javax.inject.Inject
 
-@MiskTest(startService = true)
 class LogicalDbTransactionTest {
 
-  @MiskTestModule
-  val module = MusicDbTestModule()
+  @RegisterExtension
+  @JvmField
+  val db = testDb()
 
-  @Inject lateinit var musicDb: MusicDb
-
-  private val musicTable get() = musicDb.music
+  private val musicDb by lazy { db.logicalDb<MusicDb>() }
+  private val musicTable by lazy { musicDb.music }
 
   @Test
   fun transactionLoad() {
@@ -191,10 +188,10 @@ class LogicalDbTransactionTest {
     // Introduce a race condition.
     musicTable.playlistInfo.save(playlistInfoV2)
 
-    val exception = assertThrows<AmazonServiceException> {
-      musicDb.transactionWrite(writeTransaction)
-    }
-    assertThat(exception.errorCode).isEqualTo(TransactionCanceledException::class.simpleName)
+    assertThatExceptionOfType(TransactionCanceledException::class.java)
+      .isThrownBy {
+        musicDb.transactionWrite(writeTransaction)
+      }
   }
 
   @Test
@@ -253,10 +250,10 @@ class LogicalDbTransactionTest {
       )
       .build()
 
-    val exception = assertThrows<AmazonServiceException> {
-      musicDb.transactionWrite(writeTransaction)
-    }
-    assertThat(exception.errorCode).isEqualTo(TransactionCanceledException::class.simpleName)
+    assertThatExceptionOfType(TransactionCanceledException::class.java)
+      .isThrownBy {
+        musicDb.transactionWrite(writeTransaction)
+      }
   }
 
   private fun ifPlaylistVersionIs(playlist_version: Long): DynamoDBTransactionWriteExpression {

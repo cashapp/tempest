@@ -20,21 +20,20 @@ import app.cash.tempest.Attribute
 import app.cash.tempest.ForIndex
 import app.cash.tempest.musiclibrary.AlbumInfo
 import app.cash.tempest.musiclibrary.MusicDb
-import app.cash.tempest.musiclibrary.MusicDbTestModule
-import misk.testing.MiskTest
-import misk.testing.MiskTestModule
+import app.cash.tempest.musiclibrary.testDb
+import app.cash.tempest.testing.logicalDb
 import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.time.LocalDate
-import javax.inject.Inject
 
-@MiskTest(startService = true)
 class SchemaTest {
 
-  @MiskTestModule
-  val module = MusicDbTestModule()
+  @RegisterExtension
+  @JvmField
+  val db = testDb()
 
-  @Inject lateinit var musicDb: MusicDb
+  private val musicDb by lazy { db.logicalDb<MusicDb>() }
 
   @Test
   fun badKeyType() {
