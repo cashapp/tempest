@@ -40,6 +40,14 @@ interface TestDynamoDbClient : Service {
   fun <DB : LogicalDb> logicalDb(type: KClass<DB>, mapperConfig: DynamoDBMapperConfig): DB {
     return LogicalDb.create(type, DynamoDBMapper(dynamoDb, mapperConfig))
   }
+
+  fun <DB : LogicalDb> logicalDb(type: Class<DB>): DB {
+    return logicalDb(type.kotlin, DynamoDBMapperConfig.DEFAULT)
+  }
+
+  fun <DB : LogicalDb> logicalDb(type: Class<DB>, mapperConfig: DynamoDBMapperConfig): DB {
+    return logicalDb(type.kotlin, mapperConfig)
+  }
 }
 
 inline fun <reified DB : LogicalDb> TestDynamoDbClient.logicalDb(): DB {
