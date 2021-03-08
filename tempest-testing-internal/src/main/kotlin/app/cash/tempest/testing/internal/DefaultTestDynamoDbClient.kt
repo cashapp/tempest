@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-package app.cash.tempest.testing
+package app.cash.tempest.testing.internal
 
+import app.cash.tempest.testing.TestDynamoDbClient
+import app.cash.tempest.testing.TestTable
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBStreams
 import com.google.common.util.concurrent.AbstractIdleService
 
 class DefaultTestDynamoDbClient(
   override val tables: List<TestTable>,
+  private val port: Int,
 ) : AbstractIdleService(), TestDynamoDbClient {
 
   override val dynamoDb: AmazonDynamoDB
@@ -33,8 +36,8 @@ class DefaultTestDynamoDbClient(
   private var _dynamoDbStreams: AmazonDynamoDBStreams? = null
 
   override fun startUp() {
-    _dynamoDb = TestUtils.connect()
-    _dynamoDbStreams = TestUtils.connectToStreams()
+    _dynamoDb = connect(port)
+    _dynamoDbStreams = connectToStreams(port)
 
     // Cleans up the tables before each run.
     for (tableName in dynamoDb.listTables().tableNames) {

@@ -45,6 +45,6 @@ class ExampleTest {
   }
 }
 
-fun testDb() = TestDynamoDb.Builder(DockerDynamoDbServer)
+fun testDb() = TestDynamoDb.Builder(DockerDynamoDbServer.Factory)
   .addTable(TestTable.create<AliasItem>())
   .build()

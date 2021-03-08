@@ -21,12 +21,11 @@ import com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer
 import com.google.common.util.concurrent.AbstractIdleService
 import java.io.File
 
-object JvmDynamoDbServer : AbstractIdleService(), TestDynamoDbServer {
+class JvmDynamoDbServer private constructor(
+  override val port: Int
+) : AbstractIdleService(), TestDynamoDbServer {
 
-  private val pid = ProcessHandle.current().pid()
-  override val id = "jvm-dynamodb-local-$pid"
-
-  override val port = TestUtils.port
+  override val id = "tempest-jvm-dynamodb-local-$port"
 
   private lateinit var server: DynamoDBProxyServer
 
@@ -84,5 +83,9 @@ object JvmDynamoDbServer : AbstractIdleService(), TestDynamoDbServer {
 
   override fun shutDown() {
     server.stop()
+  }
+
+  object Factory : TestDynamoDbServer.Factory<JvmDynamoDbServer> {
+    override fun create(port: Int) = JvmDynamoDbServer(port)
   }
 }

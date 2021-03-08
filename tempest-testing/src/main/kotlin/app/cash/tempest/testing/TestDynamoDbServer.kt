@@ -24,4 +24,8 @@ import com.google.common.util.concurrent.Service
 interface TestDynamoDbServer : Service {
   val id: String
   val port: Int
+
+  interface Factory<T : TestDynamoDbServer> {
+    fun create(port: Int): T
+  }
 }

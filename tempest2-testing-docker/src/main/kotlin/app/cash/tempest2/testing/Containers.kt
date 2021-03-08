@@ -1,5 +1,6 @@
 package app.cash.tempest2.testing
 
+import app.cash.tempest2.testing.internal.getLogger
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.command.CreateContainerCmd
 import com.github.dockerjava.api.exception.NotFoundException

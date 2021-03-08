@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package app.cash.tempest2.testing
+package app.cash.tempest2.testing.internal
 
+import app.cash.tempest2.testing.TestTable
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
@@ -27,39 +28,33 @@ import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput
 import software.amazon.awssdk.services.dynamodb.streams.DynamoDbStreamsClient
 import java.net.URI
 
-object TestUtils {
-  val port: Int = pickPort()
+fun pickRandomPort(): Int {
+  // There is a tolerable chance of flaky tests caused by port collision.
+  return 58000 + (ProcessHandle.current().pid() % 1000).toInt()
+}
 
-  private val url = "http://localhost:$port"
+private val AWS_CREDENTIALS_PROVIDER = StaticCredentialsProvider.create(
+  AwsBasicCredentials.create("key", "secret")
+)
 
-  private val awsCredentialsProvider: StaticCredentialsProvider = StaticCredentialsProvider.create(
-    AwsBasicCredentials.create("key", "secret")
-  )
+fun connect(port: Int): DynamoDbClient {
+  return DynamoDbClient.builder()
+    // The values that you supply for the AWS access key and the Region are only used to name
+    // the database file.
+    .credentialsProvider(AWS_CREDENTIALS_PROVIDER)
+    .region(Region.US_WEST_2)
+    .endpointOverride(URI.create("http://localhost:$port"))
+    .build()
+}
 
-  fun connect(): DynamoDbClient {
-    return DynamoDbClient.builder()
-      // The values that you supply for the AWS access key and the Region are only used to name
-      // the database file.
-      .credentialsProvider(awsCredentialsProvider)
-      .region(Region.US_WEST_2)
-      .endpointOverride(URI.create(url))
-      .build()
-  }
-
-  fun connectToStreams(): DynamoDbStreamsClient {
-    return DynamoDbStreamsClient.builder()
-      // The values that you supply for the AWS access key and the Region are only used to name
-      // the database file.
-      .credentialsProvider(awsCredentialsProvider)
-      .region(Region.US_WEST_2)
-      .endpointOverride(URI.create(url))
-      .build()
-  }
-
-  private fun pickPort(): Int {
-    // There is a tolerable chance of flaky tests caused by port collision.
-    return 58000 + (ProcessHandle.current().pid() % 1000).toInt()
-  }
+fun connectToStreams(port: Int): DynamoDbStreamsClient {
+  return DynamoDbStreamsClient.builder()
+    // The values that you supply for the AWS access key and the Region are only used to name
+    // the database file.
+    .credentialsProvider(AWS_CREDENTIALS_PROVIDER)
+    .region(Region.US_WEST_2)
+    .endpointOverride(URI.create("http://localhost:$port"))
+    .build()
 }
 
 fun DynamoDbClient.createTable(

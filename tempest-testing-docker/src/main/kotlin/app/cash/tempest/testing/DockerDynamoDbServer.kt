@@ -16,23 +16,23 @@
 
 package app.cash.tempest.testing
 
+import app.cash.tempest.testing.internal.connect
 import com.amazonaws.services.dynamodbv2.model.AmazonDynamoDBException
 import com.github.dockerjava.api.model.ExposedPort
 import com.github.dockerjava.api.model.Ports
 import com.google.common.util.concurrent.AbstractIdleService
 
-object DockerDynamoDbServer : AbstractIdleService(), TestDynamoDbServer {
+class DockerDynamoDbServer private constructor(
+  override val port: Int
+) : AbstractIdleService(), TestDynamoDbServer {
 
-  private val pid = ProcessHandle.current().pid()
-  override val id = "docker-dynamodb-local-$pid"
-
-  override val port = TestUtils.port
+  override val id = "tempest-docker-dynamodb-local-$port"
 
   override fun startUp() {
     composer.start()
 
     // Temporary client to block until the container is running
-    val client = TestUtils.connect()
+    val client = connect(port)
     while (true) {
       try {
         client.deleteTable("not a table")
@@ -56,7 +56,7 @@ object DockerDynamoDbServer : AbstractIdleService(), TestDynamoDbServer {
       // DynamoDB Local listens on port 8000 by default.
       val exposedClientPort = ExposedPort.tcp(8000)
       val portBindings = Ports()
-      portBindings.bind(exposedClientPort, Ports.Binding.bindPort(TestUtils.port))
+      portBindings.bind(exposedClientPort, Ports.Binding.bindPort(port))
       withImage("amazon/dynamodb-local")
         .withName(id)
         .withExposedPorts(exposedClientPort)
@@ -64,4 +64,8 @@ object DockerDynamoDbServer : AbstractIdleService(), TestDynamoDbServer {
         .withPortBindings(portBindings)
     }
   )
+
+  object Factory : TestDynamoDbServer.Factory<DockerDynamoDbServer> {
+    override fun create(port: Int) = DockerDynamoDbServer(port)
+  }
 }

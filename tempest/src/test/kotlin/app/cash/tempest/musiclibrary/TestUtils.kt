@@ -24,7 +24,7 @@ import app.cash.tempest.testing.TestTable
 import com.amazonaws.services.dynamodbv2.model.Projection
 import com.amazonaws.services.dynamodbv2.model.ProjectionType
 
-fun testDb() = TestDynamoDb.Builder(JvmDynamoDbServer)
+fun testDb() = TestDynamoDb.Builder(JvmDynamoDbServer.Factory)
   .addTable(
     TestTable.create<MusicItem> {
       for (gsi in it.globalSecondaryIndexes) {

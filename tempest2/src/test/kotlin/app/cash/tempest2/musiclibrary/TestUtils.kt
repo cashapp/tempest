@@ -26,7 +26,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.EnhancedLocalSecondaryInde
 import software.amazon.awssdk.services.dynamodb.model.Projection
 import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput
 
-fun testDb() = TestDynamoDb.Builder(JvmDynamoDbServer)
+fun testDb() = TestDynamoDb.Builder(JvmDynamoDbServer.Factory)
   .addTable(
     TestTable.create<MusicItem>("music_items") {
       it.toBuilder()

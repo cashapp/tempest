@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package app.cash.tempest2.testing
+package app.cash.tempest2.testing.internal
 
+import app.cash.tempest2.testing.TestDynamoDbClient
+import app.cash.tempest2.testing.TestTable
 import com.google.common.util.concurrent.AbstractIdleService
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.DeleteTableRequest
@@ -23,6 +25,7 @@ import software.amazon.awssdk.services.dynamodb.streams.DynamoDbStreamsClient
 
 class DefaultTestDynamoDbClient(
   override val tables: List<TestTable>,
+  private val port: Int,
 ) : AbstractIdleService(), TestDynamoDbClient {
 
   override val dynamoDb: DynamoDbClient
@@ -34,8 +37,8 @@ class DefaultTestDynamoDbClient(
   private var _dynamoDbStreams: DynamoDbStreamsClient? = null
 
   override fun startUp() {
-    _dynamoDb = TestUtils.connect()
-    _dynamoDbStreams = TestUtils.connectToStreams()
+    _dynamoDb = connect(port)
+    _dynamoDbStreams = connectToStreams(port)
 
     // Cleans up the tables before each run.
     for (tableName in dynamoDb.listTables().tableNames()) {

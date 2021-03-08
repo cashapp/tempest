@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package app.cash.tempest2.testing
+package app.cash.tempest2.testing.internal
 
 import mu.KLogger
 import mu.KotlinLogging

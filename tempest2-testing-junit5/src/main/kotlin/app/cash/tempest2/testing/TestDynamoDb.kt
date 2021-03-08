@@ -16,11 +16,18 @@
 
 package app.cash.tempest2.testing
 
+import app.cash.tempest2.testing.internal.DefaultTestDynamoDbClient
+import app.cash.tempest2.testing.internal.getLogger
+import app.cash.tempest2.testing.internal.pickRandomPort
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * This JUnit extension spins up a DynamoDB server in tests. It keeps the server running until the
+ * process exits and shares it across tests.
+ */
 class TestDynamoDb private constructor(
   private val client: TestDynamoDbClient,
   private val server: TestDynamoDbServer,
@@ -56,7 +63,7 @@ class TestDynamoDb private constructor(
   }
 
   class Builder(
-    private val server: TestDynamoDbServer
+    private val serverFactory: TestDynamoDbServer.Factory<*>
   ) {
     private val tables = mutableListOf<TestTable>()
 
@@ -68,10 +75,14 @@ class TestDynamoDb private constructor(
       this.tables.addAll(tables)
     }
 
-    fun build() = TestDynamoDb(DefaultTestDynamoDbClient(tables), server)
+    fun build() = TestDynamoDb(
+      DefaultTestDynamoDbClient(tables, DEFAULT_PORT),
+      serverFactory.create(DEFAULT_PORT)
+    )
   }
 
   companion object {
+    private val DEFAULT_PORT = pickRandomPort()
     private val runningServers = ConcurrentHashMap.newKeySet<String>()
     private val log = getLogger<TestDynamoDb>()
   }

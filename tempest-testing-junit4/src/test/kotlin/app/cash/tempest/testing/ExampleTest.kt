@@ -44,6 +44,6 @@ class ExampleTest {
   }
 }
 
-fun testDb() = TestDynamoDb.Builder(JvmDynamoDbServer)
+fun testDb() = TestDynamoDb.Builder(JvmDynamoDbServer.Factory)
   .addTable(TestTable.create<AliasItem>())
   .build()

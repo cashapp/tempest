@@ -24,7 +24,7 @@ import app.cash.tempest2.urlshortener.java.AliasItem;
 public class InteropTestUtils {
 
   public static TestDynamoDb testDb() {
-    return new TestDynamoDb.Builder(JvmDynamoDbServer.INSTANCE)
+    return new TestDynamoDb.Builder(JvmDynamoDbServer.Factory.INSTANCE)
         .addTable(TestTable.create("j_alias_items", AliasItem.class))
         .build();
   }

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package app.cash.tempest.testing
+package app.cash.tempest.testing.internal
 
-import com.amazonaws.auth.AWSCredentialsProvider
+import app.cash.tempest.testing.TestTable
 import com.amazonaws.auth.AWSStaticCredentialsProvider
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.client.builder.AwsClientBuilder
@@ -29,40 +29,36 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput
 
-object TestUtils {
-  val port: Int = pickPort()
+fun pickRandomPort(): Int {
+  // There is a tolerable chance of flaky tests caused by port collision.
+  return 58000 + (ProcessHandle.current().pid() % 1000).toInt()
+}
 
-  private val url = "http://localhost:$port"
+fun connect(port: Int): AmazonDynamoDB {
+  return AmazonDynamoDBClientBuilder.standard()
+    // The values that you supply for the AWS access key and the Region are only used to name
+    // the database file.
+    .withCredentials(AWS_CREDENTIALS_PROVIDER)
+    .withEndpointConfiguration(endpointConfiguration(port))
+    .build()
+}
 
-  private val awsCredentialsProvider: AWSCredentialsProvider = AWSStaticCredentialsProvider(
-    BasicAWSCredentials("key", "secret")
-  )
+fun connectToStreams(port: Int): AmazonDynamoDBStreams {
+  return AmazonDynamoDBStreamsClientBuilder.standard()
+    .withCredentials(AWS_CREDENTIALS_PROVIDER)
+    .withEndpointConfiguration(endpointConfiguration(port))
+    .build()
+}
 
-  private val endpointConfiguration = AwsClientBuilder.EndpointConfiguration(
-    url,
+private val AWS_CREDENTIALS_PROVIDER = AWSStaticCredentialsProvider(
+  BasicAWSCredentials("key", "secret")
+)
+
+private fun endpointConfiguration(port: Int): AwsClientBuilder.EndpointConfiguration {
+  return AwsClientBuilder.EndpointConfiguration(
+    "http://localhost:$port",
     Regions.US_WEST_2.toString()
   )
-
-  fun connect(): AmazonDynamoDB {
-    return AmazonDynamoDBClientBuilder.standard()
-      // The values that you supply for the AWS access key and the Region are only used to name
-      // the database file.
-      .withCredentials(awsCredentialsProvider)
-      .withEndpointConfiguration(endpointConfiguration)
-      .build()
-  }
-
-  fun connectToStreams(): AmazonDynamoDBStreams {
-    return AmazonDynamoDBStreamsClientBuilder.standard()
-      .withCredentials(awsCredentialsProvider)
-      .withEndpointConfiguration(endpointConfiguration)
-      .build()
-  }
-
-  private fun pickPort(): Int {
-    // There is a tolerable chance of flaky tests caused by port collision.
-    return 58000 + (ProcessHandle.current().pid() % 1000).toInt()
-  }
 }
 
 fun AmazonDynamoDB.createTable(

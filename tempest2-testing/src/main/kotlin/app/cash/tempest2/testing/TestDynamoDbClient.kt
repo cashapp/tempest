@@ -37,6 +37,10 @@ interface TestDynamoDbClient : Service {
     return logicalDb(type, emptyList())
   }
 
+  fun <DB : LogicalDb> logicalDb(type: KClass<DB>, vararg extensions: DynamoDbEnhancedClientExtension): DB {
+    return logicalDb(type, extensions.toList())
+  }
+
   fun <DB : LogicalDb> logicalDb(
     type: KClass<DB>,
     extensions: List<DynamoDbEnhancedClientExtension>
@@ -49,8 +53,8 @@ interface TestDynamoDbClient : Service {
   }
 }
 
-inline fun <reified DB : LogicalDb> TestDynamoDbClient.logicalDb(): DB {
-  return logicalDb(DB::class)
+inline fun <reified DB : LogicalDb> TestDynamoDbClient.logicalDb(vararg extensions: DynamoDbEnhancedClientExtension): DB {
+  return logicalDb(extensions.toList())
 }
 
 inline fun <reified DB : LogicalDb> TestDynamoDbClient.logicalDb(extensions: List<DynamoDbEnhancedClientExtension>): DB {
