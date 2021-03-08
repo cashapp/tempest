@@ -14,3 +14,5 @@ dependencies {
   testImplementation dep.assertj
   testImplementation dep.junitEngine
 }
+
+apply from: "$rootDir/gradle-mvn-publish.gradle"

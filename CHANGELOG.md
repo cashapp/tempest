@@ -1,5 +1,10 @@
 # Change Log
 
+## [1.4.0] - 2021-03-08
+
+* New: `tempest-testing` APIs for testing DynamoDB clients using DynamoDBLocal (#33).
+* New: Support for Java Record (#27).
+
 ## [1.3.0] - 2021-01-22
 
 * New: `app.cash.tempest:tempest2:1.3.0` supports AWS SDK 2.x (#23).

@@ -20,3 +20,5 @@ dependencies {
   testImplementation project(":samples:urlshortener2")
   testImplementation project(":tempest2-testing-junit5")
 }
+
+apply from: "$rootDir/gradle-mvn-publish.gradle"
