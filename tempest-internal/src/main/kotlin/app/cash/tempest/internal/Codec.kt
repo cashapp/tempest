@@ -23,7 +23,6 @@ import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
-import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.full.withNullability
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.javaField
@@ -95,7 +94,11 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
       .map { it.parameter to it.getDb(dbItem) }
       .toMap()
     val appItem =
-      appItemConstructor?.callBy(constructorArgs) ?: appItemClassFactory.newInstance()
+      if (appItemConstructor != null && constructorArgs.size == appItemConstructor.parameters.size) {
+        appItemConstructor.callBy(constructorArgs)
+      } else {
+        appItemClassFactory.newInstance()
+      }
     for (binding in varBindings) {
       binding.setApp(appItem, binding.getDb(dbItem))
     }
@@ -158,18 +161,19 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
       itemAttributes: Map<String, ItemType.Attribute>,
       rawItemType: RawItemType
     ): Codec<Any, Any> {
-      val dbItemConstructor = requireNotNull(rawItemType.type.primaryConstructor ?: rawItemType.type.constructors.singleOrNull())
+      val dbItemConstructor = requireNotNull(rawItemType.type.defaultConstructor)
       require(dbItemConstructor.parameters.isEmpty()) { "Expect ${rawItemType.type} to have a zero argument constructor" }
-      val appItemConstructorParameters = itemType.primaryConstructorParameters
-      val rawItemProperties = rawItemType.type.memberProperties.associateBy { it.name }
-      val constructorParameterBindings = mutableListOf<ConstructorParameterBinding<Any, Any, Any?>>()
+      val appItemConstructorParameters = itemType.defaultConstructorParameters
+      val dbItemProperties = rawItemType.type.memberProperties.associateBy { it.name }
+      val constructorParameterBindings =
+        mutableListOf<ConstructorParameterBinding<Any, Any, Any?>>()
       val varBindings = mutableListOf<VarBinding<Any, Any, Any?>>()
       val valBindings = mutableListOf<ValBinding<Any, Any, Any?>>()
       for (property in itemType.memberProperties) {
         val propertyName = property.name
         val itemAttribute = itemAttributes[propertyName] ?: continue
         val mappedProperties = itemAttribute.names
-          .map { requireNotNull(rawItemProperties[it]) { "Expect ${rawItemType.type} to have property $propertyName" } }
+          .map { requireNotNull(dbItemProperties[it]) { "Expect ${rawItemType.type} to have property $propertyName" } }
         val mappedPropertyTypes = mappedProperties.map { it.returnType }.distinct()
         require(mappedPropertyTypes.size == 1) { "Expect mapped properties of $propertyName to have the same type: ${mappedProperties.map { it.name }}" }
         val expectedReturnType = requireNotNull(mappedPropertyTypes.single()).withNullability(false)
@@ -195,7 +199,7 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
         .filter { attribute -> attribute.prefix.isNotEmpty() }
         .flatMap { attribute -> attribute.names.map { Prefixer.AttributePrefix(it, attribute.prefix) } }
       return ReflectionCodec(
-        itemType.primaryConstructor,
+        itemType.defaultConstructor,
         ClassFactory.create(itemType.java),
         dbItemConstructor,
         ClassFactory.create(rawItemType.type.java),
@@ -220,16 +224,18 @@ private sealed class Binding<A, D, P> {
   abstract val appProperty: KProperty1<A, P>
   abstract val dbProperties: List<KProperty1<D, P>>
 
-  fun getApp(value: A) = appProperty.get(value)
+  fun getApp(value: A): P {
+    if (!appProperty.isAccessible) {
+      appProperty.javaField!!.trySetAccessible()
+    }
+    return appProperty.get(value)
+  }
 
   fun getDb(value: D) = dbProperties[0].get(value)
 
   fun setDb(result: D, value: P) {
     for (rawProperty in dbProperties) {
-      if (!rawProperty.isAccessible) {
-        rawProperty.javaField?.trySetAccessible()
-      }
-      (rawProperty as KMutableProperty1<D, P>).set(result, value)
+      rawProperty.forceSet(result, value)
     }
   }
 }
