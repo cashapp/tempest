@@ -111,10 +111,10 @@ data class TransactionWriteSet(
       item: Any,
       expression: DynamoDBTransactionWriteExpression? = null
     ) = apply {
-      require(!itemsToSave.contains(item) && !itemsToSave.contains(item)) {
-        "Duplicate items are not allowed: $item."
+      val added = itemsToSave.add(item)
+      require(added) {
+        "Duplicate items are not allowed"
       }
-      itemsToSave.add(item)
       if (expression != null) {
         writeExpressions[item] = expression
       }

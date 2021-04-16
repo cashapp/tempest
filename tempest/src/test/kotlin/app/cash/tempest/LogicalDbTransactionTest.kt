@@ -188,10 +188,12 @@ class LogicalDbTransactionTest {
     // Introduce a race condition.
     musicTable.playlistInfo.save(playlistInfoV2)
 
+    // Confirm the exception message doesn't contain any item data.
     assertThatExceptionOfType(TransactionCanceledException::class.java)
       .isThrownBy {
         musicDb.transactionWrite(writeTransaction)
       }
+      .withMessage("xxxx")
   }
 
   @Test

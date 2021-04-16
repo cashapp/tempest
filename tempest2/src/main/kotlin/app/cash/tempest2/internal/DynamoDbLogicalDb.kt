@@ -234,7 +234,7 @@ internal class DynamoDbLogicalDb(
   private fun TransactionWriteSet.describeOperations(): List<String> {
     val descriptions = mutableListOf<String>()
     for (itemToSave in itemsToSave) {
-      descriptions.add("Save $itemToSave")
+      descriptions.add("Save ${itemToSave.encodeAsItem().rawItemKey()}")
     }
     for (keyToDelete in keysToDelete) {
       descriptions.add("Delete $keyToDelete")
@@ -289,7 +289,9 @@ internal class DynamoDbLogicalDb(
   private data class RawItemKey(
     val tableName: String,
     val key: Key
-  )
+  ) {
+    override fun toString() = "$tableName[${key.partitionKeyValue()},${key.sortKeyValue()}]"
+  }
 
   private data class LoadRequest(
     val key: RawItemKey,
