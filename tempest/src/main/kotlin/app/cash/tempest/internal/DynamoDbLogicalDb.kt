@@ -185,7 +185,7 @@ internal class DynamoDbLogicalDb(
   private fun TransactionWriteSet.describeOperations(): List<String> {
     val descriptions = mutableListOf<String>()
     for (itemToSave in itemsToSave) {
-      descriptions.add("Save $itemToSave")
+      descriptions.add("Save ${itemToSave.encodeAsItem().rawItemKey()}")
     }
     for (keyToDelete in keysToDelete) {
       descriptions.add("Delete $keyToDelete")
@@ -200,5 +200,7 @@ internal class DynamoDbLogicalDb(
     val tableName: String,
     val hashKey: AttributeValue,
     val rangeKey: AttributeValue?
-  )
+  ) {
+    override fun toString() = "$tableName[${hashKey},${rangeKey}]"
+  }
 }

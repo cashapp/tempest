@@ -192,6 +192,7 @@ class LogicalDbTransactionTest {
       .isThrownBy {
         musicDb.transactionWrite(writeTransaction)
       }
+      .withMessage("xxxx")
   }
 
   @Test
