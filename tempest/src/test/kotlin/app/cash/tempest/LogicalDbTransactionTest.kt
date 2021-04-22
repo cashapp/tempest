@@ -188,12 +188,16 @@ class LogicalDbTransactionTest {
     // Introduce a race condition.
     musicTable.playlistInfo.save(playlistInfoV2)
 
-    // Confirm the exception message doesn't contain any item data.
     assertThatExceptionOfType(TransactionCanceledException::class.java)
       .isThrownBy {
         musicDb.transactionWrite(writeTransaction)
       }
-      .withMessage("xxxx")
+      // Confirm the exception message doesn't contain any item data.
+      .withMessageContaining(
+        "Write transaction failed: [" +
+          "Save item (non-key attributes omitted) music_items[partition_key={S: PLAYLIST_1,},sort_key={S: INFO_,}], " +
+          "Delete key music_items[partition_key={S: ALBUM_1,},sort_key={S: TRACK_0000000000000001,}]]"
+      )
   }
 
   @Test
@@ -256,6 +260,12 @@ class LogicalDbTransactionTest {
       .isThrownBy {
         musicDb.transactionWrite(writeTransaction)
       }
+      // Confirm the exception message doesn't contain any item data.
+      .withMessageContaining(
+        "Write transaction failed: [" +
+          "Save item (non-key attributes omitted) music_items[partition_key={S: PLAYLIST_1,},sort_key={S: INFO_,}], " +
+          "Check key music_items[partition_key={S: ALBUM_1,},sort_key={S: TRACK_0000000000000001,}]]"
+      )
   }
 
   private fun ifPlaylistVersionIs(playlist_version: Long): DynamoDBTransactionWriteExpression {
