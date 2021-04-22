@@ -17,7 +17,7 @@
 package app.cash.tempest2.internal
 
 import app.cash.tempest.internal.ItemType
-import app.cash.tempest.internal.KeyType
+import app.cash.tempest.internal.RawItemType
 import app.cash.tempest.internal.Schema
 import app.cash.tempest2.BatchWriteSet
 import app.cash.tempest2.ItemSet
@@ -44,6 +44,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.TransactGetItemsEnhancedRe
 import software.amazon.awssdk.enhanced.dynamodb.model.TransactWriteItemsEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException
 import kotlin.reflect.KClass
 
@@ -182,14 +183,25 @@ internal class DynamoDbLogicalDb(
   }
 
   private fun Any.rawItemKey(): RawItemKey {
-    val dynamoDbTable = dynamoDbTable<Any>(this::class)
+    val rawItemType = expectedRawItemType()
     return RawItemKey(
-      dynamoDbTable.tableName(),
+      rawItemType.tableName,
       EnhancedClientUtils.createKeyFromItem(
-        this, dynamoDbTable.tableSchema(),
-        TableMetadata.primaryIndexName()
-      )
+        this,
+        dynamoDbTable<Any>(this::class).tableSchema(),
+        TableMetadata.primaryIndexName(),
+      ),
+      rawItemType.hashKeyName,
+      rawItemType.rangeKeyName,
     )
+  }
+
+  private fun Any.expectedRawItemType(): RawItemType {
+    return requireNotNull(
+      schema.resolveEnclosingRawItemType(
+        this::class
+      )
+    ) { "Cannot find a dynamodb table for ${this::class}" }
   }
 
   private fun <T : Any> dynamoDbTable(tableType: KClass<*>): DynamoDbTable<T> {
@@ -206,14 +218,6 @@ internal class DynamoDbLogicalDb(
         this::class
       )
     ) { "Cannot find an item type for ${this::class}" }
-  }
-
-  private fun Any.expectedKeyType(): KeyType {
-    return requireNotNull(
-      schema.getKey(
-        this::class
-      )
-    ) { "Cannot find an key type for ${this::class}" }
   }
 
   private fun Any.encodeAsKey(): Any {
@@ -234,13 +238,16 @@ internal class DynamoDbLogicalDb(
   private fun TransactionWriteSet.describeOperations(): List<String> {
     val descriptions = mutableListOf<String>()
     for (itemToSave in itemsToSave) {
-      descriptions.add("Save ${itemToSave.encodeAsItem().rawItemKey()}")
+      val rawItemKey = itemToSave.encodeAsItem().rawItemKey()
+      descriptions.add("Save item (non-key attributes omitted) $rawItemKey")
     }
     for (keyToDelete in keysToDelete) {
-      descriptions.add("Delete $keyToDelete")
+      val rawItemKey = keyToDelete.encodeAsKey().rawItemKey()
+      descriptions.add("Delete key $keyToDelete")
     }
     for (keyToCheck in keysToCheck) {
-      descriptions.add("Check $keyToCheck")
+      val rawItemKey = keyToCheck.encodeAsKey().rawItemKey()
+      descriptions.add("Check key $keyToCheck")
     }
     return descriptions.toList()
   }
@@ -288,9 +295,14 @@ internal class DynamoDbLogicalDb(
 
   private data class RawItemKey(
     val tableName: String,
-    val key: Key
+    val key: Key,
+    val hashKeyName: String,
+    val rangeKeyName: String?,
   ) {
-    override fun toString() = "$tableName[${key.partitionKeyValue()},${key.sortKeyValue()}]"
+    val hashKeyValue: AttributeValue get() = key.partitionKeyValue()
+    val rangeKeyValue: AttributeValue? get() = key.sortKeyValue().orElse(null)
+
+    override fun toString() = "$tableName[$hashKeyName=$hashKeyValue,$rangeKeyName=$rangeKeyValue]"
   }
 
   private data class LoadRequest(
