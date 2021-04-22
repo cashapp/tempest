@@ -103,9 +103,10 @@ interface LogicalDb : LogicalTable.Factory {
    * Transactionally writes objects specified by transactionWriteRequest by calling
    * [DynamoDbClient.transactWriteItems] API.
    *
-   * This method does not support versioning annotations. It throws
-   * [software.amazon.awssdk.core.exception.SdkClientException] exception if class of any input
-   * object is annotated with [DynamoDbVersionAttribute].
+   * This method supports versioning annotations, but not in conjunction with condition expressions.
+   * It throws [software.amazon.awssdk.core.exception.SdkClientException] exception if class of
+   * any input object is annotated with [DynamoDbVersionAttribute] and a condition expression is
+   * also present.
    *
    * A transaction cannot contain more than 25 unique items, including conditions.
    * A transaction cannot contain more than 4 MB of data.
