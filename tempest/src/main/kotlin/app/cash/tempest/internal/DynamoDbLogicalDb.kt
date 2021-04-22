@@ -136,11 +136,14 @@ internal class DynamoDbLogicalDb(
   }
 
   fun key(rawItemType: RawItemType, rawItem: Any): RawItemKey {
-    val tableModel = dynamoDbMapper.getTableModel(rawItemType.type.java) as DynamoDBMapperTableModel<Any>
+    val tableModel =
+      dynamoDbMapper.getTableModel(rawItemType.type.java) as DynamoDBMapperTableModel<Any>
     val keyAttributes = tableModel.convert(rawItem)
-    val hashKey = keyAttributes[tableModel.hashKey<Any>().name()]!!
-    val rangeKey = keyAttributes[tableModel.rangeKeyIfExists<Any>()?.name()]
-    return RawItemKey(rawItemType.tableName, hashKey, rangeKey)
+    val hashKey = keyAttributes[rawItemType.hashKeyName]!!
+    val rangeKey = keyAttributes[rawItemType.rangeKeyName]
+    return RawItemKey(
+      rawItemType.tableName, rawItemType.hashKeyName, hashKey, rawItemType.rangeKeyName, rangeKey
+    )
   }
 
   private fun Any.expectedRawItemType(): RawItemType {
@@ -185,20 +188,27 @@ internal class DynamoDbLogicalDb(
   private fun TransactionWriteSet.describeOperations(): List<String> {
     val descriptions = mutableListOf<String>()
     for (itemToSave in itemsToSave) {
-      descriptions.add("Save $itemToSave")
+      val rawItemKey = key(itemToSave.expectedRawItemType(), itemToSave.encodeAsItem())
+      descriptions.add("Save item (non-key attributes omitted) $rawItemKey")
     }
     for (keyToDelete in keysToDelete) {
-      descriptions.add("Delete $keyToDelete")
+      val rawItemKey = key(keyToDelete.expectedRawItemType(), keyToDelete.encodeAsKey())
+      descriptions.add("Delete key $rawItemKey")
     }
     for (keyToCheck in keysToCheck) {
-      descriptions.add("Check $keyToCheck")
+      val rawItemKey = key(keyToCheck.expectedRawItemType(), keyToCheck.encodeAsKey())
+      descriptions.add("Check key $rawItemKey")
     }
     return descriptions.toList()
   }
 
   data class RawItemKey(
     val tableName: String,
-    val hashKey: AttributeValue,
-    val rangeKey: AttributeValue?
-  )
+    val hashKeyName: String,
+    val hashKeyValue: AttributeValue,
+    val rangeKeyName: String?,
+    val rangeKeyValue: AttributeValue?
+  ) {
+    override fun toString() = "$tableName[$hashKeyName=$hashKeyValue,$rangeKeyName=$rangeKeyValue]"
+  }
 }

@@ -192,6 +192,12 @@ class LogicalDbTransactionTest {
       .isThrownBy {
         musicDb.transactionWrite(writeTransaction)
       }
+      // Confirm the exception message doesn't contain any item data.
+      .withMessageContaining(
+        "Write transaction failed: [" +
+          "Save item (non-key attributes omitted) music_items[partition_key=AttributeValue(S=PLAYLIST_1),sort_key=AttributeValue(S=INFO_)], " +
+          "Delete key music_items[partition_key=AttributeValue(S=ALBUM_1),sort_key=AttributeValue(S=TRACK_0000000000000001)]]"
+      )
   }
 
   @Test
@@ -254,6 +260,12 @@ class LogicalDbTransactionTest {
       .isThrownBy {
         musicDb.transactionWrite(writeTransaction)
       }
+      // Confirm the exception message doesn't contain any item data.
+      .withMessageContaining(
+        "Write transaction failed: [" +
+          "Save item (non-key attributes omitted) music_items[partition_key=AttributeValue(S=PLAYLIST_1),sort_key=AttributeValue(S=INFO_)], " +
+          "Check key music_items[partition_key=AttributeValue(S=ALBUM_1),sort_key=AttributeValue(S=TRACK_0000000000000001)]]"
+      )
   }
 
   private fun ifPlaylistVersionIs(playlist_version: Long): Expression {
