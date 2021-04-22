@@ -39,7 +39,7 @@ class SchemaTest {
   fun badKeyType() {
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.secondaryIndex(BadIndexOffset1::class, AlbumInfo::class)
-    }.withMessageContaining("partition_key")
+    }.withMessageContaining("album_token")
 
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.secondaryIndex(BadIndexOffset2::class, AlbumInfo::class)

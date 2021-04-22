@@ -161,19 +161,19 @@ data class KeyType(
         ) { "Please move Attribute annotation from $keyType.${property.name} to ${itemType.type}.${property.name}" }
         attributeNames.addAll(attribute.names)
       }
-      val primaryIndex = itemType.primaryIndex
-      require(attributeNames.contains(primaryIndex.hashKeyName)) { "Expect $keyType to have property ${primaryIndex.hashKeyName}" }
-      if (primaryIndex.rangeKeyName != null) {
-        require(attributeNames.contains(primaryIndex.rangeKeyName)) { "Expect $keyType to have property ${primaryIndex.rangeKeyName}" }
+      for (keyAttribute in itemType.keyAttributes(itemType.primaryIndex)) {
+        require(attributeNames.containsAll(keyAttribute.names)) { "Expect $keyType to have property ${keyAttribute.propertyName}" }
       }
       val secondaryIndexName = forIndexAnnotation.secondaryIndexName(keyType)
       val (hashKeyName, rangeKeyName) = if (secondaryIndexName != null) {
         val secondaryIndex =
           requireNotNull(itemType.secondaryIndexes[secondaryIndexName]) { "Expect to $itemType have secondary index $secondaryIndexName" }
-        require(attributeNames.contains(secondaryIndex.hashKeyName)) { "Expect $keyType to have property ${secondaryIndex.hashKeyName}" }
-        require(attributeNames.contains(secondaryIndex.rangeKeyName)) { "Expect $keyType to have property ${secondaryIndex.rangeKeyName}" }
+        for (keyAttribute in itemType.keyAttributes(secondaryIndex)) {
+          require(attributeNames.containsAll(keyAttribute.names)) { "Expect $keyType to have property ${keyAttribute.propertyName}" }
+        }
         secondaryIndex.hashKeyName to secondaryIndex.rangeKeyName
       } else {
+        val primaryIndex = itemType.primaryIndex
         primaryIndex.hashKeyName to primaryIndex.rangeKeyName
       }
       return KeyType(
@@ -201,15 +201,33 @@ data class ItemType(
   val attributeNames: Set<String>
     get() = attributes.values.flatMap { it.names }.toSet()
 
+  fun keyAttributes(index: Index): Set<Attribute> {
+    val keyAttributes = mutableSetOf<Attribute>()
+    for ((_, attribute) in attributes) {
+      for (attributeName in attribute.names) {
+        if (attributeName == index.hashKeyName || attributeName == index.rangeKeyName) {
+          keyAttributes.add(attribute)
+        }
+      }
+    }
+    return keyAttributes
+  }
+
   data class Attribute(
+    val propertyName: String,
     val names: Set<String>,
     val prefix: String,
     val returnType: KType
   )
 
-  data class PrimaryIndex(val hashKeyName: String, val rangeKeyName: String?)
+  interface Index {
+    val hashKeyName: String
+    val rangeKeyName: String?
+  }
 
-  data class SecondaryIndex(val name: String, val hashKeyName: String, val rangeKeyName: String)
+  data class PrimaryIndex(override val hashKeyName: String, override val rangeKeyName: String?) : Index
+
+  data class SecondaryIndex(val name: String, override val hashKeyName: String, override val rangeKeyName: String) : Index
 
   class Factory internal constructor(
     private val codecFactory: ReflectionCodec.Factory,
@@ -278,7 +296,7 @@ data class ItemType(
             "${rawItemType.type}. Use @Transient to exclude it."
         }
       }
-      return Attribute(expectedRawItemAttributes, prefix, property.returnType)
+      return Attribute(property.name, expectedRawItemAttributes, prefix, property.returnType)
     }
   }
 }
