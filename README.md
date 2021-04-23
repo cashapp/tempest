@@ -195,7 +195,7 @@ For locality, we smashed together several entity types in the same table. This i
 
 ### DynamoDBMapper API
 
-[`DynamoDBMapper`](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.html), the official Java API, forces you to write weakly-typed code that models the actual persistence type.
+[`DynamoDBMapper`](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.html) / [`DynamoDbEnhancedClient`](https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/enhanced/dynamodb/DynamoDbEnhancedClient.html), the official Java API, forces you to write weakly-typed code that models the actual persistence type.
 
 === "Kotlin"
 

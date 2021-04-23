@@ -270,7 +270,59 @@ If you need to further refine the Query results, you can optionally provide a fi
 
 This find all tracks in the given album that last longer than 3 minutes, sorted by track number.
 
-=== "Kotlin"
+=== "Kotlin - SDK 2.x"
+    
+    ```kotlin
+    private val table: MusicTable
+    
+    fun loadAlbumTracks(albumToken: String): List<AlbumTrack> {
+      val page = table.albumTracks.query(
+        keyCondition = BeginsWith(prefix = AlbumTrack.Key(albumToken)),
+        filterExpression = runLengthLongerThan(Duration.ofMinutes(3))
+      )
+      return page.contents
+    }
+
+    private fun runLengthLongerThan(duration: Duration): Expression {
+      return Expression.builder()
+        .expression("run_length > :duration")
+        .expressionValues(
+           mapOf(
+            ":duration" to AttributeValue.builder().s(duration.toString()).build()))
+        .build()
+    }
+    ```
+
+=== "Java - SDK 2.x"
+
+    ```java
+    private final MusicTable table;
+    
+    public List<AlbumTrack> loadAlbumTracks(String albumToken) {
+      Page<AlbumTrack.Key, AlbumTrack> page = table.albumTracks().query(
+          // keyCondition.
+          new BeginsWith<>(
+              // prefix.
+              new AlbumTrack.Key(albumToken)
+          ),
+          // config.
+          new QueryConfig.Builder()
+              .filterExpression(runLengthLongerThan(Duration.ofMinutes(3)))
+              .build()
+      );
+      return page.getContents();
+    }
+
+    private Expression runLengthLongerThan(Duration duration) {
+      return Expression.builder()
+        .expression("run_length > :duration")
+        .expressionValues(
+          Map.of(":duration", AttributeValue.builder().s(duration.toString()).build()))
+        .build();
+    }
+    ```
+
+=== "Kotlin - SDK 1.x"
     
     ```kotlin
     private val table: MusicTable
@@ -293,7 +345,7 @@ This find all tracks in the given album that last longer than 3 minutes, sorted 
     }
     ```
 
-=== "Java"
+=== "Java  - SDK 1.x"
 
     ```java
     private final MusicTable table;
@@ -462,7 +514,19 @@ worker can be a thread (in programming languages that support multithreading) or
 system process. To perform a parallel scan, each worker issues its own Scan request with an
 unique `WorkerId`.
 
-=== "Kotlin"
+=== "Kotlin - SDK 2.x"
+    
+    ```kotlin
+    Not supported
+    ```
+
+=== "Java - SDK 2.x"
+
+    ```java
+    Not supported
+    ```
+
+=== "Kotlin - SDK 1.x"
     
     ```kotlin
     private val table: MusicTable
@@ -481,7 +545,7 @@ unique `WorkerId`.
     }
     ```
 
-=== "Java"
+=== "Java - SDK 1.x"
 
     ```java
     private final MusicTable table;

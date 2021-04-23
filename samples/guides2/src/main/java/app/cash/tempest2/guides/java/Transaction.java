@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package app.cash.tempest.guides.java;
+package app.cash.tempest2.guides.java;
 
-import app.cash.tempest.ItemSet;
-import app.cash.tempest.TransactionWriteSet;
-import app.cash.tempest.WritingPager;
-import app.cash.tempest.musiclibrary.java.AlbumTrack;
-import app.cash.tempest.musiclibrary.java.MusicDb;
-import app.cash.tempest.musiclibrary.java.MusicTable;
-import app.cash.tempest.musiclibrary.java.PlaylistInfo;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTransactionWriteExpression;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import app.cash.tempest2.ItemSet;
+import app.cash.tempest2.TransactionWriteSet;
+import app.cash.tempest2.WritingPager;
+import app.cash.tempest2.musiclibrary.java.AlbumTrack;
+import app.cash.tempest2.musiclibrary.java.MusicDb;
+import app.cash.tempest2.musiclibrary.java.MusicTable;
+import app.cash.tempest2.musiclibrary.java.PlaylistInfo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
+import software.amazon.awssdk.enhanced.dynamodb.Expression;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
-import static app.cash.tempest.guides.java.Transaction.ifPlaylistVersionIs;
-import static app.cash.tempest.guides.java.Transaction.trackExists;
+import static app.cash.tempest2.guides.java.Transaction.ifPlaylistVersionIs;
+import static app.cash.tempest2.guides.java.Transaction.trackExists;
 
 public class Transaction {
 
@@ -97,16 +97,18 @@ public class Transaction {
     ).execute();
   }
 
-  static DynamoDBTransactionWriteExpression ifPlaylistVersionIs(Long playlist_version) {
-    return new DynamoDBTransactionWriteExpression()
-        .withConditionExpression("playlist_version = :playlist_version")
-        .withExpressionAttributeValues(
-            Map.of(":playlist_version", new AttributeValue().withN("" + playlist_version)));
+  static Expression ifPlaylistVersionIs(Long playlist_version) {
+    return Expression.builder()
+        .expression("playlist_version = :playlist_version")
+        .expressionValues(
+            Map.of(":playlist_version", AttributeValue.builder().n("" + playlist_version).build()))
+        .build();
   }
 
-  static DynamoDBTransactionWriteExpression trackExists() {
-    return new DynamoDBTransactionWriteExpression()
-        .withConditionExpression("attribute_exists(track_title)");
+  static Expression trackExists() {
+    return Expression.builder()
+        .expression("attribute_exists(track_title)")
+        .build();
   }
 }
 

@@ -2,7 +2,37 @@
 
 `LogicalDb` lets you `batchLoad` multiple items from one or more tables using their primary keys.
 
-=== "Kotlin"
+=== "Kotlin - SDK 2.x"
+
+    ```kotlin
+    private val db: MusicDb
+
+    fun loadPlaylistTracks(playlist: PlaylistInfo): List<AlbumTrack> {
+      val results = db.batchLoad(
+        keys = playlist.playlist_tracks, // [AlbumTrack.Key("ALBUM_1", track_number = 1), AlbumTrack.Key("ALBUM_354", 12), ...]
+        consistentReads = false,
+      )
+      return results.getItems<AlbumTrack>()
+    }
+    ```
+
+=== "Java - SDK 2.x"
+
+    ```java
+    private final MusicDb db;
+    
+    public List<AlbumTrack> loadPlaylistTracks(PlaylistInfo playlist) {
+      ItemSet results = db.batchLoad(
+          // keys.
+          playlist.playlist_tracks, // [AlbumTrack.Key("ALBUM_1", track_number = 1), AlbumTrack.Key("ALBUM_354", 12), ...]
+          // consistentReads.
+          false
+      );
+      return results.getItems(AlbumTrack.class);
+    }
+    ```
+
+=== "Kotlin - SDK 1.x"
 
     ```kotlin
     private val db: MusicDb
@@ -17,7 +47,7 @@
     }
     ```
 
-=== "Java"
+=== "Java - SDK 1.x"
 
     ```java
     private final MusicDb db;
@@ -61,7 +91,43 @@
     provisioned throughput is exceeded or an internal processing failure occurs, the failed operations 
     are returned in the UnprocessedItems response parameter.
 
-=== "Kotlin"
+=== "Kotlin - SDK 2.x"
+
+    ```kotlin
+    private val db: MusicDb
+    
+    fun backfill(
+      albumTracksToSave: List<AlbumTrack>,
+      albumTracksToDelete: List<AlbumTrack.Key>
+    ): Boolean {
+      val writeSet = BatchWriteSet.Builder()
+        .clobber(albumTracksToSave)
+        .delete(albumTracksToDelete)
+        .build()
+      val result = db.batchWrite(writeSet)
+      return result.isSuccessful
+    }
+    ```
+
+=== "Java - SDK 2.x"
+
+    ```java
+    private final MusicDb db;
+    
+    public boolean backfill(
+        List<AlbumTrack> albumTracksToSave,
+        List<AlbumTrack.Key> albumTracksToDelete
+    ) {
+      BatchWriteSet writeSet = new BatchWriteSet.Builder()
+          .clobber(albumTracksToSave)
+          .delete(albumTracksToDelete)
+          .build();
+      BatchWriteResult result = db.batchWrite(writeSet);
+      return result.isSuccessful();
+    }
+    ```
+
+=== "Kotlin - SDK 1.x"
     
     ```kotlin
     private val db: MusicDb
@@ -82,7 +148,7 @@
     }
     ```
  
-=== "Java"
+=== "Java - SDK 1.x"
 
     ```java
     private final MusicDb db;

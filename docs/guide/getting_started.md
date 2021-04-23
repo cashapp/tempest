@@ -112,9 +112,54 @@ We will store URL aliases in the following table.
   </tbody>
 </table>
 
-To access this table in code, model it using [`DynamoDBMapper`](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.html).
+To access this table in code, model it using 
+[`DynamoDBMapper`](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.html) or 
+[`DynamoDbEnhancedClient`](https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/enhanced/dynamodb/DynamoDbEnhancedClient.html).
 
-=== "Kotlin"
+=== "Kotlin - SDK 2.x"
+
+    ```kotlin
+    // Note: this POJO is not type-safe because its attributes are nullable and mutable.
+    @DynamoDbBean
+    class AliasItem {
+      @get:DynamoDbPartitionKey
+      var short_url: String? = null
+      var destination_url: String? = null
+    }
+    ```
+
+=== "Java - SDK 2.x"
+
+    ```java
+    // Note: this POJO is not type-safe because its attributes are nullable and mutable.
+    @DynamoDbBean
+    public class AliasItem {
+      private String short_url;
+      private String destination_url;
+    
+      @DynamoDbPartitionKey
+      @DynamoDbAttribute("short_url")
+      public String getShortUrl() {
+        return short_url;
+      }
+    
+      public void setShortUrl(String short_url) {
+        this.short_url = short_url;
+      }
+    
+      @DynamoDbAttribute("destination_url")
+      public String getDestinationUrl() {
+        return destination_url;
+      }
+    
+      public void setDestinationUrl(String destination_url) {
+        this.destination_url = destination_url;
+      }
+    
+    }
+    ```
+
+=== "Kotlin - SDK 1.x"
 
     ```kotlin
     // Note: this POJO is not type-safe because its attributes are nullable and mutable.
@@ -127,7 +172,7 @@ To access this table in code, model it using [`DynamoDBMapper`](https://docs.aws
     }
     ```
 
-=== "Java"
+=== "Java - SDK 1.x"
 
     ```java
     // Note: this POJO is not type-safe because its attributes are nullable and mutable.
@@ -158,7 +203,66 @@ To access this table in code, model it using [`DynamoDBMapper`](https://docs.aws
 
 Tempest lets you interact with `AliasItem` using strongly typed data classes.
   
-=== "Kotlin"
+=== "Kotlin - SDK 2.x"
+
+    ```kotlin
+    interface AliasDb : LogicalDb {
+      @TableName("alias_items")
+      val aliasTable: AliasTable
+    }
+    
+    interface AliasTable : LogicalTable<AliasItem> {
+      val aliases: InlineView<Alias.Key, Alias>
+    }
+    
+    data class Alias(
+      val short_url: String,
+      val destination_url: String
+    ) {
+      data class Key(
+        val short_url: String 
+      )
+    }
+    ```
+
+=== "Java - SDK 2.x"
+
+    ```java
+    public interface AliasDb extends LogicalDb {
+      @TableName("alias_items")
+      AliasTable aliasTable();
+    }
+
+    public interface AliasTable extends LogicalTable<AliasItem> {
+      InlineView<Alias.Key, Alias> aliases();
+    }
+
+    public class Alias {
+    
+      public final String short_url;
+      public final String destination_url;
+    
+      public Alias(String short_url, String destination_url) {
+        this.short_url = short_url;
+        this.destination_url = destination_url;
+      }
+    
+      public Key key() {
+        return new Key(short_url);
+      }
+    
+      public static class Key {
+    
+        public final String short_url;
+    
+        public Key(String short_url) {
+          this.short_url = short_url;
+        }
+      }
+    }
+    ```
+
+=== "Kotlin - SDK 1.x"
 
     ```kotlin
     interface AliasDb: LogicalDb {
@@ -179,7 +283,7 @@ Tempest lets you interact with `AliasItem` using strongly typed data classes.
     }
     ```
 
-=== "Java"
+=== "Java - SDK 1.x"
 
     ```java
     public interface AliasDb extends LogicalDb {
@@ -214,9 +318,91 @@ Tempest lets you interact with `AliasItem` using strongly typed data classes.
       }
     }
     ```
+
 Let's put everything together.
 
-=== "Kotlin"
+=== "Kotlin - SDK 2.x"
+
+    ```kotlin
+    class RealUrlShortener(
+      private val table: AliasTable
+    ) : UrlShortener {
+    
+      override fun shorten(shortUrl: String, destinationUrl: String): Boolean {
+        val item = Alias(shortUrl, destinationUrl)
+        val ifNotExist = Expression.builder()
+          .expression("attribute_not_exists(short_url)")
+          .build()
+        return try {
+          table.aliases.save(item, ifNotExist)
+          true
+        } catch (e: ConditionalCheckFailedException) {
+          println("Failed to shorten $shortUrl because it already exists!")
+          false
+        }
+      }
+    
+      override fun redirect(shortUrl: String): String? {
+        val key = Alias.Key(shortUrl)
+        return table.aliases.load(key)?.destination_url
+      }
+    }
+    
+    fun main(args: Array<String>) {
+      val client = DynamoDbEnhancedClient.create()
+      val db = LogicalDb<AliasDb>(client)
+      urlShortener = RealUrlShortener(db.aliasTable)
+      urlShortener.shorten("tempest", "https://cashapp.github.io/tempest")
+    }
+    ```
+
+=== "Java - SDK 2.x"
+
+    ```java
+    public class RealUrlShortener implements UrlShortener {
+    
+      private final AliasTable table;
+    
+      public RealUrlShortener(AliasTable table) {
+        this.table = table;
+      }
+    
+      @Override
+      public boolean shorten(String shortUrl, String destinationUrl) {
+        Alias item = new Alias(shortUrl, destinationUrl);
+        Expression ifNotExist = Expression.builder()
+            .expression("attribute_not_exists(short_url)")
+            .build();
+        try {
+          table.aliases().save(item, ifNotExist);
+          return true;
+        } catch (ConditionalCheckFailedException e) {
+          System.out.println("Failed to shorten $shortUrl because it already exists!");
+          return false;
+        }
+      }
+    
+      @Override
+      @Nullable
+      public String redirect(String shortUrl) {
+        Alias.Key key = new Alias.Key(shortUrl);
+        Alias alias = table.aliases().load(key);
+        if (alias == null) {
+          return null;
+        }
+        return alias.destination_url;
+      }
+    }
+    
+    public static void main(String[] args) {
+      DynamoDbEnhancedClient client = DynamoDbEnhancedClient.create();
+      AliasDb db = LogicalDb.create(AliasDb.class, client);
+      UrlShortener urlShortener = new RealUrlShortener(db.aliasTable());
+      urlShortener.shorten("tempest", "https://cashapp.github.io/tempest");
+    }
+    ```
+
+=== "Kotlin - SDK 1.x"
    
     ```kotlin
     class RealUrlShortener(
@@ -252,7 +438,7 @@ Let's put everything together.
     }
     ```
 
-=== "Java"
+=== "Java - SDK 1.x"
 
     ```java
     public class RealUrlShortener implements UrlShortener {
@@ -304,5 +490,6 @@ Let's put everything together.
 
 Check out the code samples on Github:
 
- * URL Shortener ([.kt](https://github.com/cashapp/tempest/tree/master/samples/urlshortener/src/main/kotlin/app/cash/tempest/urlshortener), [.java](https://github.com/cashapp/tempest/tree/master/samples/urlshortener/src/main/java/app/cash/tempest/urlshortener/java))
+ * URL Shortener - SDK 1.x ([.kt](https://github.com/cashapp/tempest/tree/master/samples/urlshortener/src/main/kotlin/app/cash/tempest/urlshortener), [.java](https://github.com/cashapp/tempest/tree/master/samples/urlshortener/src/main/java/app/cash/tempest/urlshortener/java))
+ * URL Shortener - SDK 2.x ([.kt](https://github.com/cashapp/tempest/tree/master/samples/urlshortener2/src/main/kotlin/app/cash/tempest2/urlshortener), [.java](https://github.com/cashapp/tempest/tree/master/samples/urlshortener2/src/main/java/app/cash/tempest2/urlshortener/java))
  
