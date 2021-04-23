@@ -1,5 +1,10 @@
 # Change Log
 
+## [1.4.1] - 2021-04-22
+
+* Fixed: Improve error message (#44)
+* Fixed: Improve documentation (#43, #46).
+
 ## [1.4.0] - 2021-03-08
 
 * New: `tempest-testing` APIs for testing DynamoDB clients using DynamoDBLocal (#33).
