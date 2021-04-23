@@ -64,6 +64,7 @@ class TestDynamoDb private constructor(
     private val serverFactory: TestDynamoDbServer.Factory<*>
   ) {
     private val tables = mutableListOf<TestTable>()
+    private var port: Int? = null
 
     fun addTable(table: TestTable) = apply {
       tables.add(table)
@@ -73,14 +74,20 @@ class TestDynamoDb private constructor(
       this.tables.addAll(tables)
     }
 
-    fun build() = TestDynamoDb(
-      DefaultTestDynamoDbClient(tables, DEFAULT_PORT),
-      serverFactory.create(DEFAULT_PORT)
-    )
+    fun port(port: Int) = apply {
+      this.port = port
+    }
+
+    fun build(): TestDynamoDb {
+      val port = port ?: pickRandomPort()
+      return TestDynamoDb(
+        DefaultTestDynamoDbClient(tables, port),
+        serverFactory.create(port)
+      )
+    }
   }
 
   companion object {
-    private val DEFAULT_PORT = pickRandomPort()
     private val runningServers = ConcurrentHashMap.newKeySet<String>()
     private val log = getLogger<TestDynamoDb>()
   }

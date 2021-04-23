@@ -5,7 +5,7 @@ using [DynamoDBLocal](https://docs.aws.amazon.com/amazondynamodb/latest/develope
 . It comes with two implementations:
 
 - **JVM:** This is the preferred option, running a `DynamoDBProxyServer` backed by `sqlite4java`,
-  which is available on most platforms.
+  which is available on [most platforms](https://github.com/cashapp/tempest/blob/24beb08b2be88d3666b5b64879618d01771b529a/tempest-testing-jvm/src/main/kotlin/app/cash/tempest/testing/JvmDynamoDbServer.kt#L66).
 - **Docker:** This runs [dynamodb-local](https://hub.docker.com/r/amazon/dynamodb-local) in a Docker
   container.
 
@@ -49,42 +49,162 @@ dependencies {
 }
 ```
 
-Then in tests annotated `@org.junit.jupiter.api.Test`, you may add `TestDynamoDb` as a test
+Then in tests annotated with `@org.junit.jupiter.api.Test`, you may add `TestDynamoDb` as a test
 [extension](https://junit.org/junit5/docs/current/user-guide/#extensions). This extension spins up a
 DynamoDB server. It shares the server across tests and keeps it running until the process exits. It
 also manages test tables for you, recreating them before each test.
 
-```kotlin
-class MyTest {
-  @RegisterExtension
-  @JvmField
-  val db = TestDynamoDb.Builder(JvmDynamoDbServer.Factory)
-    // Tempest recreates this `@DynamoDBTable` before each test.
-    .addTable(TestTable.create<MusicItem>())
-    .build()
+=== "Kotlin - SDK 2.x"
 
-  private val musicTable by lazy { db.logicalDb<MusicDb>().music }
+    ```kotlin
+    class MyTest {
+      @RegisterExtension
+      @JvmField
+      val db = TestDynamoDb.Builder(JvmDynamoDbServer.Factory)
+          // `MusicItem` is annotated with `@DynamoDBTable`. Tempest recreates this table before each test.
+          .addTable(TestTable.create(MusicItem.TABLE_NAME, MusicItem::class.java))
+          .build()
+    
+      private val musicTable by lazy { db.logicalDb<MusicDb>().music }
+    
+      @Test
+      fun test() {
+        val albumInfo = AlbumInfo(
+            "ALBUM_1",
+            "after hours - EP",
+            "53 Thieves",
+            LocalDate.of(2020, 2, 21),
+            "Contemporary R&B"
+        )
+        // Talk to DynamoDB using Tempest's API.
+        musicTable.albumInfo.save(albumInfo)
+      }
+    
+      @Test
+      fun anotherTest() {
+        // Talk to DynamoDB using the AWS SDK.
+        val result = db.dynamoDb.describeTable(
+                DescribeTableRequest.builder().tableName(MusicItem.TABLE_NAME).build()
+        )
+        // Do something with the result...
+      }
+    }
+    ```
 
-  @Test
-  fun test() {
-    val albumInfo = AlbumInfo(
-      "ALBUM_1",
-      "after hours - EP",
-      "53 Thieves",
-      LocalDate.of(2020, 2, 21),
-      "Contemporary R&B"
-    )
-    // Talk to DynamoDB using Tempest's API.
-    musicTable.albumInfo.save(albumInfo)
-  }
+=== "Java - SDK 2.x"
 
-  @Test
-  fun anotherTest() {
-    // Talk to DynamoDB using the AWS SDK.
-    val result = db.dynamoDb.describeTable("table_name")
-  }
-}
-```
+    ```java
+    class MyTest {
+      @RegisterExtension
+      TestDynamoDb db = new TestDynamoDb.Builder(JvmDynamoDbServer.Factory.INSTANCE)
+          // `MusicItem` is annotated with `@DynamoDBTable`. Tempest recreates this table before each test.
+          .addTable(TestTable.create(MusicItem.TABLE_NAME, MusicItem.class))
+          .build();
+    
+      MusicTable musicTable;
+    
+      @BeforeEach
+      public void setup() {
+        musicTable = db.logicalDb(MusicDb.class).music();
+      }
+    
+      @Test
+      public void test() {
+        AlbumInfo albumInfo = new AlbumInfo(
+            "ALBUM_1",
+            "after hours - EP",
+            "53 Thieves",
+            LocalDate.of(2020, 2, 21),
+            "Contemporary R&B"
+        );
+        // Talk to DynamoDB using Tempest's API.
+        musicTable.albumInfo().save(albumInfo);
+      }
+    
+      @Test
+      public void anotherTest() {
+        // Talk to DynamoDB using the AWS SDK.
+        DescribeTableResponse result = db.getDynamoDb().describeTable(
+                DescribeTableRequest.builder().tableName(MusicItem.TABLE_NAME).build()
+        );
+        // Do something with the result...
+      }
+    }
+    ```
+
+=== "Kotlin - SDK 1.x"
+
+    ```kotlin
+    class MyTest {
+      @RegisterExtension
+      @JvmField
+      val db = TestDynamoDb.Builder(JvmDynamoDbServer.Factory)
+          // `MusicItem` is annotated with `@DynamoDBTable`. Tempest recreates this table before each test.
+          .addTable(TestTable.create(MusicItem::class.java))
+          .build()
+    
+      private val musicTable by lazy { db.logicalDb<MusicDb>().music }
+    
+      @Test
+      fun test() {
+        val albumInfo = AlbumInfo(
+            "ALBUM_1",
+            "after hours - EP",
+            "53 Thieves",
+            LocalDate.of(2020, 2, 21),
+            "Contemporary R&B"
+        )
+        // Talk to DynamoDB using Tempest's API.
+        musicTable.albumInfo.save(albumInfo)
+      }
+    
+      @Test
+      fun anotherTest() {
+        // Talk to DynamoDB using the AWS SDK.
+        val result = db.dynamoDb.describeTable("music_items")
+        // Do something with the result...
+      }
+    }
+    ```
+
+=== "Java - SDK 1.x"
+
+    ```java
+    class MyTest {
+      @RegisterExtension
+      TestDynamoDb db = new TestDynamoDb.Builder(JvmDynamoDbServer.Factory.INSTANCE)
+          // `MusicItem` is annotated with `@DynamoDBTable`. Tempest recreates this table before each test.
+          .addTable(TestTable.create(MusicItem.class))
+          .build();
+    
+      MusicTable musicTable;
+    
+      @BeforeEach
+      public void setup() {
+        musicTable = db.logicalDb(MusicDb.class).music();
+      }
+    
+      @Test
+      public void test() {
+        AlbumInfo albumInfo = new AlbumInfo(
+            "ALBUM_1",
+            "after hours - EP",
+            "53 Thieves",
+            LocalDate.of(2020, 2, 21),
+            "Contemporary R&B"
+        );
+        // Talk to DynamoDB using Tempest's API.
+        musicTable.albumInfo().save(albumInfo);
+      }
+    
+      @Test
+      public void anotherTest() {
+        // Talk to DynamoDB using the AWS SDK.
+        DescribeTableResult result = db.getDynamoDb().describeTable("music_items");
+        // Do something with the result...
+      }
+    }
+    ```
 
 To customize test tables, mutate the `CreateTableRequest` in a lambda.
 
@@ -141,41 +261,160 @@ dependencies {
 }
 ```
 
-Then in tests annotated `@org.junit.Test`, you may add `TestDynamoDb` as a
+Then in tests annotated with `@org.junit.Test`, you may add `TestDynamoDb` as a
 test [rule](https://junit.org/junit4/javadoc/4.12/org/junit/Rule.html). This rule spins up a
 DynamoDB server. It shares the server across tests and keeps it running until the process exits. It
 also manages test tables for you, recreating them before each test.
 
-```kotlin
-class MyTest {
-  @get:Rule
-  val db = TestDynamoDb.Builder(JvmDynamoDbServer.Factory)
-    // Tempest recreates this `@DynamoDBTable` before each test.
-    .addTable(TestTable.create<MusicItem>())
-    .build()
+=== "Kotlin - SDK 2.x"
 
-  private val musicTable by lazy { db.logicalDb<MusicDb>().music }
+    ```kotlin
+    class MyTest {
+      @get:Rule
+      val db = TestDynamoDb.Builder(JvmDynamoDbServer.Factory)
+          // `MusicItem` is annotated with `@DynamoDBTable`. Tempest recreates this table before each test.
+          .addTable(TestTable.create(MusicItem.TABLE_NAME, MusicItem::class.java))
+          .build()
+    
+      private val musicTable by lazy { db.logicalDb<MusicDb>().music }
+    
+      @Test
+      fun test() {
+        val albumInfo = AlbumInfo(
+            "ALBUM_1",
+            "after hours - EP",
+            "53 Thieves",
+            LocalDate.of(2020, 2, 21),
+            "Contemporary R&B"
+        )
+        // Talk to DynamoDB using Tempest's API.
+        musicTable.albumInfo.save(albumInfo)
+      }
+    
+      @Test
+      fun anotherTest() {
+        // Talk to DynamoDB using the AWS SDK.
+        val result = db.dynamoDb.describeTable(
+                DescribeTableRequest.builder().tableName(MusicItem.TABLE_NAME).build()
+        )
+        // Do something with the result...
+      }
+    }
+    ```
 
-  @Test
-  fun test() {
-    val albumInfo = AlbumInfo(
-      "ALBUM_1",
-      "after hours - EP",
-      "53 Thieves",
-      LocalDate.of(2020, 2, 21),
-      "Contemporary R&B"
-    )
-    // Talk to DynamoDB using Tempest's API.
-    musicTable.albumInfo.save(albumInfo)
-  }
+=== "Java - SDK 2.x"
 
-  @Test
-  fun anotherTest() {
-    // Talk to DynamoDB using the AWS SDK.
-    val result = db.dynamoDb.describeTable("table_name")
-  }
-}
-```
+    ```java
+    class MyTest {
+      @Rule
+      public TestDynamoDb db = new TestDynamoDb.Builder(JvmDynamoDbServer.Factory.INSTANCE)
+          // `MusicItem` is annotated with `@DynamoDBTable`. Tempest recreates this table before each test.
+          .addTable(TestTable.create(MusicItem.TABLE_NAME, MusicItem.class))
+          .build();
+    
+      MusicTable musicTable;
+    
+      @Before
+      public void setup() {
+        musicTable = db.logicalDb(MusicDb.class).music();
+      }
+    
+      @Test
+      public void test() {
+        AlbumInfo albumInfo = new AlbumInfo(
+            "ALBUM_1",
+            "after hours - EP",
+            "53 Thieves",
+            LocalDate.of(2020, 2, 21),
+            "Contemporary R&B"
+        );
+        // Talk to DynamoDB using Tempest's API.
+        musicTable.albumInfo().save(albumInfo);
+      }
+    
+      @Test
+      public void anotherTest() {
+        // Talk to DynamoDB using the AWS SDK.
+        DescribeTableResponse result = db.getDynamoDb().describeTable(
+                DescribeTableRequest.builder().tableName(MusicItem.TABLE_NAME).build()
+        );
+        // Do something with the result...
+      }
+    }
+    ```
+
+=== "Kotlin - SDK 1.x"
+
+    ```kotlin
+    class MyTest {
+      @get:Rule
+      val db = TestDynamoDb.Builder(JvmDynamoDbServer.Factory)
+          // `MusicItem` is annotated with `@DynamoDBTable`. Tempest recreates this table before each test.
+          .addTable(TestTable.create(MusicItem::class.java))
+          .build()
+    
+      private val musicTable by lazy { db.logicalDb<MusicDb>().music }
+    
+      @Test
+      fun test() {
+        val albumInfo = AlbumInfo(
+            "ALBUM_1",
+            "after hours - EP",
+            "53 Thieves",
+            LocalDate.of(2020, 2, 21),
+            "Contemporary R&B"
+        )
+        // Talk to DynamoDB using Tempest's API.
+        musicTable.albumInfo.save(albumInfo)
+      }
+    
+      @Test
+      fun anotherTest() {
+        // Talk to DynamoDB using the AWS SDK.
+        val result = db.dynamoDb.describeTable("music_items")
+        // Do something with the result...
+      }
+    }
+    ```
+
+=== "Java - SDK 1.x"
+
+    ```java
+    class MyTest {
+      @Rule
+      public TestDynamoDb db = new TestDynamoDb.Builder(JvmDynamoDbServer.Factory.INSTANCE)
+          // `MusicItem` is annotated with `@DynamoDBTable`. Tempest recreates this table before each test.
+          .addTable(TestTable.create(MusicItem.class))
+          .build();
+    
+      MusicTable musicTable;
+    
+      @Before
+      public void setup() {
+        musicTable = db.logicalDb(MusicDb.class).music();
+      }
+    
+      @Test
+      public void test() {
+        AlbumInfo albumInfo = new AlbumInfo(
+            "ALBUM_1",
+            "after hours - EP",
+            "53 Thieves",
+            LocalDate.of(2020, 2, 21),
+            "Contemporary R&B"
+        );
+        // Talk to DynamoDB using Tempest's API.
+        musicTable.albumInfo().save(albumInfo);
+      }
+    
+      @Test
+      public void anotherTest() {
+        // Talk to DynamoDB using the AWS SDK.
+        DescribeTableResult result = db.getDynamoDb().describeTable("music_items");
+        // Do something with the result...
+      }
+    }
+    ```
 
 To customize test tables, mutate the `CreateTableRequest` in a lambda.
 
@@ -199,3 +438,23 @@ fun testDb() = TestDynamoDb.Builder(DockerDynamoDbServer.Factory)
   .addTable(TestTable.create<MusicItem>())
   .build()
 ```
+
+## Other Testing Frameworks
+
+Tempest testing is compatible with other testing frameworks. You'll need to write your own integration code. Feel free to reference the implementations above.
+
+---
+
+Check out the code samples on Github:
+
+* Music Library - SDK 1.x ([.kt](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary/src/main/kotlin/app/cash/tempest/musiclibrary), [.java](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary/src/main/java/app/cash/tempest/musiclibrary/java))
+* Music Library - SDK 2.x ([.kt](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary2/src/main/kotlin/app/cash/tempest2/musiclibrary), [.java](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary2/src/main/java/app/cash/tempest2/musiclibrary/java))
+* Testing - SDK 1.x - JUnit4 - JVM ([.kt](https://github.com/cashapp/tempest/blob/master/samples/guides/src/test/kotlin/app/cash/tempest/guides/Junit4JVMTest.kt), [.java](https://github.com/cashapp/tempest/blob/master/samples/guides/src/test/java/app/cash/tempest/guides/java/Junit4JVMTest.java))
+* Testing - SDK 1.x - JUnit4 - Docker ([.kt](https://github.com/cashapp/tempest/blob/master/samples/guides/src/test/kotlin/app/cash/tempest/guides/Junit4DockerTest.kt), [.java](https://github.com/cashapp/tempest/blob/master/samples/guides/src/test/java/app/cash/tempest/guides/java/Junit4DockerTest.java))
+* Testing - SDK 1.x - JUnit5 - JVM ([.kt](https://github.com/cashapp/tempest/blob/master/samples/guides/src/test/kotlin/app/cash/tempest/guides/Junit4JVMTest.kt), [.java](https://github.com/cashapp/tempest/blob/master/samples/guides/src/test/java/app/cash/tempest/guides/java/Junit4JVMTest.java))
+* Testing - SDK 1.x - JUnit5 - Docker ([.kt](https://github.com/cashapp/tempest/blob/master/samples/guides/src/test/kotlin/app/cash/tempest/guides/Junit4DockerTest.kt), [.java](https://github.com/cashapp/tempest/blob/master/samples/guides/src/test/java/app/cash/tempest/guides/java/Junit4DockerTest.java))
+* Testing - SDK 2.x - JUnit4 - JVM ([.kt](https://github.com/cashapp/tempest/blob/master/samples/guides2/src/test/kotlin/app/cash/tempest2/guides/Junit5JVMTest.kt), [.java](https://github.com/cashapp/tempest/blob/master/samples/guides2/src/test/java/app/cash/tempest2/guides/java/Junit5JVMTest.java))
+* Testing - SDK 2.x - JUnit4 - Docker ([.kt](https://github.com/cashapp/tempest/blob/master/samples/guides2/src/test/kotlin/app/cash/tempest2/guides/Junit5DockerTest.kt), [.java](https://github.com/cashapp/tempest/blob/master/samples/guides2/src/test/java/app/cash/tempest2/guides/java/Junit5DockerTest.java))
+* Testing - SDK 2.x - JUnit5 - JVM ([.kt](https://github.com/cashapp/tempest/blob/master/samples/guides2/src/test/kotlin/app/cash/tempest2/guides/Junit5JVMTest.kt), [.java](https://github.com/cashapp/tempest/blob/master/samples/guides2/src/test/java/app/cash/tempest2/guides/java/Junit5JVMTest.java))
+* Testing - SDK 2.x - JUnit5 - Docker ([.kt](https://github.com/cashapp/tempest/blob/master/samples/guides2/test/main/kotlin/app/cash/tempest2/guides/Junit5DockerTest.kt), [.java](https://github.com/cashapp/tempest/blob/master/samples/guides2/src/test/java/app/cash/tempest2/guides/java/Junit5DockerTest.java))
+ 

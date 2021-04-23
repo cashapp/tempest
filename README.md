@@ -234,26 +234,90 @@ For locality, we smashed together several entity types in the same table. This i
     @DynamoDBTable(tableName = "music_library_items")
     public class MusicLibraryItem {
       // All Items.
-      @DynamoDBHashKey
-      public String partition_key;
-      @DynamoDBRangeKey
-      public String sort_key;
+      String partition_key = null;
+      String sort_key = null;
     
       // AlbumInfo.
-      @DynamoDBAttribute
-      public String album_title;
-      @DynamoDBAttribute
-      public String album_artist;
-      @DynamoDBAttribute
-      public String release_date;
-      @DynamoDBAttribute
-      public String genre;
+      String album_title = null;
+      String artist_name = null;
+      String release_date = null;
+      String genre_name = null;
     
       // AlbumTrack.
-      @DynamoDBAttribute
-      public String track_title;
-      @DynamoDBAttribute
-      public String run_length;
+      String track_title = null;
+      String run_length = null;
+      
+      @DynamoDBHashKey(attributeName = "partition_key")
+      public String getPartitionKey() {
+        return partition_key;
+      }
+    
+      public void setPartitionKey(String partition_key) {
+        this.partition_key = partition_key;
+      }
+    
+      @DynamoDBRangeKey(attributeName = "sort_key")
+      public String getSortKey() {
+        return sort_key;
+      }
+    
+      public void setSortKey(String sort_key) {
+        this.sort_key = sort_key;
+      }
+    
+      @DynamoDBAttribute(attributeName = "album_title")
+      public String getAlbumTitle() {
+        return album_title;
+      }
+    
+      public void setAlbumTitle(String album_title) {
+        this.album_title = album_title;
+      }
+    
+      @DynamoDBAttribute(attributeName = "artist_name")
+      public String getArtistName() {
+        return artist_name;
+      }
+    
+      public void setArtistName(String artist_name) {
+        this.artist_name = artist_name;
+      }
+    
+      @DynamoDBAttribute(attributeName = "release_date")
+      public String getReleaseDate() {
+        return release_date;
+      }
+    
+      public void setReleaseDate(String release_date) {
+        this.release_date = release_date;
+      }
+    
+      @DynamoDBAttribute(attributeName = "genre_name")
+      public String getGenreName() {
+        return genre_name;
+      }
+    
+      public void setGenreName(String genre_name) {
+        this.genre_name = genre_name;
+      }
+    
+      @DynamoDBAttribute(attributeName = "track_title")
+      public String getTrackTitle() {
+        return track_title;
+      }
+    
+      public void setTrackTitle(String track_title) {
+        this.track_title = track_title;
+      }
+    
+      @DynamoDBAttribute(attributeName = "run_length")
+      public String getRunLength() {
+        return run_length;
+      }
+    
+      public void setRunLength(String run_length) {
+        this.run_length = run_length;
+      }
     }
     ```
 

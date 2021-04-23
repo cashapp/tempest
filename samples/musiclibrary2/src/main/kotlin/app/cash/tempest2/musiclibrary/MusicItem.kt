@@ -62,6 +62,10 @@ class MusicItem {
 
   // PlaylistEntry.
   var track_token: String? = null
+
+  companion object {
+    const val TABLE_NAME = "music_items"
+  }
 }
 
 internal class DurationTypeConverter : AttributeConverter<Duration> {

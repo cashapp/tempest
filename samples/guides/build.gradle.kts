@@ -8,10 +8,6 @@ dependencies {
   implementation(project(":samples:urlshortener"))
   implementation(Dependencies.kotlinStdLib)
   implementation(Dependencies.kotlinxCoroutines)
-
-  testImplementation(Dependencies.assertj)
-  testImplementation(Dependencies.junitApi)
-  testImplementation(Dependencies.junitEngine)
 }
 
 val compileKotlin by tasks.getting(KotlinCompile::class) {

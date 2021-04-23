@@ -28,10 +28,10 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBStreamsClientBuilder
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput
+import java.net.ServerSocket
 
 fun pickRandomPort(): Int {
-  // There is a tolerable chance of flaky tests caused by port collision.
-  return 58000 + (ProcessHandle.current().pid() % 1000).toInt()
+  ServerSocket(0).use { socket -> return socket.localPort }
 }
 
 fun connect(port: Int): AmazonDynamoDB {
