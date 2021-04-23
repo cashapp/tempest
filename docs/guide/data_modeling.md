@@ -271,7 +271,94 @@ This [global secondary index](https://docs.aws.amazon.com/amazondynamodb/latest/
 
 Tempest lets you define strongly typed data models on top of your [`DynamoDBMapper`](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.html) classes.
 
-=== "Kotlin"
+=== "Kotlin - SDK 2.x"
+
+    ```kotlin
+    interface MusicDb : LogicalDb {
+       @TableName("music_items")
+       val music: MusicTable
+    }
+    
+    interface MusicTable : LogicalTable<MusicItem> {
+      val albumInfo: InlineView<AlbumInfo.Key, AlbumInfo>
+      val albumTracks: InlineView<AlbumTrack.Key, AlbumTrack>
+    
+      val playlistInfo: InlineView<PlaylistInfo.Key, PlaylistInfo>
+    
+      // Global Secondary Indexes.
+      val albumInfoByGenre: SecondaryIndex<AlbumInfo.GenreIndexOffset, AlbumInfo>
+      val albumInfoByArtist: SecondaryIndex<AlbumInfo.ArtistIndexOffset, AlbumInfo>
+    
+      // Local Secondary Indexes.
+      val albumTracksByTitle: SecondaryIndex<AlbumTrack.TitleIndexOffset, AlbumTrack>
+    }
+    
+    @DynamoDbBean
+    class MusicItem {
+      // Primary key.
+      @get:DynamoDbPartitionKey
+      @get:DynamoDbSecondarySortKey(indexNames = ["genre_album_index", "artist_album_index"])
+      var partition_key: String? = null
+      @get:DynamoDbSortKey
+      var sort_key: String? = null
+      // Attributes...
+    }
+    ```
+
+=== "Java - SDK 2.x"
+
+    ```java
+    public interface MusicDb extends LogicalDb {
+      @TableName("music_items")
+      MusicTable music();
+    }
+    
+    public interface MusicTable extends LogicalTable<MusicItem> {
+      InlineView<AlbumInfo.Key, AlbumInfo> albumInfo();
+      InlineView<AlbumTrack.Key, AlbumTrack> albumTracks();
+    
+      InlineView<PlaylistInfo.Key, PlaylistInfo> playlistInfo();
+    
+      // Global Secondary Indexes.
+      SecondaryIndex<AlbumInfo.GenreIndexOffset, AlbumInfo> albumInfoByGenre();
+      SecondaryIndex<AlbumInfo.ArtistIndexOffset, AlbumInfo> albumInfoByArtist();
+    
+      // Local Secondary Indexes.
+      SecondaryIndex<AlbumTrack.TitleIndexOffset, AlbumTrack> albumTracksByTitle();
+    }
+    
+    @DynamoDbBean
+    public class MusicItem {
+      // All Items.
+      String partition_key = null;
+      String sort_key = null;
+      // Attributes...
+
+      @DynamoDbAttribute("partition_key")
+      @DynamoDbPartitionKey
+      @DynamoDbSecondarySortKey(indexNames = {"genre_album_index", "artist_album_index"})
+      public String getPartitionKey() {
+        return partition_key;
+      }
+    
+      public void setPartitionKey(String partition_key) {
+        this.partition_key = partition_key;
+      }
+    
+      @DynamoDbAttribute("sort_key")
+      @DynamoDbSortKey
+      public String getSortKey() {
+        return sort_key;
+      }
+    
+      public void setSortKey(String sort_key) {
+        this.sort_key = sort_key;
+      }
+      // Getters and setters...
+    }
+    ```
+
+=== "Kotlin - SDK 1.x"
 
     ```kotlin
     interface MusicDb : LogicalDb {
@@ -304,7 +391,7 @@ Tempest lets you define strongly typed data models on top of your [`DynamoDBMapp
     }
     ```
 
-=== "Java"
+=== "Java - SDK 1.x"
 
     ```java
     public interface MusicDb extends LogicalDb {
@@ -376,7 +463,21 @@ For example, you can batch load up to 100 items in a single request.
 
 To create a `LogicalDb`, you need to pass in an instance of `DynamoDBMapper`.
 
-=== "Kotlin"
+=== "Kotlin - SDK 2.x"
+    
+    ```kotlin
+    val enhancedClient = DynamoDbEnhancedClient.create()
+    val db: MusicDb = LogicalDb(enhancedClient)
+    ```
+
+=== "Java - SDK 2.x"
+
+    ```java
+    DynamoDbEnhancedClient enhancedClient = DynamoDbEnhancedClient.create();
+    MusicDb db = LogicalDb.create(MusicDb.class, enhancedClient);
+    ```
+
+=== "Kotlin - SDK 1.x"
     
     ```kotlin
     val client: AmazonDynamoDB = AmazonDynamoDBClientBuilder.standard().build()
@@ -384,7 +485,7 @@ To create a `LogicalDb`, you need to pass in an instance of `DynamoDBMapper`.
     val db: MusicDb = LogicalDb(mapper)
     ```
 
-=== "Java"
+=== "Java - SDK 1.x"
 
     ```java
     AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
@@ -398,10 +499,31 @@ When you create an instance of DynamoDBMapper, it has certain default behaviors;
 
 The following code snippet creates a DynamoDBMapper with custom settings:
 
-=== "Kotlin"
+=== "Kotlin - SDK 2.x"
 
     ```kotlin
+    val client = DynamoDbClient.create()
+    val enhancedClient = DynamoDbEnhancedClient.builder()
+      .dynamoDbClient(client)
+      .extensions(listOf(/* ... */))
+      .build()
+    val db: MusicDb = LogicalDb(enhancedClient)
+    ```
+
+=== "Java - SDK 2.x"
     
+    ```java
+    DynamoDbClient client = DynamoDbClient.create();
+    DynamoDbEnhancedClient enhancedClient = DynamoDbEnhancedClient.builder()
+        .dynamoDbClient(client)
+        .extensions(List.of(/* ... */))
+        .build();
+    MusicDb db = LogicalDb.create(MusicDb.class, enhancedClient);
+    ```
+    
+=== "Kotlin - SDK 1.x"
+
+    ```kotlin
     val client = AmazonDynamoDBClientBuilder.standard().build()
     val mapperConfig = DynamoDBMapperConfig.builder()
       .withSaveBehavior(SaveBehavior.CLOBBER)
@@ -410,10 +532,10 @@ The following code snippet creates a DynamoDBMapper with custom settings:
       .withPaginationLoadingStrategy(PaginationLoadingStrategy.EAGER_LOADING)
       .build()
     val mapper = DynamoDBMapper(client, mapperConfig)
-    val musicDb: MusicDb = LogicalDB(mapper)
+    val db: MusicDb = LogicalDb(mapper)
     ```
 
-=== "Java"
+=== "Java - SDK 1.x"
     
     ```java
     AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
@@ -725,7 +847,73 @@ Tempest uses `DynamoDBMapper` to encode and decode entities.
 
 You may use `DynamoDBTypeConverter` to support [custom attribute types](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.ArbitraryDataMapping.html).
 
-=== "Kotlin"
+=== "Kotlin - SDK 2.x"
+
+    ```kotlin
+    @DynamoDbBean
+    class MusicItem {
+      // ...
+      @get:DynamoDbAttribute
+      @get:DynamoDbConvertedBy(LocalDateTypeConverter::class)
+      var release_date: LocalDate? = null
+      // ...
+    }
+
+    internal class LocalDateTypeConverter : AttributeConverter<LocalDate> {
+    
+      override fun transformFrom(input: LocalDate): AttributeValue {
+        return AttributeValue.builder().s(input.toString()).build()
+      }
+    
+      override fun transformTo(input: AttributeValue): LocalDate {
+        return LocalDate.parse(input.s())
+      }
+    
+      override fun type(): EnhancedType<LocalDate> {
+        return EnhancedType.of(LocalDate::class.java)
+      }
+    
+      override fun attributeValueType(): AttributeValueType {
+        return AttributeValueType.S
+      }
+    }
+    ```
+
+=== "Java - SDK 2.x"
+
+    ```java
+    @DynamoDbBean
+    public class MusicItem {
+      // ...
+      @DynamoDbAttribute("release_date")
+      @DynamoDbConvertedBy(LocalDateTypeConverter.class)
+      public String getReleaseDate() {
+        return release_date;
+      }
+      // ...
+    }
+
+    class LocalDateTypeConverter implements AttributeConverter<LocalDate> {
+    
+      @Override public AttributeValue transformFrom(LocalDate input) {
+        return AttributeValue.builder().s(input.toString()).build();
+      }
+    
+      @Override public LocalDate transformTo(AttributeValue input) {
+        return LocalDate.parse(input.s());
+      }
+    
+      @Override public EnhancedType<LocalDate> type() {
+        return EnhancedType.of(LocalDate.class);
+      }
+    
+      @Override public AttributeValueType attributeValueType() {
+        return AttributeValueType.S;
+      }
+    }
+    ```
+
+=== "Kotlin - SDK 1.x"
 
     ```kotlin
     @DynamoDBTable(tableName = "music_items")
@@ -748,10 +936,10 @@ You may use `DynamoDBTypeConverter` to support [custom attribute types](https://
     }
     ```
 
-=== "Java"
+=== "Java - SDK 1.x"
 
     ```java
-    @DynamoDBTable(tableName = "j_music_items")
+    @DynamoDBTable(tableName = "music_items")
     public class MusicItem {
       // ...
       @DynamoDBAttribute
@@ -760,7 +948,7 @@ You may use `DynamoDBTypeConverter` to support [custom attribute types](https://
       // ...
     }
     
-    class LocalDateTypeConverter  implements DynamoDBTypeConverter<String, LocalDate> {
+    class LocalDateTypeConverter implements DynamoDBTypeConverter<String, LocalDate> {
       @Override public String convert(LocalDate object) {
         return object.toString();
       }
@@ -775,5 +963,6 @@ You may use `DynamoDBTypeConverter` to support [custom attribute types](https://
 
 Check out the code samples on Github:
 
- * Music Library ([.kt](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary/src/main/kotlin/app/cash/tempest/musiclibrary), [.java](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary/src/main/java/app/cash/tempest/musiclibrary/java))
+ * Music Library - SDK 1.x ([.kt](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary/src/main/kotlin/app/cash/tempest/musiclibrary), [.java](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary/src/main/java/app/cash/tempest/musiclibrary/java))
+ * Music Library - SDK 2.x ([.kt](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary2/src/main/kotlin/app/cash/tempest2/musiclibrary), [.java](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary2/src/main/java/app/cash/tempest2/musiclibrary/java))
  

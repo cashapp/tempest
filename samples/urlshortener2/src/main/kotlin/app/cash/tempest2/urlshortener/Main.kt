@@ -31,6 +31,7 @@ class Cli : CliktCommand(help = "Configure access key and region environment var
     val client = DynamoDbEnhancedClient.create()
     val db = LogicalDb<AliasDb>(client)
     urlShortener = RealUrlShortener(db.aliasTable)
+    urlShortener.shorten("tempest", "https://cashapp.github.io/tempest")
   }
 }
 

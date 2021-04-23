@@ -118,7 +118,7 @@ We’ve written some examples that demonstrate how to solve common problems with
 
 Use `load()` to read a value.
 
-=== "Kotliin"
+=== "Kotlin"
 
     ```kotlin
     private val table: MusicTable
@@ -197,7 +197,39 @@ Use `load()` to read a value.
 
 If you need to read your writes, you may perform a strongly consistent read at a higher latency.
 
-=== "Kotlin"
+=== "Kotlin - SDK 2.x"
+
+    ```kotlin
+    private val table: MusicTable
+    
+    fun getAlbumTitle(albumToken: String): String? {
+      val albumInfo = table.albumInfo.load(
+        AlbumInfo.Key(albumToken), 
+        consistentReads = true
+      ) ?: return null
+      return albumInfo.album_title
+    }
+    ```
+
+=== "Java - SDK 2.x"
+
+    ```java
+    private final MusicTable table;
+    
+    @Nullable
+    public String getAlbumTitle(String albumToken) {
+      AlbumInfo albumInfo = table.albumInfo().load(
+          new AlbumInfo.Key(albumToken),
+          // consistentReads.
+          true);
+      if (albumInfo == null) {
+        return null;
+      }
+      return albumInfo.album_title;
+    }
+    ```
+
+=== "Kotlin - SDK 1.x"
 
     ```kotlin
     private val table: MusicTable
@@ -211,7 +243,7 @@ If you need to read your writes, you may perform a strongly consistent read at a
     }
     ```
 
-=== "Java"
+=== "Java - SDK 1.x"
 
     ```java
     private final MusicTable table;
@@ -256,7 +288,39 @@ By default, writes are unconditional. When there is a conflict, the last writer 
 
 To prevent lost updates across concurrent writes, you may specify a condition expression. If the condition expression evaluates to true, the operation is applied; otherwise, the operation is rolled back.
 
-=== "Kotlin"
+=== "Kotlin - SDK 2.x"
+    
+    ```kotlin
+    private val table: MusicTable
+    
+    fun addAlbum(albumInfo: AlbumInfo) {
+      table.albumInfo.save(albumInfo, ifNotExist())
+    }
+
+    private fun ifNotExist(): Expression {
+      return Expression.builder()
+        .expression("attribute_not_exists(partition_key)")
+        .build()
+    }
+    ```
+
+=== "Java - SDK 2.x"
+
+    ```java
+    private final MusicTable table;
+
+    public void addAlbum(AlbumInfo albumInfo) {
+      table.albumInfo().save(albumInfo, ifNotExist());
+    }
+
+    private Expression ifNotExist() {
+      return Expression.builder()
+        .expression("attribute_not_exists(partition_key)")
+        .build();
+    }
+    ```
+
+=== "Kotlin - SDK 1.x"
     
     ```kotlin
     private val table: MusicTable
@@ -271,7 +335,7 @@ To prevent lost updates across concurrent writes, you may specify a condition ex
     }
     ```
 
-=== "Java"
+=== "Java - SDK 1.x"
 
     ```java
     private final MusicTable table;
@@ -312,7 +376,39 @@ Use `delete()` to delete a value by key.
 
 Similarly, you can add a condition expression to the delete operation. 
 
-=== "Kotlin"
+=== "Kotlin - SDK 2.x"
+    
+    ```kotlin
+    private val table: MusicTable
+    
+    fun deleteAlbum(albumToken: String) {
+      table.albumInfo.delete(AlbumInfo.Key(albumToken), ifExist())
+    }
+
+    private fun ifExist(): Expression {
+      return Expression.builder()
+        .expression("attribute_exists(partition_key)")
+        .build()
+    }
+    ```
+
+=== "Java - SDK 2.x"
+
+    ```java
+    private final MusicTable table;
+    
+    public void deleteAlbum(String albumToken) {
+      table.albumInfo().deleteKey(new AlbumInfo.Key(albumToken), ifExist());
+    }
+
+    private Expression ifExist() {
+      return Expression.builder()
+        .expression("attribute_exists(partition_key)")
+        .build();
+    }
+    ```
+
+=== "Kotlin - SDK 1.x"
     
     ```kotlin
     private val table: MusicTable
@@ -327,7 +423,7 @@ Similarly, you can add a condition expression to the delete operation.
     }
     ```
 
-=== "Java"
+=== "Java - SDK 1.x"
 
     ```java
     private final MusicTable table;

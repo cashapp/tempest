@@ -39,7 +39,101 @@ Amazon DynamoDB [transactions](https://docs.aws.amazon.com/amazondynamodb/latest
 
 The following example uses transactions to make sure it only adds valid album tracks to the playlist. 
 
-=== "Kotlin"
+=== "Kotlin - SDK 2.x"
+
+    ```kotlin
+    private val db: MusicDb
+    private val table: MusicTable
+    
+    fun addTrackToPlaylist(
+      playlistToken: String,
+      albumTrack: AlbumTrack.Key
+    ) {
+      // Read.
+      val existing = checkNotNull(
+        table.playlistInfo.load(PlaylistInfo.Key(playlistToken))
+      ) { "Playlist does not exist: $playlistToken" }
+      // Modify.
+      val newPlaylist = existing.copy(
+        playlist_tracks = existing.playlist_tracks + albumTrack,
+        playlist_version = existing.playlist_version + 1
+      )
+      // Write.
+      val writeSet = TransactionWriteSet.Builder()
+        .save(newPlaylist, ifPlaylistVersionIs(existing.playlist_version))
+        // Add a playlist entry only if the album track exists.
+        .checkCondition(albumTrack, trackExists())
+        .build()
+      db.transactionWrite(writeSet)
+    }
+
+    private fun ifPlaylistVersionIs(playlist_version: Long): Expression {
+      return Expression.builder()
+        .expression("playlist_version = :playlist_version")
+        .expressionValues(
+          mapOf(":playlist_version" to AttributeValue.builder().n("$playlist_version").build())
+        )
+        .build()
+    }
+
+    private fun trackExists(): Expression {
+      return Expression.builder()
+        .expression("attribute_exists(track_title)")
+        .build()
+    }
+    ```
+
+=== "Java - SDK 2.x"
+
+    ```java
+    private final MusicDb db;
+    private final MusicTable table;
+
+    public void addTrackToPlaylist(
+        String playlistToken,
+        AlbumTrack.Key albumTrack
+    ) {
+      // Read.
+      PlaylistInfo existing = table.playlistInfo().load(new PlaylistInfo.Key(playlistToken));
+      if (existing == null) {
+        throw new IllegalStateException("Playlist does not exist: " + playlistToken);
+      }
+      // Modify.
+      List<AlbumTrack.Key> playlistTrackTokens = new ArrayList<>(existing.playlist_tracks);
+      playlistTrackTokens.add(albumTrack);
+      PlaylistInfo newPlaylist = new PlaylistInfo(
+          existing.playlist_token,
+          existing.playlist_name,
+          // playlist_tracks.
+          playlistTrackTokens,
+          // playlist_version.
+          existing.playlist_version + 1
+      );
+      // Write.
+      TransactionWriteSet writeSet = new TransactionWriteSet.Builder()
+          .save(newPlaylist, ifPlaylistVersionIs(existing.playlist_version))
+          // Add a playlist entry only if the album track exists.
+          .checkCondition(albumTrack, trackExists())
+          .build();
+      db.transactionWrite(writeSet);
+    }
+
+    private Expression ifPlaylistVersionIs(Long playlist_version) {
+      return Expression.builder()
+        .expression("playlist_version = :playlist_version")
+        .expressionValues(
+          Map.of(":playlist_version", AttributeValue.builder().n("" + playlist_version).build()))
+        .build();
+    }
+
+    private Expression trackExists() {
+      return Expression.builder()
+        .expression("attribute_exists(track_title)")
+        .build();
+    }
+    ```
+
+=== "Kotlin - SDK 1.x"
 
     ```kotlin
     private val db: MusicDb
@@ -83,7 +177,7 @@ The following example uses transactions to make sure it only adds valid album tr
     }
     ```
 
-=== "Java"
+=== "Java - SDK 1.x"
 
     ```java
     private final MusicDb db;

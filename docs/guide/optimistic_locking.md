@@ -77,7 +77,72 @@ Let's add a playlist feature to our music library:
     
 To serialize writes to the same playlist, we can have writers implement optimistic locking on the `playlist_version` attribute. 
 
-=== "Kotlin"
+=== "Kotlin - SDK 2.x"
+
+    ```kotlin
+    private val table: MusicTable
+    
+    fun changePlaylistName(playlistToken: String, newName: String) {
+      // Read.
+      val existing = checkNotNull(
+        table.playlistInfo.load(PlaylistInfo.Key(playlistToken))
+      ) { "Playlist does not exist: $playlistToken" }
+      // Modify.
+      val newPlaylist = existing.copy(
+        playlist_name = newName,
+        playlist_version = existing.playlist_version + 1
+      )
+      // Write.
+      table.playlistInfo.save(
+        newPlaylist,
+        ifPlaylistVersionIs(existing.playlist_version)
+      )
+    }
+  
+    private fun ifPlaylistVersionIs(playlist_version: Long): Expression {
+      return Expression.builder()
+        .expression("playlist_version = :playlist_version")
+        .expressionValues(Map.of(":playlist_version", AttributeValue.builder().n("$playlist_version").build()))
+        .build()
+    }
+    
+    ```
+
+=== "Java - SDK 2.x"
+
+    ```java
+    private final MusicTable table;
+    
+    public void changePlaylistName(String playlistToken, String newName) {
+      // Read.
+      PlaylistInfo existing = table.playlistInfo().load(new PlaylistInfo.Key(playlistToken));
+      if (existing == null) {
+        throw new IllegalStateException("Playlist does not exist: " + playlistToken);
+      }
+      // Modify.
+      PlaylistInfo newPlaylist = new PlaylistInfo(
+          existing.playlist_token,
+          newName,
+          existing.playlist_tracks,
+          // playlist_version.
+          existing.playlist_version + 1
+      );
+      // Write.
+      table.playlistInfo().save(
+          newPlaylist,
+          ifPlaylistVersionIs(existing.playlist_version)
+      );
+    }
+    
+    private Expression ifPlaylistVersionIs(Long playlist_version) {
+      return Expression.builder()
+          .expression("playlist_version = :playlist_version")
+          .expressionValues(Map.of(":playlist_version", AttributeValue.builder().n("" + playlist_version).build()))
+          .build();
+    }
+    ```
+
+=== "Kotlin - SDK 1.x"
 
     ```kotlin
     private val table: MusicTable
@@ -110,10 +175,10 @@ To serialize writes to the same playlist, we can have writers implement optimist
     }
     ```
 
-=== "Java"
+=== "Java - SDK 1.x"
     
     ```java
-    private val table: MusicTable
+    private MusicTable table;
 
     public void changePlaylistName(String playlistToken, String newName) {
       // Read.
