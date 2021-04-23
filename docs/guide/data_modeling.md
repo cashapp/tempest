@@ -412,15 +412,32 @@ Tempest lets you define strongly typed data models on top of your [`DynamoDBMapp
       SecondaryIndex<AlbumTrack.TitleIndexOffset, AlbumTrack> albumTracksByTitle();
     }
     
-    @DynamoDBTable(tableName = "j_music_items")
+    @DynamoDBTable(tableName = "music_items")
     public class MusicItem {
       // All Items.
-      @DynamoDBHashKey
-      @DynamoDBIndexRangeKey(globalSecondaryIndexNames = {"genre_album_index", "artist_album_index"})
       String partition_key = null;
-      @DynamoDBRangeKey
       String sort_key = null;
       // Attributes...
+      
+      @DynamoDBHashKey(attributeName = "partition_key")
+      @DynamoDBIndexRangeKey(globalSecondaryIndexNames = {"genre_album_index", "artist_album_index"})
+      public String getPartitionKey() {
+        return partition_key;
+      }
+    
+      public void setPartitionKey(String partition_key) {
+        this.partition_key = partition_key;
+      }
+    
+      @DynamoDBRangeKey(attributeName = "sort_key")
+      public String getSortKey() {
+        return sort_key;
+      }
+    
+      public void setSortKey(String sort_key) {
+        this.sort_key = sort_key;
+      }
+      // Getter and setters...
     }
     ```
 
@@ -860,7 +877,6 @@ You may use `DynamoDBTypeConverter` to support [custom attribute types](https://
     }
 
     internal class LocalDateTypeConverter : AttributeConverter<LocalDate> {
-    
       override fun transformFrom(input: LocalDate): AttributeValue {
         return AttributeValue.builder().s(input.toString()).build()
       }
@@ -894,7 +910,6 @@ You may use `DynamoDBTypeConverter` to support [custom attribute types](https://
     }
 
     class LocalDateTypeConverter implements AttributeConverter<LocalDate> {
-    
       @Override public AttributeValue transformFrom(LocalDate input) {
         return AttributeValue.builder().s(input.toString()).build();
       }
@@ -942,9 +957,11 @@ You may use `DynamoDBTypeConverter` to support [custom attribute types](https://
     @DynamoDBTable(tableName = "music_items")
     public class MusicItem {
       // ...
-      @DynamoDBAttribute
+      @DynamoDBAttribute(attributeName = "release_date")
       @DynamoDBTypeConverted(converter = LocalDateTypeConverter.class)
-      LocalDate release_date = null;
+      public LocalDate getReleaseDate() {
+        return release_date;
+      }
       // ...
     }
     

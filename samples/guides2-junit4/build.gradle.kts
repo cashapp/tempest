@@ -8,6 +8,16 @@ dependencies {
   implementation(project(":samples:urlshortener2"))
   implementation(Dependencies.kotlinStdLib)
   implementation(Dependencies.kotlinxCoroutines)
+
+  testImplementation(Dependencies.assertj)
+  testImplementation(Dependencies.junit4Api)
+  implementation(project(":tempest2-testing-docker"))
+  implementation(project(":tempest2-testing-jvm"))
+  implementation(project(":tempest2-testing-junit4"))
+}
+
+tasks.withType<Test> {
+  useJUnit()
 }
 
 val compileKotlin by tasks.getting(KotlinCompile::class) {

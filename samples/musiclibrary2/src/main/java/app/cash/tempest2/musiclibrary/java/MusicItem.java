@@ -18,7 +18,6 @@ package app.cash.tempest2.musiclibrary.java;
 
 import app.cash.tempest2.musiclibrary.AlbumTrackKeyListTypeConverter;
 import app.cash.tempest2.musiclibrary.DurationTypeConverter;
-import app.cash.tempest2.musiclibrary.LocalDateTypeConverter;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
@@ -36,6 +35,9 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 @DynamoDbBean
 public class MusicItem {
+
+  public static String TABLE_NAME = "j_music_items";
+
   // All Items.
   String partition_key = null;
   String sort_key = null;
@@ -186,7 +188,7 @@ public class MusicItem {
     this.track_token = track_token;
   }
 
-  class LocalDateTypeConverter implements AttributeConverter<LocalDate> {
+  static class LocalDateTypeConverter implements AttributeConverter<LocalDate> {
 
     @Override public AttributeValue transformFrom(LocalDate input) {
       return AttributeValue.builder().s(input.toString()).build();
