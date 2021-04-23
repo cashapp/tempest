@@ -441,7 +441,7 @@ fun testDb() = TestDynamoDb.Builder(DockerDynamoDbServer.Factory)
 
 ## Other Testing Frameworks
 
-Tempest testing is compatible with other testing frameworks. You'll need to write your own integration code. Feel free to reference the above implementations.
+Tempest testing is compatible with other testing frameworks. You'll need to write your own integration code. Feel free to reference the implementations above.
 
 ---
 

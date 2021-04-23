@@ -10,7 +10,6 @@ import app.cash.tempest2.testing.logicalDb
 import org.junit.Rule
 import org.junit.Test
 import software.amazon.awssdk.services.dynamodb.model.DescribeTableRequest
-import software.amazon.awssdk.services.dynamodb.model.DescribeTableResponse
 import java.time.LocalDate
 
 class Junit4DockerTest {

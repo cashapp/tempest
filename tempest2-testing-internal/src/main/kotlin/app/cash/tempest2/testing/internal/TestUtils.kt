@@ -26,11 +26,11 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput
 import software.amazon.awssdk.services.dynamodb.streams.DynamoDbStreamsClient
+import java.net.ServerSocket
 import java.net.URI
 
 fun pickRandomPort(): Int {
-  // There is a tolerable chance of flaky tests caused by port collision.
-  return 58000 + (ProcessHandle.current().pid() % 1000).toInt()
+  ServerSocket(0).use { socket -> return socket.localPort }
 }
 
 private val AWS_CREDENTIALS_PROVIDER = StaticCredentialsProvider.create(

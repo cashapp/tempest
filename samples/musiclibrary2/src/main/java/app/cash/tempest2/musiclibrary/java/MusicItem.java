@@ -188,7 +188,7 @@ public class MusicItem {
     this.track_token = track_token;
   }
 
-  static class LocalDateTypeConverter implements AttributeConverter<LocalDate> {
+  public static class LocalDateTypeConverter implements AttributeConverter<LocalDate> {
 
     @Override public AttributeValue transformFrom(LocalDate input) {
       return AttributeValue.builder().s(input.toString()).build();
