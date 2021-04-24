@@ -20,6 +20,8 @@ import app.cash.tempest2.KeyCondition
 import app.cash.tempest2.Offset
 import app.cash.tempest2.Page
 import app.cash.tempest2.QueryConfig
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.future
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 
 interface Queryable<K : Any, I : Any> {
@@ -39,29 +41,38 @@ interface Queryable<K : Any, I : Any> {
 
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
-  suspend fun query(keyCondition: KeyCondition<K>) = query(
+  fun queryAsync(
+    keyCondition: KeyCondition<K>,
+    asc: Boolean,
+    pageSize: Int,
+    consistentRead: Boolean,
+    filterExpression: Expression?,
+    initialOffset: Offset<K>?
+  ) = GlobalScope.future { query(keyCondition, asc, pageSize, consistentRead, filterExpression, initialOffset) }
+
+  fun queryAsync(keyCondition: KeyCondition<K>) = queryAsync(
     keyCondition,
     config = QueryConfig.Builder().build(),
     initialOffset = null
   )
 
-  suspend fun query(keyCondition: KeyCondition<K>, initialOffset: Offset<K>?) = query(
+  fun queryAsync(keyCondition: KeyCondition<K>, initialOffset: Offset<K>?) = queryAsync(
     keyCondition,
     config = QueryConfig.Builder().build(),
     initialOffset = initialOffset
   )
 
-  suspend fun query(keyCondition: KeyCondition<K>, config: QueryConfig) = query(
+  fun queryAsync(keyCondition: KeyCondition<K>, config: QueryConfig) = queryAsync(
     keyCondition,
     config = config,
     initialOffset = null
   )
 
-  suspend fun query(
+  fun queryAsync(
     keyCondition: KeyCondition<K>,
     config: QueryConfig,
     initialOffset: Offset<K>?
-  ) = query(
+  ) = queryAsync(
     keyCondition,
     config.asc,
     config.pageSize,

@@ -64,6 +64,7 @@ nav:
       - 'Query & Scan': guide/query_scan.md
       - 'Transaction': guide/transaction.md
       - 'Testing': guide/testing.md
+      - 'Asynchronous Programming': guide/asynchronous_programming.md
       - 'DynamoDB Resources': guide/dynamodb_resources.md
 
   - 'Reference':

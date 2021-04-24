@@ -19,6 +19,8 @@ package app.cash.tempest2.async
 import app.cash.tempest2.Offset
 import app.cash.tempest2.Page
 import app.cash.tempest2.ScanConfig
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.future
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 
 interface Scannable<K : Any, I : Any> {
@@ -35,22 +37,29 @@ interface Scannable<K : Any, I : Any> {
 
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
-  suspend fun scan() = scan(
+  fun scanAsync(
+    pageSize: Int = 100,
+    consistentRead: Boolean = false,
+    filterExpression: Expression? = null,
+    initialOffset: Offset<K>? = null
+  ) = GlobalScope.future { scan(pageSize, consistentRead, filterExpression, initialOffset) }
+
+  fun scanAsync() = scanAsync(
     ScanConfig.Builder().build(),
     initialOffset = null
   )
 
-  suspend fun scan(initialOffset: Offset<K>?) = scan(
+  fun scanAsync(initialOffset: Offset<K>?) = scanAsync(
     ScanConfig.Builder().build(),
     initialOffset = initialOffset
   )
 
-  suspend fun scan(config: ScanConfig) = scan(
+  fun scanAsync(config: ScanConfig) = scanAsync(
     config,
     initialOffset = null
   )
 
-  suspend fun scan(config: ScanConfig, initialOffset: Offset<K>?) = scan(
+  fun scanAsync(config: ScanConfig, initialOffset: Offset<K>?) = scanAsync(
     config.pageSize,
     config.consistentRead,
     config.filterExpression,

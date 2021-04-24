@@ -23,6 +23,8 @@ import app.cash.tempest2.ItemSet
 import app.cash.tempest2.KeySet
 import app.cash.tempest2.TransactionWriteSet
 import app.cash.tempest2.internal.AsyncLogicalDbFactory
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.future
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient
 import software.amazon.awssdk.enhanced.dynamodb.extensions.annotations.DynamoDbVersionAttribute
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
@@ -148,9 +150,37 @@ interface LogicalDb : LogicalTable.Factory {
 
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
-  suspend fun batchLoad(
+  fun batchLoadAsync(
+    keys: KeySet,
+    consistentReads: Boolean
+  ) = GlobalScope.future { batchLoad(keys, consistentReads) }
+
+  fun batchLoadAsync(
+    keys: Iterable<Any>,
+    consistentReads: Boolean
+  ) = batchLoadAsync(KeySet(keys), consistentReads)
+
+  fun batchLoadAsync(
+    vararg keys: Any,
+    consistentReads: Boolean
+  ) = batchLoadAsync(keys.toList(), consistentReads)
+
+  fun batchLoadAsync(
     keys: Iterable<Any>
-  ) = batchLoad(keys, consistentReads = false)
+  ) = batchLoadAsync(keys, consistentReads = false)
+
+  fun batchWriteAsync(
+    writeSet: BatchWriteSet
+  ) = GlobalScope.future { batchWrite(writeSet) }
+
+  fun transactionLoadAsync(keys: KeySet) = GlobalScope.future { transactionLoad(keys) }
+
+  fun transactionLoadAsync(keys: Iterable<Any>) = transactionLoadAsync(KeySet(keys))
+
+  fun transactionLoadAsync(vararg keys: Any) = transactionLoadAsync(keys.toList())
+
+  fun transactionWriteAsync(writeSet: TransactionWriteSet) = GlobalScope.future { transactionWrite(writeSet) }
+
 }
 
 /**

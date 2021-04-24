@@ -16,9 +16,12 @@
 
 package app.cash.tempest2.async
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.future
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.enhanced.dynamodb.extensions.VersionedRecordExtension
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import java.util.concurrent.CompletableFuture
 
 interface View<K : Any, I : Any> {
   /**
@@ -64,17 +67,34 @@ interface View<K : Any, I : Any> {
 
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
-  suspend fun load(key: K) = load(key, false)
+  fun loadAsync(key: K, consistentReads: Boolean) = GlobalScope.future { load(key, consistentReads) }
 
-  suspend fun save(
+  fun loadAsync(key: K) = loadAsync(key, false)
+
+  fun saveAsync(
+    item: I,
+    saveExpression: Expression?
+  ) = GlobalScope.future { save(item, saveExpression) }
+
+  fun saveAsync(
     item: I
-  ) = save(item, saveExpression = null)
+  ) = saveAsync(item, saveExpression = null)
 
-  suspend fun deleteKey(
+  fun deleteKeyAsync(
+    key: K,
+    deleteExpression: Expression?
+  ) = GlobalScope.future { deleteKey(key, deleteExpression) }
+
+  fun deleteKeyAsync(
     key: K
-  ) = deleteKey(key, deleteExpression = null)
+  ) = deleteKeyAsync(key, deleteExpression = null)
 
-  suspend fun delete(
+  fun deleteAsync(
+    item: I,
+    deleteExpression: Expression?
+  ) = GlobalScope.future { delete(item, deleteExpression) }
+
+  fun deleteAsync(
     item: I
-  ) = delete(item, deleteExpression = null)
+  ) = deleteAsync(item, deleteExpression = null)
 }
