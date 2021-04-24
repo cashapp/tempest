@@ -18,10 +18,13 @@ package app.cash.tempest2.internal
 
 import app.cash.tempest.internal.Codec
 import app.cash.tempest2.View
+import kotlinx.coroutines.future.await
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.enhanced.dynamodb.Key
 import software.amazon.awssdk.enhanced.dynamodb.TableMetadata
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 import software.amazon.awssdk.enhanced.dynamodb.internal.EnhancedClientUtils
 import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest
@@ -30,62 +33,119 @@ import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest
 internal class DynamoDbView<K : Any, I : Any, R : Any>(
   private val keyCodec: Codec<K, R>,
   private val itemCodec: Codec<I, R>,
-  private val dynamoDbTable: DynamoDbTable<R>
-) : View<K, I> {
+  private val tableSchema: TableSchema<R>,
+) {
 
-  override fun load(key: K, consistentReads: Boolean): I? {
-    val keyObject = keyCodec.toDb(key)
-    val request = GetItemEnhancedRequest.builder()
-      .key(keyObject.key())
-      .consistentRead(consistentReads)
-      .build()
-    val itemObject = dynamoDbTable.getItem(request)
-    return if (itemObject != null) itemCodec.toApp(itemObject) else null
+  fun sync(dynamoDbTable: DynamoDbTable<R>) = Sync(dynamoDbTable)
+
+  inner class Sync(
+    private val dynamoDbTable: DynamoDbTable<R>
+  ) : View<K, I> {
+    override fun load(key: K, consistentReads: Boolean): I? {
+      val request = toLoadRequest(key, consistentReads)
+      val itemObject = dynamoDbTable.getItem(request)
+      return toLoadResponse(itemObject)
+    }
+
+    override fun save(
+      item: I,
+      saveExpression: Expression?
+    ) {
+      val request = toSaveRequest(item, saveExpression)
+      dynamoDbTable.putItem(request)
+    }
+
+    override fun deleteKey(
+      key: K,
+      deleteExpression: Expression?
+    ) {
+      val request = toDeleteKeyRequest(key, deleteExpression)
+      dynamoDbTable.deleteItem(request)
+    }
+
+    override fun delete(
+      item: I,
+      deleteExpression: Expression?
+    ) {
+      val request = toDeleteItemRequest(item, deleteExpression)
+      dynamoDbTable.deleteItem(request)
+    }
   }
 
-  override fun save(
-    item: I,
-    saveExpression: Expression?
-  ) {
-    val itemObject = itemCodec.toDb(item)
-    val request = PutItemEnhancedRequest.builder(dynamoDbTable.tableSchema().itemType().rawClass())
-      .item(itemObject)
-      .conditionExpression(saveExpression)
-      .build()
-    dynamoDbTable.putItem(request)
-  }
+  fun async(dynamoDbTable: DynamoDbAsyncTable<R>) = Async(dynamoDbTable)
 
-  override fun deleteKey(
-    key: K,
-    deleteExpression: Expression?
-  ) {
-    val keyObject = keyCodec.toDb(key)
-    deleteInternal(keyObject, deleteExpression)
-  }
+  inner class Async(
+    private val dynamoDbTable: DynamoDbAsyncTable<R>
+  ) : app.cash.tempest2.async.View<K, I> {
+    override suspend fun load(key: K, consistentReads: Boolean): I? {
+      val request = toLoadRequest(key, consistentReads)
+      val itemObject = dynamoDbTable.getItem(request).await()
+      return toLoadResponse(itemObject)
+    }
 
-  override fun delete(
-    item: I,
-    deleteExpression: Expression?
-  ) {
-    val itemObject = itemCodec.toDb(item)
-    deleteInternal(itemObject, deleteExpression)
-  }
+    override suspend fun save(
+      item: I,
+      saveExpression: Expression?
+    ) {
+      val request = toSaveRequest(item, saveExpression)
+      dynamoDbTable.putItem(request).await()
+    }
 
-  private fun deleteInternal(
-    itemObject: R,
-    deleteExpression: Expression?
-  ) {
-    val request = DeleteItemEnhancedRequest.builder()
-      .key(itemObject.key())
-      .conditionExpression(deleteExpression)
-      .build()
-    dynamoDbTable.deleteItem(request)
+    override suspend fun deleteKey(
+      key: K,
+      deleteExpression: Expression?
+    ) {
+      val request = toDeleteKeyRequest(key, deleteExpression)
+      dynamoDbTable.deleteItem(request).await()
+    }
+
+    override suspend fun delete(
+      item: I,
+      deleteExpression: Expression?
+    ) {
+      val request = toDeleteItemRequest(item, deleteExpression)
+      dynamoDbTable.deleteItem(request).await()
+    }
   }
 
   private fun R.key(): Key {
     return EnhancedClientUtils.createKeyFromItem(
-      this, dynamoDbTable.tableSchema(),
+      this, tableSchema,
       TableMetadata.primaryIndexName()
     )
+  }
+
+  private fun toLoadRequest(key: K, consistentReads: Boolean): GetItemEnhancedRequest {
+    val keyObject = keyCodec.toDb(key)
+    return GetItemEnhancedRequest.builder()
+      .key(keyObject.key())
+      .consistentRead(consistentReads)
+      .build()
+  }
+
+  private fun toLoadResponse(itemObject: R?) = if (itemObject != null) itemCodec.toApp(itemObject) else null
+
+  private fun toSaveRequest(item: I, saveExpression: Expression?): PutItemEnhancedRequest<R> {
+    val itemObject = itemCodec.toDb(item)
+    return PutItemEnhancedRequest.builder(tableSchema.itemType().rawClass())
+      .item(itemObject)
+      .conditionExpression(saveExpression)
+      .build()
+  }
+
+  private fun toDeleteKeyRequest(key: K, deleteExpression: Expression?): DeleteItemEnhancedRequest {
+    val keyObject = keyCodec.toDb(key)
+    return DeleteItemEnhancedRequest.builder()
+      .key(keyObject.key())
+      .conditionExpression(deleteExpression)
+      .build()
+  }
+
+  private fun toDeleteItemRequest(item: I, deleteExpression: Expression?): DeleteItemEnhancedRequest {
+    val itemObject = itemCodec.toDb(item)
+    return DeleteItemEnhancedRequest.builder()
+      .key(itemObject.key())
+      .conditionExpression(deleteExpression)
+      .build()
   }
 }

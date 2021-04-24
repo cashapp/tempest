@@ -102,3 +102,27 @@ fun MusicTable.givenAlbums(vararg albums: Album) {
     }
   }
 }
+
+suspend fun app.cash.tempest2.musiclibrary.async.MusicTable.givenAlbums(vararg albums: Album) {
+  for (album in albums) {
+    albumInfo.save(
+      AlbumInfo(
+        album.album_token,
+        album.album_title,
+        album.artist_name,
+        album.release_date,
+        album.genre_name
+      )
+    )
+    for ((i, track) in album.tracks.withIndex()) {
+      albumTracks.save(
+        AlbumTrack(
+          album.album_token,
+          i + 1L,
+          track.track_title,
+          track.run_length
+        )
+      )
+    }
+  }
+}

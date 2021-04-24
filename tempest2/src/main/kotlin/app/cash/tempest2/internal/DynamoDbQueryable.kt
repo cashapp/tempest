@@ -23,10 +23,13 @@ import app.cash.tempest2.KeyCondition
 import app.cash.tempest2.Offset
 import app.cash.tempest2.Page
 import app.cash.tempest2.Queryable
+import kotlinx.coroutines.reactive.awaitFirst
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.enhanced.dynamodb.Key
 import software.amazon.awssdk.enhanced.dynamodb.TableMetadata
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 import software.amazon.awssdk.enhanced.dynamodb.internal.EnhancedClientUtils
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest
@@ -37,17 +40,59 @@ internal class DynamoDbQueryable<K : Any, I : Any, R : Any>(
   private val specificAttributeNames: Set<String>,
   private val keyCodec: Codec<K, R>,
   private val itemCodec: Codec<I, R>,
-  private val dynamoDbTable: DynamoDbTable<R>
-) : Queryable<K, I> {
+  private val tableSchema: TableSchema<R>,
+) {
 
-  override fun query(
+  fun sync(dynamoDbTable: DynamoDbTable<R>) = Sync(dynamoDbTable)
+
+  inner class Sync(
+    private val dynamoDbTable: DynamoDbTable<R>
+  ) : Queryable<K, I> {
+
+    override fun query(
+      keyCondition: KeyCondition<K>,
+      asc: Boolean,
+      pageSize: Int,
+      consistentRead: Boolean,
+      filterExpression: Expression?,
+      initialOffset: Offset<K>?
+    ): Page<K, I> {
+      val request = toQueryRequest(keyCondition, asc, consistentRead, pageSize, filterExpression, initialOffset)
+      val page = if (secondaryIndexName != null) {
+        dynamoDbTable.index(secondaryIndexName).query(request)
+      } else {
+        dynamoDbTable.query(request)
+      }
+        .iterator().next()
+      return toQueryResponse(page)
+    }
+  }
+
+  fun async(dynamoDbTable: DynamoDbAsyncTable<R>) = Async(dynamoDbTable)
+
+  inner class Async(
+    private val dynamoDbTable: DynamoDbAsyncTable<R>
+  ) : app.cash.tempest2.async.Queryable<K, I> {
+    override suspend fun query(keyCondition: KeyCondition<K>, asc: Boolean, pageSize: Int, consistentRead: Boolean, filterExpression: Expression?, initialOffset: Offset<K>?): Page<K, I> {
+      val request = toQueryRequest(keyCondition, asc, consistentRead, pageSize, filterExpression, initialOffset)
+      val page = if (secondaryIndexName != null) {
+        dynamoDbTable.index(secondaryIndexName).query(request)
+      } else {
+        dynamoDbTable.query(request)
+      }
+        .limit(1).awaitFirst()
+      return toQueryResponse(page)
+    }
+  }
+
+  private fun toQueryRequest(
     keyCondition: KeyCondition<K>,
     asc: Boolean,
-    pageSize: Int,
     consistentRead: Boolean,
+    pageSize: Int,
     filterExpression: Expression?,
     initialOffset: Offset<K>?
-  ): Page<K, I> {
+  ): QueryEnhancedRequest {
     val query = QueryEnhancedRequest.builder()
       .queryConditional(toQueryConditional(keyCondition))
       .scanIndexForward(asc)
@@ -60,12 +105,10 @@ internal class DynamoDbQueryable<K : Any, I : Any, R : Any>(
     if (initialOffset != null) {
       query.exclusiveStartKey(initialOffset.encodeOffset())
     }
-    val page = if (secondaryIndexName != null) {
-      dynamoDbTable.index(secondaryIndexName).query(query.build())
-    } else {
-      dynamoDbTable.query(query.build())
-    }
-      .iterator().next()
+    return query.build()
+  }
+
+  private fun toQueryResponse(page: software.amazon.awssdk.enhanced.dynamodb.model.Page<R>): Page<K, I> {
     val contents = page.items().map { itemCodec.toApp(it) }
     val offset = page.lastEvaluatedKey()?.decodeOffset()
     return Page(contents, offset)
@@ -101,18 +144,18 @@ internal class DynamoDbQueryable<K : Any, I : Any, R : Any>(
 
   private fun Offset<K>.encodeOffset(): Map<String, AttributeValue> {
     val offsetKey = keyCodec.toDb(key)
-    return dynamoDbTable.tableSchema().itemToMap(offsetKey, true)
+    return tableSchema.itemToMap(offsetKey, true)
   }
 
   private fun Map<String, AttributeValue>.decodeOffset(): Offset<K> {
-    val offsetKeyAttributes = dynamoDbTable.tableSchema().mapToItem(this)
+    val offsetKeyAttributes = tableSchema.mapToItem(this)
     val offsetKey = keyCodec.toApp(offsetKeyAttributes)
     return Offset(offsetKey)
   }
 
   private fun R.key(): Key {
     return EnhancedClientUtils.createKeyFromItem(
-      this, dynamoDbTable.tableSchema(),
+      this, tableSchema,
       secondaryIndexName ?: TableMetadata.primaryIndexName()
     )
   }

@@ -7,7 +7,6 @@ dependencies {
   implementation(project(":samples:musiclibrary"))
   implementation(project(":samples:urlshortener"))
   implementation(Dependencies.kotlinStdLib)
-  implementation(Dependencies.kotlinxCoroutines)
 
   testImplementation(Dependencies.assertj)
   testImplementation(Dependencies.junitApi)

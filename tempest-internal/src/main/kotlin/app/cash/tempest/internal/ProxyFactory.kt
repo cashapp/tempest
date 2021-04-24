@@ -22,7 +22,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import kotlin.reflect.KClass
 
-class ProxyFactory {
+object ProxyFactory {
 
   fun <T : Any> create(
     type: KClass<T>,

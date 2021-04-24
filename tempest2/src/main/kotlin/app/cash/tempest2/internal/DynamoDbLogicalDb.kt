@@ -27,15 +27,21 @@ import app.cash.tempest2.LogicalTable
 import app.cash.tempest2.TransactionWriteSet
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.CLOBBER
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.DELETE
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.reactive.awaitFirst
+import software.amazon.awssdk.enhanced.dynamodb.Document
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.enhanced.dynamodb.Key
+import software.amazon.awssdk.enhanced.dynamodb.MappedTableResource
 import software.amazon.awssdk.enhanced.dynamodb.TableMetadata
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 import software.amazon.awssdk.enhanced.dynamodb.internal.EnhancedClientUtils
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchGetItemEnhancedRequest
+import software.amazon.awssdk.enhanced.dynamodb.model.BatchGetResultPage
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteItemEnhancedRequest
+import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteResult
 import software.amazon.awssdk.enhanced.dynamodb.model.ConditionCheck
 import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest
@@ -48,23 +54,119 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException
 import kotlin.reflect.KClass
 
-internal class DynamoDbLogicalDb(
-  private val dynamoDbEnhancedClient: DynamoDbEnhancedClient,
-  private val schema: Schema,
-  logicalTableFactory: LogicalTable.Factory
-) : LogicalDb, LogicalTable.Factory by logicalTableFactory {
+typealias AsyncLogicalDb = app.cash.tempest2.async.LogicalDb
+typealias AsyncLogicalTableFactory = app.cash.tempest2.async.LogicalTable.Factory
 
-  override fun batchLoad(
+internal class DynamoDbLogicalDb(
+  private val mappedTableResourceFactory: MappedTableResourceFactory,
+  private val schema: Schema,
+) {
+
+  interface MappedTableResourceFactory {
+    fun <T> mappedTableResource(tableName: String, tableSchema: TableSchema<T>): MappedTableResource<T>
+
+    companion object {
+      fun simple(create: (String, TableSchema<Any>) -> MappedTableResource<Any>): MappedTableResourceFactory {
+        return object : MappedTableResourceFactory {
+          override fun <T> mappedTableResource(tableName: String, tableSchema: TableSchema<T>): MappedTableResource<T> {
+            return create(tableName, tableSchema as TableSchema<Any>) as MappedTableResource<T>
+          }
+        }
+      }
+    }
+  }
+
+  fun sync(dynamoDbEnhancedClient: DynamoDbEnhancedClient, logicalTableFactory: LogicalTable.Factory) = Sync(dynamoDbEnhancedClient, logicalTableFactory)
+
+  inner class Sync(
+    private val dynamoDbEnhancedClient: DynamoDbEnhancedClient,
+    logicalTableFactory: LogicalTable.Factory
+  ) : LogicalDb, LogicalTable.Factory by logicalTableFactory {
+
+    override fun batchLoad(
+      keys: KeySet,
+      consistentReads: Boolean
+    ): ItemSet {
+      val (requests, requestsByTable, batchRequest) = toBatchLoadRequest(keys, consistentReads)
+      val page = dynamoDbEnhancedClient.batchGetItem(batchRequest).iterator().next()
+      return toBatchLoadResponse(requestsByTable, requests, page)
+    }
+
+    override fun batchWrite(
+      writeSet: BatchWriteSet
+    ): app.cash.tempest2.BatchWriteResult {
+      val (requestsByTable, batchRequest) = toBatchWriteRequest(writeSet)
+      val result = dynamoDbEnhancedClient.batchWriteItem(batchRequest)
+      return toBatchWriteResponse(requestsByTable, result)
+    }
+
+    override fun transactionLoad(keys: KeySet): ItemSet {
+      val (requests, batchRequest) = toTransactionLoadRequest(keys)
+      val documents = dynamoDbEnhancedClient.transactGetItems(batchRequest)
+      return toTransactionLoadResponse(documents, requests)
+    }
+
+    override fun transactionWrite(writeSet: TransactionWriteSet) {
+      val writeRequest = toTransactionWriteRequest(writeSet)
+      try {
+        dynamoDbEnhancedClient.transactWriteItems(writeRequest)
+      } catch (e: TransactionCanceledException) {
+        toTransactionWriteException(writeSet, e)
+      }
+    }
+  }
+
+  fun async(dynamoDbEnhancedClient: DynamoDbEnhancedAsyncClient, logicalTableFactory: AsyncLogicalTableFactory) = Async(dynamoDbEnhancedClient, logicalTableFactory)
+
+  inner class Async(
+    private val dynamoDbEnhancedClient: DynamoDbEnhancedAsyncClient,
+    logicalTableFactory: AsyncLogicalTableFactory
+  ) : AsyncLogicalDb, AsyncLogicalTableFactory by logicalTableFactory {
+
+    override suspend fun batchLoad(
+      keys: KeySet,
+      consistentReads: Boolean
+    ): ItemSet {
+      val (requests, requestsByTable, batchRequest) = toBatchLoadRequest(keys, consistentReads)
+      val page = dynamoDbEnhancedClient.batchGetItem(batchRequest).limit(1).awaitFirst()
+      return toBatchLoadResponse(requestsByTable, requests, page)
+    }
+
+    override suspend fun batchWrite(
+      writeSet: BatchWriteSet
+    ): app.cash.tempest2.BatchWriteResult {
+      val (requestsByTable, batchRequest) = toBatchWriteRequest(writeSet)
+      val result = dynamoDbEnhancedClient.batchWriteItem(batchRequest).await()
+      return toBatchWriteResponse(requestsByTable, result)
+    }
+
+    override suspend fun transactionLoad(keys: KeySet): ItemSet {
+      val (requests, batchRequest) = toTransactionLoadRequest(keys)
+      val documents = dynamoDbEnhancedClient.transactGetItems(batchRequest).await()
+      return toTransactionLoadResponse(documents, requests)
+    }
+
+    override suspend fun transactionWrite(writeSet: TransactionWriteSet) {
+      val writeRequest = toTransactionWriteRequest(writeSet)
+      try {
+        dynamoDbEnhancedClient.transactWriteItems(writeRequest).await()
+      } catch (e: TransactionCanceledException) {
+        toTransactionWriteException(writeSet, e)
+      }
+    }
+  }
+
+  private fun toBatchLoadRequest(
     keys: KeySet,
     consistentReads: Boolean
-  ): ItemSet {
+  ): Triple<List<LoadRequest>, Map<KClass<*>, List<LoadRequest>>, BatchGetItemEnhancedRequest> {
     val requests = keys.map { LoadRequest(it.encodeAsKey().rawItemKey(), it.expectedItemType()) }
     val requestsByTable = requests.groupBy { it.tableType }
     val batchRequest = BatchGetItemEnhancedRequest.builder()
       .readBatches(
         requestsByTable.map { (tableType, requestsForTable) ->
           ReadBatch.builder(tableType.java)
-            .mappedTableResource(dynamoDbTable(tableType))
+            .mappedTableResource(mappedTableResource(tableType))
             .apply {
               for (request in requestsForTable) {
                 addGetItem(request.key.key, consistentReads)
@@ -74,12 +176,19 @@ internal class DynamoDbLogicalDb(
         }
       )
       .build()
-    val page = dynamoDbEnhancedClient.batchGetItem(batchRequest).iterator().next()
+    return Triple(requests, requestsByTable, batchRequest)
+  }
+
+  private fun toBatchLoadResponse(
+    requestsByTable: Map<KClass<*>, List<LoadRequest>>,
+    requests: List<LoadRequest>,
+    page: BatchGetResultPage
+  ): ItemSet {
     val results = mutableSetOf<Any>()
     val tableTypes = requestsByTable.keys
     val resultTypes = requests.map { it.key to it.resultType }.toMap()
     for (tableType in tableTypes) {
-      for (result in page.resultsForTable(dynamoDbTable<Any>(tableType))) {
+      for (result in page.resultsForTable(mappedTableResource<Any>(tableType))) {
         val resultType = resultTypes[result.rawItemKey()]!!
         val decoded = resultType.codec.toApp(result)
         results.add(decoded)
@@ -88,9 +197,7 @@ internal class DynamoDbLogicalDb(
     return ItemSet(results)
   }
 
-  override fun batchWrite(
-    writeSet: BatchWriteSet
-  ): app.cash.tempest2.BatchWriteResult {
+  private fun toBatchWriteRequest(writeSet: BatchWriteSet): Pair<Map<KClass<out Any>, List<WriteRequest>>, BatchWriteItemEnhancedRequest> {
     val clobberRequests = writeSet.itemsToClobber.map { WriteRequest(it.encodeAsItem(), CLOBBER) }
     val deleteRequests = writeSet.keysToDelete.map { WriteRequest(it.encodeAsKey(), DELETE) }
     val requests = clobberRequests + deleteRequests
@@ -99,7 +206,7 @@ internal class DynamoDbLogicalDb(
       .writeBatches(
         requestsByTable.map { (tableType, writeRequestsForTable) ->
           WriteBatch.builder(tableType.java)
-            .mappedTableResource(dynamoDbTable(tableType))
+            .mappedTableResource(mappedTableResource(tableType))
             .apply {
               for (request in writeRequestsForTable) {
                 when (request.op) {
@@ -112,12 +219,18 @@ internal class DynamoDbLogicalDb(
         }
       )
       .build()
-    val result = dynamoDbEnhancedClient.batchWriteItem(batchRequest)
+    return Pair(requestsByTable, batchRequest)
+  }
+
+  private fun toBatchWriteResponse(
+    requestsByTable: Map<KClass<out Any>, List<WriteRequest>>,
+    result: BatchWriteResult
+  ): app.cash.tempest2.BatchWriteResult {
     val unprocessedClobbers = mutableListOf<Key>()
     val unprocessedDeletes = mutableListOf<Key>()
     val tableTypes = requestsByTable.keys
     for (tableType in tableTypes) {
-      val table = dynamoDbTable<Any>(tableType)
+      val table = mappedTableResource<Any>(tableType)
       val rawClobbersItems = result.unprocessedPutItemsForTable(table)
       for (rawItem in rawClobbersItems) {
         unprocessedClobbers.add(rawItem.rawItemKey().key)
@@ -133,27 +246,33 @@ internal class DynamoDbLogicalDb(
     )
   }
 
-  override fun transactionLoad(keys: KeySet): ItemSet {
+  private fun toTransactionLoadRequest(keys: KeySet): Pair<List<LoadRequest>, TransactGetItemsEnhancedRequest> {
     val requests = keys.map { LoadRequest(it.encodeAsKey().rawItemKey(), it.expectedItemType()) }
     val batchRequest = TransactGetItemsEnhancedRequest.builder()
       .apply {
         for (request in requests) {
-          addGetItem(dynamoDbTable<Any>(request.tableType), request.key.key)
+          addGetItem(mappedTableResource<Any>(request.tableType), request.key.key)
         }
       }
       .build()
-    val documents = dynamoDbEnhancedClient.transactGetItems(batchRequest)
+    return Pair(requests, batchRequest)
+  }
+
+  private fun toTransactionLoadResponse(
+    documents: MutableList<Document>,
+    requests: List<LoadRequest>
+  ): ItemSet {
     val results = mutableSetOf<Any>()
     for ((document, request) in documents.zip(requests)) {
-      val result = document.getItem(dynamoDbTable<Any>(request.tableType)) ?: continue
+      val result = document.getItem(mappedTableResource<Any>(request.tableType)) ?: continue
       val decoded = request.resultType.codec.toApp(result)
       results.add(decoded)
     }
     return ItemSet(results)
   }
 
-  override fun transactionWrite(writeSet: TransactionWriteSet) {
-    val writeRequest = TransactWriteItemsEnhancedRequest.builder()
+  private fun toTransactionWriteRequest(writeSet: TransactionWriteSet): TransactWriteItemsEnhancedRequest? {
+    return TransactWriteItemsEnhancedRequest.builder()
       .apply {
         for (itemToSave in writeSet.itemsToSave) {
           addUpdateItem(itemToSave.encodeAsItem(), writeSet.writeExpressions[itemToSave])
@@ -169,17 +288,16 @@ internal class DynamoDbLogicalDb(
         }
       }
       .build()
+  }
+
+  private fun toTransactionWriteException(writeSet: TransactionWriteSet, e: TransactionCanceledException) {
     // We don't want to wrap these exceptions but only add a more useful message so upstream callers can themselves
     // parse the potentially concurrency related TransactionCancelledExceptions
     // https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/dynamodbv2/model/TransactionCanceledException.html
-    try {
-      dynamoDbEnhancedClient.transactWriteItems(writeRequest)
-    } catch (e: TransactionCanceledException) {
-      throw TransactionCanceledException.builder()
-        .message("Write transaction failed: ${writeSet.describeOperations()}")
-        .cancellationReasons(e.cancellationReasons())
-        .build()
-    }
+    throw TransactionCanceledException.builder()
+      .message("Write transaction failed: ${writeSet.describeOperations()}")
+      .cancellationReasons(e.cancellationReasons())
+      .build()
   }
 
   private fun Any.rawItemKey(): RawItemKey {
@@ -188,7 +306,7 @@ internal class DynamoDbLogicalDb(
       rawItemType.tableName,
       EnhancedClientUtils.createKeyFromItem(
         this,
-        dynamoDbTable<Any>(this::class).tableSchema(),
+        mappedTableResource<Any>(this::class).tableSchema(),
         TableMetadata.primaryIndexName(),
       ),
       rawItemType.hashKeyName,
@@ -204,9 +322,9 @@ internal class DynamoDbLogicalDb(
     ) { "Cannot find a dynamodb table for ${this::class}" }
   }
 
-  private fun <T : Any> dynamoDbTable(tableType: KClass<*>): DynamoDbTable<T> {
+  private fun <T : Any> mappedTableResource(tableType: KClass<*>): MappedTableResource<T> {
     val rawItemType = schema.getRawItem(tableType)!!
-    return dynamoDbEnhancedClient.table(
+    return mappedTableResourceFactory.mappedTableResource(
       rawItemType.tableName,
       TableSchema.fromClass(rawItemType.type.java) as TableSchema<T>
     )
@@ -264,7 +382,7 @@ internal class DynamoDbLogicalDb(
     item: T,
     expression: Expression?
   ) = addUpdateItem(
-    dynamoDbTable<T>(item::class),
+    mappedTableResource<T>(item::class),
     UpdateItemEnhancedRequest.builder(item.javaClass)
       .item(item)
       .conditionExpression(expression)
@@ -275,7 +393,7 @@ internal class DynamoDbLogicalDb(
     item: T,
     expression: Expression?
   ) = addDeleteItem(
-    dynamoDbTable<T>(item::class),
+    mappedTableResource<T>(item::class),
     DeleteItemEnhancedRequest.builder()
       .key(item.rawItemKey().key)
       .conditionExpression(expression)
@@ -286,7 +404,7 @@ internal class DynamoDbLogicalDb(
     item: T,
     expression: Expression?
   ) = addConditionCheck(
-    dynamoDbTable<T>(item::class),
+    mappedTableResource<T>(item::class),
     ConditionCheck.builder()
       .key(item.rawItemKey().key)
       .conditionExpression(expression)

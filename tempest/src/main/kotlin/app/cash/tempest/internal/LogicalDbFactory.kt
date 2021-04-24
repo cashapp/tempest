@@ -37,7 +37,6 @@ internal class LogicalDbFactory(
 ) {
 
   private val logicalTableFactory = LogicalTableFactory()
-  private val proxyFactory: ProxyFactory = ProxyFactory()
   private val schema = Schema.create(
     V1StringAttributeValue,
     V1MapAttributeValue.Factory(dynamoDbMapper),
@@ -61,7 +60,7 @@ internal class LogicalDbFactory(
       schema,
       logicalTableFactory
     )
-    return proxyFactory.create(dbType, methodHandlers.toMap(), logicalDb)
+    return ProxyFactory.create(dbType, methodHandlers.toMap(), logicalDb)
   }
 
   private fun <K : Any, I : Any> queryable(
@@ -139,7 +138,7 @@ internal class LogicalDbFactory(
         }
         methodHandlers[member.javaMethod] = GetterMethodHandler(component)
       }
-      return proxyFactory.create(tableType, methodHandlers.toMap(), logicalTable)
+      return ProxyFactory.create(tableType, methodHandlers.toMap(), logicalTable)
     }
   }
 
