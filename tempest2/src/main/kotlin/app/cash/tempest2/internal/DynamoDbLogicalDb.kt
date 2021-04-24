@@ -19,6 +19,8 @@ package app.cash.tempest2.internal
 import app.cash.tempest.internal.ItemType
 import app.cash.tempest.internal.RawItemType
 import app.cash.tempest.internal.Schema
+import app.cash.tempest2.AsyncLogicalDb
+import app.cash.tempest2.AsyncLogicalTable
 import app.cash.tempest2.BatchWriteSet
 import app.cash.tempest2.ItemSet
 import app.cash.tempest2.KeySet
@@ -53,9 +55,6 @@ import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException
 import kotlin.reflect.KClass
-
-typealias AsyncLogicalDb = app.cash.tempest2.async.LogicalDb
-typealias AsyncLogicalTableFactory = app.cash.tempest2.async.LogicalTable.Factory
 
 internal class DynamoDbLogicalDb(
   private val mappedTableResourceFactory: MappedTableResourceFactory,
@@ -116,12 +115,12 @@ internal class DynamoDbLogicalDb(
     }
   }
 
-  fun async(dynamoDbEnhancedClient: DynamoDbEnhancedAsyncClient, logicalTableFactory: AsyncLogicalTableFactory) = Async(dynamoDbEnhancedClient, logicalTableFactory)
+  fun async(dynamoDbEnhancedClient: DynamoDbEnhancedAsyncClient, logicalTableFactory: AsyncLogicalTable.Factory) = Async(dynamoDbEnhancedClient, logicalTableFactory)
 
   inner class Async(
     private val dynamoDbEnhancedClient: DynamoDbEnhancedAsyncClient,
-    logicalTableFactory: AsyncLogicalTableFactory
-  ) : AsyncLogicalDb, AsyncLogicalTableFactory by logicalTableFactory {
+    logicalTableFactory: AsyncLogicalTable.Factory
+  ) : AsyncLogicalDb, AsyncLogicalTable.Factory by logicalTableFactory {
 
     override suspend fun batchLoad(
       keys: KeySet,

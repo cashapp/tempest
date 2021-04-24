@@ -27,7 +27,7 @@ import software.amazon.awssdk.services.dynamodb.streams.DynamoDbStreamsAsyncClie
 import software.amazon.awssdk.services.dynamodb.streams.DynamoDbStreamsClient
 import kotlin.reflect.KClass
 
-typealias AsyncLogicalDb = app.cash.tempest2.async.LogicalDb
+typealias AsyncLogicalDb = app.cash.tempest2.AsyncLogicalDb
 
 interface TestDynamoDbClient : Service {
   val tables: List<TestTable>
@@ -94,7 +94,7 @@ interface TestDynamoDbClient : Service {
       .dynamoDbClient(asyncDynamoDb)
       .extensions(extensions)
       .build()
-    return AsyncLogicalDb.create(type, enhancedClient)
+    return app.cash.tempest2.AsyncLogicalDb.create(type, enhancedClient)
   }
 
   fun <DB : AsyncLogicalDb> asyncLogicalDb(type: Class<DB>): DB {

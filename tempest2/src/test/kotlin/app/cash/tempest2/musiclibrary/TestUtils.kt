@@ -103,7 +103,7 @@ fun MusicTable.givenAlbums(vararg albums: Album) {
   }
 }
 
-suspend fun app.cash.tempest2.musiclibrary.async.MusicTable.givenAlbums(vararg albums: Album) {
+suspend fun AsyncMusicTable.givenAlbums(vararg albums: Album) {
   for (album in albums) {
     albumInfo.save(
       AlbumInfo(

@@ -16,16 +16,16 @@
 
 package app.cash.tempest2.internal
 
+import app.cash.tempest2.AsyncQueryable
 import app.cash.tempest2.KeyCondition
 import app.cash.tempest2.Offset
 import app.cash.tempest2.Page
-import app.cash.tempest2.async.Queryable
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import kotlin.reflect.KClass
 
 internal class UnsupportedAsyncQueryable<K : Any, I : Any>(
   private val rawType: KClass<*>
-) : Queryable<K, I> {
+) : AsyncQueryable<K, I> {
   override suspend fun query(
     keyCondition: KeyCondition<K>,
     asc: Boolean,

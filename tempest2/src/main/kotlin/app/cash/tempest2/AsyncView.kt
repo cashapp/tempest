@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package app.cash.tempest2.async
+package app.cash.tempest2
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.enhanced.dynamodb.extensions.VersionedRecordExtension
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
-import java.util.concurrent.CompletableFuture
 
-interface View<K : Any, I : Any> {
+interface AsyncView<K : Any, I : Any> {
   /**
    * Returns an item whose keys match those of the prototype key object given, or null if no
    * such item exists.

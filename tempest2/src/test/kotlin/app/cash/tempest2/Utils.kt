@@ -1,4 +1,4 @@
-package app.cash.tempest2.async
+package app.cash.tempest2
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking

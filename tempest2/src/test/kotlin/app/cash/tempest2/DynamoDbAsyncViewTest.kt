@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package app.cash.tempest2.async
+package app.cash.tempest2
 
 import app.cash.tempest2.musiclibrary.AlbumInfo
 import app.cash.tempest2.musiclibrary.AlbumTrack
+import app.cash.tempest2.musiclibrary.AsyncMusicDb
 import app.cash.tempest2.musiclibrary.PlaylistInfo
-import app.cash.tempest2.musiclibrary.async.MusicDb
 import app.cash.tempest2.musiclibrary.testDb
 import app.cash.tempest2.testing.asyncLogicalDb
 import kotlinx.coroutines.runBlocking
@@ -32,13 +32,13 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException
 import java.time.LocalDate
 
-class DynamoDbViewTest {
+class DynamoDbAsyncViewTest {
 
   @RegisterExtension
   @JvmField
   val db = testDb()
 
-  private val musicTable by lazy { db.asyncLogicalDb<MusicDb>().music }
+  private val musicTable by lazy { db.asyncLogicalDb<AsyncMusicDb>().music }
 
   @Test
   fun loadAfterSave() = runBlockingTest {

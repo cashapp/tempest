@@ -17,6 +17,7 @@
 package app.cash.tempest2.internal
 
 import app.cash.tempest.internal.Codec
+import app.cash.tempest2.AsyncScannable
 import app.cash.tempest2.Offset
 import app.cash.tempest2.Page
 import app.cash.tempest2.Scannable
@@ -63,7 +64,7 @@ internal class DynamoDbScannable<K : Any, I : Any, R : Any>(
 
   inner class Async(
     private val dynamoDbTable: DynamoDbAsyncTable<R>
-  ) : app.cash.tempest2.async.Scannable<K, I> {
+  ) : AsyncScannable<K, I> {
 
     override suspend fun scan(
       pageSize: Int,

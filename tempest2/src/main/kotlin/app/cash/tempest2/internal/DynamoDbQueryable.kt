@@ -17,6 +17,7 @@
 package app.cash.tempest2.internal
 
 import app.cash.tempest.internal.Codec
+import app.cash.tempest2.AsyncQueryable
 import app.cash.tempest2.BeginsWith
 import app.cash.tempest2.Between
 import app.cash.tempest2.KeyCondition
@@ -72,7 +73,7 @@ internal class DynamoDbQueryable<K : Any, I : Any, R : Any>(
 
   inner class Async(
     private val dynamoDbTable: DynamoDbAsyncTable<R>
-  ) : app.cash.tempest2.async.Queryable<K, I> {
+  ) : AsyncQueryable<K, I> {
     override suspend fun query(keyCondition: KeyCondition<K>, asc: Boolean, pageSize: Int, consistentRead: Boolean, filterExpression: Expression?, initialOffset: Offset<K>?): Page<K, I> {
       val request = toQueryRequest(keyCondition, asc, consistentRead, pageSize, filterExpression, initialOffset)
       val page = if (secondaryIndexName != null) {

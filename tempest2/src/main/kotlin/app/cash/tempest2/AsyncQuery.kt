@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package app.cash.tempest2.async
+package app.cash.tempest2
 
-import app.cash.tempest2.Offset
-import app.cash.tempest2.Page
-import app.cash.tempest2.ScanConfig
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 
-interface Scannable<K : Any, I : Any> {
+interface AsyncQueryable<K : Any, I : Any> {
+
   /**
-   * Scans up to the [pageSize] items or a maximum of 1 MB of data. This limit applies before the
+   * Reads up to the [pageSize] items or a maximum of 1 MB of data. This limit applies before the
    * filter expression is evaluated.
    */
-  suspend fun scan(
+  suspend fun query(
+    keyCondition: KeyCondition<K>,
+    asc: Boolean = true,
     pageSize: Int = 100,
     consistentRead: Boolean = false,
     filterExpression: Expression? = null,
@@ -37,29 +37,40 @@ interface Scannable<K : Any, I : Any> {
 
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
-  fun scanAsync(
-    pageSize: Int = 100,
-    consistentRead: Boolean = false,
-    filterExpression: Expression? = null,
-    initialOffset: Offset<K>? = null
-  ) = GlobalScope.future { scan(pageSize, consistentRead, filterExpression, initialOffset) }
+  fun queryAsync(
+    keyCondition: KeyCondition<K>,
+    asc: Boolean,
+    pageSize: Int,
+    consistentRead: Boolean,
+    filterExpression: Expression?,
+    initialOffset: Offset<K>?
+  ) = GlobalScope.future { query(keyCondition, asc, pageSize, consistentRead, filterExpression, initialOffset) }
 
-  fun scanAsync() = scanAsync(
-    ScanConfig.Builder().build(),
+  fun queryAsync(keyCondition: KeyCondition<K>) = queryAsync(
+    keyCondition,
+    config = QueryConfig.Builder().build(),
     initialOffset = null
   )
 
-  fun scanAsync(initialOffset: Offset<K>?) = scanAsync(
-    ScanConfig.Builder().build(),
+  fun queryAsync(keyCondition: KeyCondition<K>, initialOffset: Offset<K>?) = queryAsync(
+    keyCondition,
+    config = QueryConfig.Builder().build(),
     initialOffset = initialOffset
   )
 
-  fun scanAsync(config: ScanConfig) = scanAsync(
-    config,
+  fun queryAsync(keyCondition: KeyCondition<K>, config: QueryConfig) = queryAsync(
+    keyCondition,
+    config = config,
     initialOffset = null
   )
 
-  fun scanAsync(config: ScanConfig, initialOffset: Offset<K>?) = scanAsync(
+  fun queryAsync(
+    keyCondition: KeyCondition<K>,
+    config: QueryConfig,
+    initialOffset: Offset<K>?
+  ) = queryAsync(
+    keyCondition,
+    config.asc,
     config.pageSize,
     config.consistentRead,
     config.filterExpression,

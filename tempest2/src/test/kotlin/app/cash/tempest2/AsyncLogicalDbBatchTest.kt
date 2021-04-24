@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package app.cash.tempest2.async
+package app.cash.tempest2
 
-import app.cash.tempest2.BatchWriteSet
 import app.cash.tempest2.musiclibrary.AlbumTrack
+import app.cash.tempest2.musiclibrary.AsyncMusicDb
 import app.cash.tempest2.musiclibrary.PlaylistInfo
-import app.cash.tempest2.musiclibrary.async.MusicDb
 import app.cash.tempest2.musiclibrary.testDb
 import app.cash.tempest2.testing.asyncLogicalDb
 import org.assertj.core.api.Assertions.assertThat
@@ -27,13 +26,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.time.Duration
 
-class LogicalDbBatchTest {
+class AsyncLogicalDbBatchTest {
 
   @RegisterExtension
   @JvmField
   val db = testDb()
 
-  private val musicDb by lazy { db.asyncLogicalDb<MusicDb>() }
+  private val musicDb by lazy { db.asyncLogicalDb<AsyncMusicDb>() }
   private val musicTable by lazy { musicDb.music }
 
   @Test

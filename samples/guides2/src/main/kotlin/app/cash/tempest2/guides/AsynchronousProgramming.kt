@@ -1,13 +1,13 @@
 package app.cash.tempest2.guides
 
 import app.cash.tempest2.musiclibrary.PlaylistInfo
-import app.cash.tempest2.musiclibrary.async.MusicTable
+import app.cash.tempest2.musiclibrary.AsyncMusicTable
 import kotlinx.coroutines.runBlocking
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
 class AsynchronousProgramming(
-  private val table: MusicTable,
+  private val table: AsyncMusicTable,
 ) {
 
   fun changePlaylistName(playlistToken: String, newName: String) = runBlocking {

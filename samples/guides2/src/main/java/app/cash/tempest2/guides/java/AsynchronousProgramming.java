@@ -1,6 +1,6 @@
 package app.cash.tempest2.guides.java;
 
-import app.cash.tempest2.musiclibrary.java.async.MusicTable;
+import app.cash.tempest2.musiclibrary.java.AsyncMusicTable;
 import app.cash.tempest2.musiclibrary.java.PlaylistInfo;
 import java.util.Map;
 import software.amazon.awssdk.enhanced.dynamodb.Expression;
@@ -8,9 +8,9 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 public class AsynchronousProgramming {
 
-  private final MusicTable table;
+  private final AsyncMusicTable table;
 
-  public AsynchronousProgramming(MusicTable table) {
+  public AsynchronousProgramming(AsyncMusicTable table) {
     this.table = table;
   }
 

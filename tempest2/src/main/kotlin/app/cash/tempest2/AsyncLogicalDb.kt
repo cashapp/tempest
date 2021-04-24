@@ -14,14 +14,8 @@
  * limitations under the License.
  */
 
-package app.cash.tempest2.async
+package app.cash.tempest2
 
-import app.cash.tempest2.BatchWriteResult
-import app.cash.tempest2.BatchWriteSet
-import app.cash.tempest2.Codec
-import app.cash.tempest2.ItemSet
-import app.cash.tempest2.KeySet
-import app.cash.tempest2.TransactionWriteSet
 import app.cash.tempest2.internal.AsyncLogicalDbFactory
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
@@ -36,7 +30,7 @@ import kotlin.reflect.KClass
  * item types into the same storage table. This makes it possible to perform aggregate operations
  * and transactions on those item types.
  */
-interface LogicalDb : LogicalTable.Factory {
+interface AsyncLogicalDb : AsyncLogicalTable.Factory {
 
   /**
    * Retrieves multiple items from multiple tables using their primary keys.
@@ -124,13 +118,13 @@ interface LogicalDb : LogicalTable.Factory {
   suspend fun transactionWrite(writeSet: TransactionWriteSet)
 
   companion object {
-    inline operator fun <reified DB : LogicalDb> invoke(
+    inline operator fun <reified DB : AsyncLogicalDb> invoke(
       dynamoDbEnhancedClient: DynamoDbEnhancedAsyncClient
     ): DB {
       return create(DB::class, dynamoDbEnhancedClient)
     }
 
-    fun <DB : LogicalDb> create(
+    fun <DB : AsyncLogicalDb> create(
       dbType: KClass<DB>,
       dynamoDbEnhancedClient: DynamoDbEnhancedAsyncClient
     ): DB {
@@ -142,7 +136,7 @@ interface LogicalDb : LogicalTable.Factory {
     // https://youtrack.jetbrains.com/issue/KT-35716
 
     @JvmStatic
-    fun <DB : LogicalDb> create(
+    fun <DB : AsyncLogicalDb> create(
       dbType: Class<DB>,
       dynamoDbEnhancedClient: DynamoDbEnhancedAsyncClient
     ) = create(dbType.kotlin, dynamoDbEnhancedClient)
@@ -180,45 +174,44 @@ interface LogicalDb : LogicalTable.Factory {
   fun transactionLoadAsync(vararg keys: Any) = transactionLoadAsync(keys.toList())
 
   fun transactionWriteAsync(writeSet: TransactionWriteSet) = GlobalScope.future { transactionWrite(writeSet) }
-
 }
 
 /**
  * A collection of views on a DynamoDB table that makes it easy to model heterogeneous items
  * using strongly typed data classes.
  */
-interface LogicalTable<RI : Any> :
-  View<RI, RI>,
-  InlineView.Factory,
-  SecondaryIndex.Factory {
+interface AsyncLogicalTable<RI : Any> :
+  AsyncView<RI, RI>,
+  AsyncInlineView.Factory,
+  AsyncSecondaryIndex.Factory {
 
   /** [type] must be a key type or item type of one of the views of this table. */
   fun <T : Any> codec(type: KClass<T>): Codec<T, RI>
 
   interface Factory {
-    fun <T : LogicalTable<RI>, RI : Any> logicalTable(
+    fun <T : AsyncLogicalTable<RI>, RI : Any> logicalTable(
       tableName: String,
       tableType: KClass<T>
     ): T
   }
 }
 
-interface InlineView<K : Any, I : Any> : View<K, I>, Scannable<K, I>, Queryable<K, I> {
+interface AsyncInlineView<K : Any, I : Any> : AsyncView<K, I>, AsyncScannable<K, I>, AsyncQueryable<K, I> {
 
   interface Factory {
     fun <K : Any, I : Any> inlineView(
       keyType: KClass<K>,
       itemType: KClass<I>
-    ): InlineView<K, I>
+    ): AsyncInlineView<K, I>
   }
 }
 
-interface SecondaryIndex<K : Any, I : Any> : Scannable<K, I>, Queryable<K, I> {
+interface AsyncSecondaryIndex<K : Any, I : Any> : AsyncScannable<K, I>, AsyncQueryable<K, I> {
 
   interface Factory {
     fun <K : Any, I : Any> secondaryIndex(
       keyType: KClass<K>,
       itemType: KClass<I>
-    ): SecondaryIndex<K, I>
+    ): AsyncSecondaryIndex<K, I>
   }
 }

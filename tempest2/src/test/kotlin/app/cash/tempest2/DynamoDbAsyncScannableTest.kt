@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package app.cash.tempest2.async
+package app.cash.tempest2
 
 import app.cash.tempest.musiclibrary.AFTER_HOURS_EP
 import app.cash.tempest.musiclibrary.LOCKDOWN_SINGLE
 import app.cash.tempest.musiclibrary.THE_DARK_SIDE_OF_THE_MOON
 import app.cash.tempest.musiclibrary.THE_WALL
 import app.cash.tempest.musiclibrary.WHAT_YOU_DO_TO_ME_SINGLE
+import app.cash.tempest2.musiclibrary.AsyncMusicDb
 import app.cash.tempest2.musiclibrary.albumTitles
-import app.cash.tempest2.musiclibrary.async.MusicDb
 import app.cash.tempest2.musiclibrary.givenAlbums
 import app.cash.tempest2.musiclibrary.testDb
 import app.cash.tempest2.musiclibrary.trackTitles
@@ -34,13 +34,13 @@ import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import java.time.Duration
 
-class DynamoDbScannableTest {
+class DynamoDbAsyncScannableTest {
 
   @RegisterExtension
   @JvmField
   val db = testDb()
 
-  private val musicTable by lazy { db.asyncLogicalDb<MusicDb>().music }
+  private val musicTable by lazy { db.asyncLogicalDb<AsyncMusicDb>().music }
 
   @Test
   fun primaryIndex() = runBlockingTest {

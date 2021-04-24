@@ -17,6 +17,7 @@
 package app.cash.tempest2.internal
 
 import app.cash.tempest.internal.Codec
+import app.cash.tempest2.AsyncView
 import app.cash.tempest2.View
 import kotlinx.coroutines.future.await
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable
@@ -76,7 +77,7 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
 
   inner class Async(
     private val dynamoDbTable: DynamoDbAsyncTable<R>
-  ) : app.cash.tempest2.async.View<K, I> {
+  ) : AsyncView<K, I> {
     override suspend fun load(key: K, consistentReads: Boolean): I? {
       val request = toLoadRequest(key, consistentReads)
       val itemObject = dynamoDbTable.getItem(request).await()

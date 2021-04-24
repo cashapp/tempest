@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package app.cash.tempest2.musiclibrary.java.async;
+package app.cash.tempest2.musiclibrary.java;
 
-import app.cash.tempest2.async.LogicalDb;
+import app.cash.tempest2.AsyncLogicalDb;
 import app.cash.tempest2.TableName;
 
-public interface MusicDb extends LogicalDb {
+public interface AsyncMusicDb extends AsyncLogicalDb {
   @TableName("j_music_items")
-  MusicTable music();
+  AsyncMusicTable music();
 }

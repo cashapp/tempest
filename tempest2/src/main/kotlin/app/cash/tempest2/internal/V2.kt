@@ -101,4 +101,3 @@ internal class CodecAdapter<A : Any, D : Any>(
 
   override fun toApp(dbItem: D): A = internal.toApp(dbItem)
 }
-
