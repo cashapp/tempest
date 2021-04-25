@@ -3,6 +3,8 @@ package app.cash.tempest2.guides.java;
 import app.cash.tempest2.musiclibrary.java.AsyncMusicTable;
 import app.cash.tempest2.musiclibrary.java.PlaylistInfo;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import kotlin.Unit;
 import software.amazon.awssdk.enhanced.dynamodb.Expression;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
@@ -14,29 +16,29 @@ public class AsynchronousProgramming {
     this.table = table;
   }
 
-  public void changePlaylistName(String playlistToken, String newName) {
+  public CompletableFuture<Unit> changePlaylistName(String playlistToken, String newName) {
     // Read.
-    PlaylistInfo existing = table.playlistInfo()
+    return table.playlistInfo()
         .loadAsync(new PlaylistInfo.Key(playlistToken))
-        .join(); // This is a completable future.
-    if (existing == null) {
-      throw new IllegalStateException("Playlist does not exist: " + playlistToken);
-    }
-    // Modify.
-    PlaylistInfo newPlaylist = new PlaylistInfo(
-        existing.playlist_token,
-        newName,
-        existing.playlist_tracks,
-        // playlist_version.
-        existing.playlist_version + 1
-    );
-    // Write.
-    table.playlistInfo()
-        .saveAsync(
-            newPlaylist,
-            ifPlaylistVersionIs(existing.playlist_version)
-        )
-        .join(); // This is a completable future.
+        .thenCompose(existing -> {
+          if (existing == null) {
+            throw new IllegalStateException("Playlist does not exist: " + playlistToken);
+          }
+          // Modify.
+          PlaylistInfo newPlaylist = new PlaylistInfo(
+              existing.playlist_token,
+              newName,
+              existing.playlist_tracks,
+              // playlist_version.
+              existing.playlist_version + 1
+          );
+          // Write.
+          return table.playlistInfo()
+              .saveAsync(
+                  newPlaylist,
+                  ifPlaylistVersionIs(existing.playlist_version)
+              );
+        });
   }
 
   private Expression ifPlaylistVersionIs(Long playlist_version) {

@@ -6,7 +6,7 @@ concurrency across a few threads.
     The AWS SDK for Java 1.11.x has asynchronous clients that are wrappers around a thread pool and blocking synchronous clients that don’t provide the full benefit of nonblocking I/O.
 
 ## Tempest Async APIs
-Tempest for SDK 2.x comes with a set of async APIs that utilizes Kotlin [coroutine](https://kotlinlang.org/docs/coroutines-overview.html) and Java [CompletableFuture](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html).
+Tempest for SDK 2.x comes with async APIs that utilize Kotlin [coroutine](https://kotlinlang.org/docs/coroutines-overview.html) and Java [CompletableFuture](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html).
 
 Declare you DB and tables as `AsyncLogicalDb` and `AsyncLogicalTable`.
 
@@ -63,7 +63,7 @@ Write familiar code that is asynchronous under the hood.
     ```kotlin
     private val table: AsyncMusicTable
   
-    fun changePlaylistName(playlistToken: String, newName: String) = runBlocking {
+    suspend fun changePlaylistName(playlistToken: String, newName: String) {
       // Read.
       val existing = checkNotNull(
         table.playlistInfo.load(PlaylistInfo.Key(playlistToken)) // This is a suspend function.
@@ -92,37 +92,37 @@ Write familiar code that is asynchronous under the hood.
 
     ```java
     private final AsyncMusicTable table;
-    
-    public void changePlaylistName(String playlistToken, String newName) {
+
+    public CompletableFuture<Unit> changePlaylistName(String playlistToken, String newName) {
       // Read.
-      PlaylistInfo existing = table.playlistInfo()
+      return table.playlistInfo()
           .loadAsync(new PlaylistInfo.Key(playlistToken))
-          .join(); // This is a completable future.
-      if (existing == null) {
-        throw new IllegalStateException("Playlist does not exist: " + playlistToken);
-      }
-      // Modify.
-      PlaylistInfo newPlaylist = new PlaylistInfo(
-          existing.playlist_token,
-          newName,
-          existing.playlist_tracks,
-          // playlist_version.
-          existing.playlist_version + 1
-      );
-      // Write.
-      table.playlistInfo()
-          .saveAsync(
-              newPlaylist,
-              ifPlaylistVersionIs(existing.playlist_version)
-          )
-          .join(); // This is a completable future.
+          .thenCompose(existing -> {
+            if (existing == null) {
+              throw new IllegalStateException("Playlist does not exist: " + playlistToken);
+            }
+            // Modify.
+            PlaylistInfo newPlaylist = new PlaylistInfo(
+                existing.playlist_token,
+                newName,
+                existing.playlist_tracks,
+                // playlist_version.
+                existing.playlist_version + 1
+            );
+            // Write.
+            return table.playlistInfo()
+                .saveAsync(
+                    newPlaylist,
+                    ifPlaylistVersionIs(existing.playlist_version)
+                );
+          });
     }
 
     private Expression ifPlaylistVersionIs(Long playlist_version) {
       return Expression.builder()
         .expression("playlist_version = :playlist_version")
         .expressionValues(
-        Map.of(":playlist_version", AttributeValue.builder().n("" + playlist_version).build()))
+            Map.of(":playlist_version", AttributeValue.builder().n("" + playlist_version).build()))
         .build();
     }
     ```

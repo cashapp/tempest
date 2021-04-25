@@ -10,7 +10,7 @@ class AsynchronousProgramming(
   private val table: AsyncMusicTable,
 ) {
 
-  fun changePlaylistName(playlistToken: String, newName: String) = runBlocking {
+  suspend fun changePlaylistName(playlistToken: String, newName: String) {
     // Read.
     val existing = checkNotNull(
       table.playlistInfo.load(PlaylistInfo.Key(playlistToken)) // This is a suspend function.
