@@ -29,8 +29,11 @@ interface View<K : Any, I : Any> {
   fun load(key: K, consistentReads: ConsistentReads = ConsistentReads.EVENTUAL): I?
 
   /**
-   * Saves an item in DynamoDB. This method uses [DynamoDBMapperConfig.SaveBehavior.PUT] to clear
-   * and replace all attributes, including unmodeled ones, on save. Partial update, i.e.
+   * Saves an item in DynamoDB and returns a new copy with locally updated attributes such as versions
+   * and auto-generated timestamps. The return value does not reflect the result of concurrent writes.
+   *
+   * This method uses [DynamoDBMapperConfig.SaveBehavior.PUT] to clear and replace all attributes,
+   * including unmodeled ones, on save. Partial update, i.e.
    * [DynamoDBMapperConfig.SaveBehavior.UPDATE_SKIP_NULL_ATTRIBUTES], is not supported yet.
    *
    * Any options specified in the [saveExpression] parameter will be overlaid on any constraints due
@@ -42,7 +45,7 @@ interface View<K : Any, I : Any> {
     item: I,
     saveExpression: DynamoDBSaveExpression? = null,
     ignoreVersionConstraints: Boolean = false
-  )
+  ): I
 
   /**
    * Deletes the item identified by [key] from its DynamoDB table using [deleteExpression]. Any

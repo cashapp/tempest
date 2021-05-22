@@ -40,10 +40,11 @@ internal class DynamoDbView<K : Any, I : Any>(
     item: I,
     saveExpression: DynamoDBSaveExpression?,
     ignoreVersionConstraints: Boolean
-  ) {
+  ): I {
     val itemObject = itemCodec.toDb(item)
     val saveBehavior = if (ignoreVersionConstraints) CLOBBER else PUT
     dynamoDbMapper.save(itemObject, saveExpression, saveBehavior.config())
+    return itemCodec.toApp(itemObject)
   }
 
   override fun deleteKey(
