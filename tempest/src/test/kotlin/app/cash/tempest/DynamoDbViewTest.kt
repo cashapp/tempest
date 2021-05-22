@@ -22,6 +22,8 @@ import app.cash.tempest.musiclibrary.MusicDb
 import app.cash.tempest.musiclibrary.PlaylistInfo
 import app.cash.tempest.musiclibrary.testDb
 import app.cash.tempest.testing.logicalDb
+import app.cash.tempest.versionedattribute.VersionedAttribute
+import app.cash.tempest.versionedattribute.VersionedAttributeDb
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBSaveExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.ComparisonOperator
@@ -40,6 +42,7 @@ class DynamoDbViewTest {
   val db = testDb()
 
   private val musicTable by lazy { db.logicalDb<MusicDb>().music }
+  private val versionedAttributeTable by lazy { db.logicalDb<VersionedAttributeDb>().versionedAttributes }
 
   @Test
   fun loadAfterSave() {
@@ -77,6 +80,22 @@ class DynamoDbViewTest {
       .isThrownBy {
         musicTable.albumInfo.save(albumInfo, ifNotExist())
       }
+  }
+
+  @Test
+  fun saveReturnsUpdatedValues() {
+    var item = VersionedAttribute(
+      "partition_key",
+    )
+    item = versionedAttributeTable.attributes.save(item)
+
+    assertThat(item.version).isEqualTo(1)
+    assertThat(item.updated_at).isNotNull()
+
+    item = versionedAttributeTable.attributes.save(item)
+
+    assertThat(item.version).isEqualTo(2)
+    assertThat(item.updated_at).isNotNull()
   }
 
   @Test

@@ -21,6 +21,7 @@ import app.cash.tempest.reservedwords.ReservedWordsItem
 import app.cash.tempest.testing.JvmDynamoDbServer
 import app.cash.tempest.testing.TestDynamoDb
 import app.cash.tempest.testing.TestTable
+import app.cash.tempest.versionedattribute.VersionedAttributeItem
 import com.amazonaws.services.dynamodbv2.model.Projection
 import com.amazonaws.services.dynamodbv2.model.ProjectionType
 
@@ -34,6 +35,7 @@ fun testDb() = TestDynamoDb.Builder(JvmDynamoDbServer.Factory)
     }
   )
   .addTable(TestTable.create<ReservedWordsItem>())
+  .addTable(TestTable.create<VersionedAttributeItem>())
   .build()
 
 val Page<*, AlbumTrack>.trackTitles: List<String>
