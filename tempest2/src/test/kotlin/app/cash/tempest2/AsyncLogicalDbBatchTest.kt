@@ -21,6 +21,7 @@ import app.cash.tempest2.musiclibrary.AsyncMusicDb
 import app.cash.tempest2.musiclibrary.PlaylistInfo
 import app.cash.tempest2.musiclibrary.testDb
 import app.cash.tempest2.testing.asyncLogicalDb
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -36,7 +37,7 @@ class AsyncLogicalDbBatchTest {
   private val musicTable by lazy { musicDb.music }
 
   @Test
-  fun batchLoad() = runBlockingTest {
+  fun batchLoad() = runBlocking {
     val albumTracks = listOf(
       AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S")),
       AlbumTrack("ALBUM_1", 2, "what you do to me", Duration.parse("PT3M24S")),
@@ -63,7 +64,7 @@ class AsyncLogicalDbBatchTest {
   }
 
   @Test
-  fun batchLoadMultipleTables() = runBlockingTest {
+  fun batchLoadMultipleTables() = runBlocking {
     val albumTracks = listOf(
       AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S")),
       AlbumTrack("ALBUM_1", 2, "what you do to me", Duration.parse("PT3M24S")),
@@ -90,7 +91,7 @@ class AsyncLogicalDbBatchTest {
   }
 
   @Test
-  fun batchLoadAfterBatchWrite() = runBlockingTest {
+  fun batchLoadAfterBatchWrite() = runBlocking {
     val albumTracks = listOf(
       AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S")),
       AlbumTrack("ALBUM_1", 2, "what you do to me", Duration.parse("PT3M24S")),
@@ -108,7 +109,7 @@ class AsyncLogicalDbBatchTest {
   }
 
   @Test
-  fun batchLoadAfterBatchDelete() = runBlockingTest {
+  fun batchLoadAfterBatchDelete() = runBlocking {
     val t1 = AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S"))
     val t2 = AlbumTrack("ALBUM_1", 2, "what you do to me", Duration.parse("PT3M24S"))
     val t3 = AlbumTrack("ALBUM_1", 3, "too slow", Duration.parse("PT2M27S"))

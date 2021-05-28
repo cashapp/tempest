@@ -41,7 +41,7 @@ class DynamoDbAsyncViewTest {
   private val musicTable by lazy { db.asyncLogicalDb<AsyncMusicDb>().music }
 
   @Test
-  fun loadAfterSave() = runBlockingTest {
+  fun loadAfterSave() = runBlocking {
     val albumInfo = AlbumInfo(
       "ALBUM_1",
       "after hours - EP",
@@ -61,7 +61,7 @@ class DynamoDbAsyncViewTest {
   }
 
   @Test
-  fun saveIfNotExist() = runBlockingTest {
+  fun saveIfNotExist() = runBlocking {
     val albumInfo = AlbumInfo(
       "ALBUM_1",
       "after hours - EP",
@@ -81,7 +81,7 @@ class DynamoDbAsyncViewTest {
   }
 
   @Test
-  fun optimisticLocking() = runBlockingTest {
+  fun optimisticLocking() = runBlocking {
     val playlistInfoV1 = PlaylistInfo(
       "PLAYLIST_1",
       "WFH Music",
@@ -118,7 +118,7 @@ class DynamoDbAsyncViewTest {
   }
 
   @Test
-  fun delete() = runBlockingTest {
+  fun delete() = runBlocking {
     val albumInfo = AlbumInfo(
       "ALBUM_1",
       "after hours - EP",

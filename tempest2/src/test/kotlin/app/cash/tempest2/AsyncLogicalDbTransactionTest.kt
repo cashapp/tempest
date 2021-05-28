@@ -41,7 +41,7 @@ class AsyncLogicalDbTransactionTest {
   private val musicTable by lazy { musicDb.music }
 
   @Test
-  fun transactionLoad() = runBlockingTest {
+  fun transactionLoad() = runBlocking {
     val albumTracks = listOf(
       AlbumTrack(
         "ALBUM_1",
@@ -83,7 +83,7 @@ class AsyncLogicalDbTransactionTest {
   }
 
   @Test
-  fun transactionLoadAfterTransactionWrite() = runBlockingTest {
+  fun transactionLoadAfterTransactionWrite() = runBlocking {
     val albumTracks = listOf(
       AlbumTrack(
         "ALBUM_1",
@@ -127,7 +127,7 @@ class AsyncLogicalDbTransactionTest {
   }
 
   @Test
-  fun conditionalUpdateInTransactionWrite() = runBlockingTest {
+  fun conditionalUpdateInTransactionWrite() = runBlocking {
     val playlistInfoV1 =
       PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
     musicTable.playlistInfo.save(playlistInfoV1)
@@ -162,7 +162,7 @@ class AsyncLogicalDbTransactionTest {
   }
 
   @Test
-  fun conditionalUpdateFailureInTransactionWrite() = runBlockingTest {
+  fun conditionalUpdateFailureInTransactionWrite() = runBlocking {
     val playlistInfoV1 =
       PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
     musicTable.playlistInfo.save(playlistInfoV1)
@@ -204,7 +204,7 @@ class AsyncLogicalDbTransactionTest {
   }
 
   @Test
-  fun conditionCheckInTransactionWrite() = runBlockingTest {
+  fun conditionCheckInTransactionWrite() = runBlocking {
     val playlistInfoV1 =
       PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
     musicTable.playlistInfo.save(playlistInfoV1)
@@ -238,7 +238,7 @@ class AsyncLogicalDbTransactionTest {
   }
 
   @Test
-  fun conditionCheckFailureInTransactionWrite() = runBlockingTest {
+  fun conditionCheckFailureInTransactionWrite() = runBlocking {
     val playlistInfoV1 =
       PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
     musicTable.playlistInfo.save(playlistInfoV1)

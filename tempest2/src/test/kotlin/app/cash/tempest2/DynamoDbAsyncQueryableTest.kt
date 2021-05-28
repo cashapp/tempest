@@ -29,6 +29,7 @@ import app.cash.tempest2.musiclibrary.givenAlbums
 import app.cash.tempest2.musiclibrary.testDb
 import app.cash.tempest2.musiclibrary.trackTitles
 import app.cash.tempest2.testing.asyncLogicalDb
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -45,7 +46,7 @@ class DynamoDbAsyncQueryableTest {
   private val musicTable by lazy { db.asyncLogicalDb<AsyncMusicDb>().music }
 
   @Test
-  fun primaryIndexBetween() = runBlockingTest {
+  fun primaryIndexBetween() = runBlocking {
     musicTable.givenAlbums(AFTER_HOURS_EP)
 
     val page1 = musicTable.albumTracks.query(
@@ -77,7 +78,7 @@ class DynamoDbAsyncQueryableTest {
   }
 
   @Test
-  fun primaryIndexBeginsWith() = runBlockingTest {
+  fun primaryIndexBeginsWith() = runBlocking {
     musicTable.givenAlbums(AFTER_HOURS_EP)
 
     val page1 = musicTable.albumTracks.query(
@@ -94,7 +95,7 @@ class DynamoDbAsyncQueryableTest {
   }
 
   @Test
-  fun primaryIndexFilter() = runBlockingTest {
+  fun primaryIndexFilter() = runBlocking {
     musicTable.givenAlbums(AFTER_HOURS_EP)
 
     val page1 = musicTable.albumTracks.query(
@@ -110,7 +111,7 @@ class DynamoDbAsyncQueryableTest {
   }
 
   @Test
-  fun primaryIndexPagination() = runBlockingTest {
+  fun primaryIndexPagination() = runBlocking {
     musicTable.givenAlbums(AFTER_HOURS_EP)
 
     val page1 = musicTable.albumTracks.query(
@@ -138,7 +139,7 @@ class DynamoDbAsyncQueryableTest {
   }
 
   @Test
-  fun primaryIndexDesc() = runBlockingTest {
+  fun primaryIndexDesc() = runBlocking {
     musicTable.givenAlbums(AFTER_HOURS_EP)
 
     val page = musicTable.albumTracks.query(
@@ -150,7 +151,7 @@ class DynamoDbAsyncQueryableTest {
   }
 
   @Test
-  fun primaryIndexDescPagination() = runBlockingTest {
+  fun primaryIndexDescPagination() = runBlocking {
     musicTable.givenAlbums(AFTER_HOURS_EP)
 
     val page1 = musicTable.albumTracks.query(
@@ -181,7 +182,7 @@ class DynamoDbAsyncQueryableTest {
   }
 
   @Test
-  fun localSecondaryIndex() = runBlockingTest {
+  fun localSecondaryIndex() = runBlocking {
     musicTable.givenAlbums(AFTER_HOURS_EP)
     val expectedTrackTitles = AFTER_HOURS_EP.trackTitles.sorted()
 
@@ -193,7 +194,7 @@ class DynamoDbAsyncQueryableTest {
   }
 
   @Test
-  fun localSecondaryIndexPagination() = runBlockingTest {
+  fun localSecondaryIndexPagination() = runBlocking {
     musicTable.givenAlbums(AFTER_HOURS_EP)
     val expectedTrackTitles = AFTER_HOURS_EP.trackTitles.sorted()
 
@@ -222,7 +223,7 @@ class DynamoDbAsyncQueryableTest {
   }
 
   @Test
-  fun globalSecondaryIndex() = runBlockingTest {
+  fun globalSecondaryIndex() = runBlocking {
     musicTable.givenAlbums(
       THE_DARK_SIDE_OF_THE_MOON,
       THE_WALL,
@@ -251,7 +252,7 @@ class DynamoDbAsyncQueryableTest {
   }
 
   @Test
-  fun globalSecondaryIndexPagination() = runBlockingTest {
+  fun globalSecondaryIndexPagination() = runBlocking {
     musicTable.givenAlbums(
       WHAT_YOU_DO_TO_ME_SINGLE,
       AFTER_HOURS_EP,
