@@ -51,7 +51,7 @@ interface View<K : Any, I : Any> {
   fun deleteKey(
     key: K,
     deleteExpression: Expression? = null
-  )
+  ): I?
 
   /**
    * Deletes [item] from its DynamoDB table using [deleteExpression]. Any options specified in the
@@ -60,7 +60,7 @@ interface View<K : Any, I : Any> {
   fun delete(
     item: I,
     deleteExpression: Expression? = null
-  )
+  ): I?
 
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 

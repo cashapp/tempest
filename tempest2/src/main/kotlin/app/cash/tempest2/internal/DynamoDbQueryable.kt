@@ -24,7 +24,7 @@ import app.cash.tempest2.KeyCondition
 import app.cash.tempest2.Offset
 import app.cash.tempest2.Page
 import app.cash.tempest2.Queryable
-import kotlinx.coroutines.reactive.awaitFirst
+import org.reactivestreams.Publisher
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable
 import software.amazon.awssdk.enhanced.dynamodb.Expression
@@ -74,15 +74,15 @@ internal class DynamoDbQueryable<K : Any, I : Any, R : Any>(
   inner class Async(
     private val dynamoDbTable: DynamoDbAsyncTable<R>
   ) : AsyncQueryable<K, I> {
-    override suspend fun query(keyCondition: KeyCondition<K>, asc: Boolean, pageSize: Int, consistentRead: Boolean, filterExpression: Expression?, initialOffset: Offset<K>?): Page<K, I> {
+    override fun queryAsync(keyCondition: KeyCondition<K>, asc: Boolean, pageSize: Int, consistentRead: Boolean, filterExpression: Expression?, initialOffset: Offset<K>?): Publisher<Page<K, I>> {
       val request = toQueryRequest(keyCondition, asc, consistentRead, pageSize, filterExpression, initialOffset)
-      val page = if (secondaryIndexName != null) {
+      return if (secondaryIndexName != null) {
         dynamoDbTable.index(secondaryIndexName).query(request)
       } else {
         dynamoDbTable.query(request)
       }
-        .limit(1).awaitFirst()
-      return toQueryResponse(page)
+        .limit(1)
+        .map { page -> toQueryResponse(page) }
     }
   }
 

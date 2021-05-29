@@ -17,11 +17,13 @@
 package app.cash.tempest2
 
 import app.cash.tempest2.internal.AsyncLogicalDbFactory
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.future.future
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.reactive.awaitFirst
+import org.reactivestreams.Publisher
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient
 import software.amazon.awssdk.enhanced.dynamodb.extensions.annotations.DynamoDbVersionAttribute
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import java.util.concurrent.CompletableFuture
 import javax.annotation.CheckReturnValue
 import kotlin.reflect.KClass
 
@@ -46,7 +48,7 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
   suspend fun batchLoad(
     keys: KeySet,
     consistentReads: Boolean = false
-  ): ItemSet
+  ): ItemSet = batchLoadAsync(keys, consistentReads).awaitFirst()
 
   suspend fun batchLoad(
     keys: Iterable<Any>,
@@ -81,7 +83,7 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
   @CheckReturnValue
   suspend fun batchWrite(
     writeSet: BatchWriteSet
-  ): BatchWriteResult
+  ): BatchWriteResult = batchWriteAsync(writeSet).await()
 
   /**
    * Transactionally loads objects specified by transactionLoadRequest by calling
@@ -91,7 +93,7 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
    * A transaction cannot contain more than 4 MB of data.
    * No two actions in a transaction can work against the same item in the same table.
    */
-  suspend fun transactionLoad(keys: KeySet): ItemSet
+  suspend fun transactionLoad(keys: KeySet): ItemSet = transactionLoadAsync(keys).await()
 
   suspend fun transactionLoad(keys: Iterable<Any>): ItemSet {
     return transactionLoad(KeySet(keys))
@@ -115,7 +117,9 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
    * No two actions in a transaction can work against the same item in the same table.
    * For example, you cannot both ConditionCheck and Update the same item in one transaction.
    */
-  suspend fun transactionWrite(writeSet: TransactionWriteSet)
+  suspend fun transactionWrite(writeSet: TransactionWriteSet) {
+    transactionWriteAsync(writeSet).await()
+  }
 
   companion object {
     inline operator fun <reified DB : AsyncLogicalDb> invoke(
@@ -147,7 +151,7 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
   fun batchLoadAsync(
     keys: KeySet,
     consistentReads: Boolean
-  ) = GlobalScope.future { batchLoad(keys, consistentReads) }
+  ): Publisher<ItemSet>
 
   fun batchLoadAsync(
     keys: Iterable<Any>,
@@ -165,15 +169,15 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
 
   fun batchWriteAsync(
     writeSet: BatchWriteSet
-  ) = GlobalScope.future { batchWrite(writeSet) }
+  ): CompletableFuture<BatchWriteResult>
 
-  fun transactionLoadAsync(keys: KeySet) = GlobalScope.future { transactionLoad(keys) }
+  fun transactionLoadAsync(keys: KeySet): CompletableFuture<ItemSet>
 
   fun transactionLoadAsync(keys: Iterable<Any>) = transactionLoadAsync(KeySet(keys))
 
   fun transactionLoadAsync(vararg keys: Any) = transactionLoadAsync(keys.toList())
 
-  fun transactionWriteAsync(writeSet: TransactionWriteSet) = GlobalScope.future { transactionWrite(writeSet) }
+  fun transactionWriteAsync(writeSet: TransactionWriteSet): CompletableFuture<Void>
 }
 
 /**

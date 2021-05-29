@@ -16,8 +16,8 @@
 
 package app.cash.tempest2
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.future.future
+import kotlinx.coroutines.reactive.awaitFirst
+import org.reactivestreams.Publisher
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 
 interface AsyncScannable<K : Any, I : Any> {
@@ -30,7 +30,7 @@ interface AsyncScannable<K : Any, I : Any> {
     consistentRead: Boolean = false,
     filterExpression: Expression? = null,
     initialOffset: Offset<K>? = null
-  ): Page<K, I>
+  ) = scanAsync(pageSize, consistentRead, filterExpression, initialOffset).awaitFirst()
 
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
@@ -39,7 +39,7 @@ interface AsyncScannable<K : Any, I : Any> {
     consistentRead: Boolean = false,
     filterExpression: Expression? = null,
     initialOffset: Offset<K>? = null
-  ) = GlobalScope.future { scan(pageSize, consistentRead, filterExpression, initialOffset) }
+  ): Publisher<Page<K, I>>
 
   fun scanAsync() = scanAsync(
     ScanConfig.Builder().build(),

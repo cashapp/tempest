@@ -16,18 +16,18 @@
 
 package app.cash.tempest2
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.future.future
+import kotlinx.coroutines.future.await
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.enhanced.dynamodb.extensions.VersionedRecordExtension
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import java.util.concurrent.CompletableFuture
 
 interface AsyncView<K : Any, I : Any> {
   /**
    * Returns an item whose keys match those of the prototype key object given, or null if no
    * such item exists.
    */
-  suspend fun load(key: K, consistentReads: Boolean = false): I?
+  suspend fun load(key: K, consistentReads: Boolean = false): I? = loadAsync(key, consistentReads).await()
 
   /**
    * Saves an item in DynamoDB. This method uses [DynamoDbClient.putItem] to clear
@@ -40,7 +40,7 @@ interface AsyncView<K : Any, I : Any> {
   suspend fun save(
     item: I,
     saveExpression: Expression? = null
-  )
+  ) = saveAsync(item, saveExpression).await()
 
   /**
    * Deletes the item identified by [key] from its DynamoDB table using [deleteExpression]. Any
@@ -53,7 +53,7 @@ interface AsyncView<K : Any, I : Any> {
   suspend fun deleteKey(
     key: K,
     deleteExpression: Expression? = null
-  )
+  ) = deleteKeyAsync(key, deleteExpression).await()
 
   /**
    * Deletes [item] from its DynamoDB table using [deleteExpression]. Any options specified in the
@@ -62,18 +62,18 @@ interface AsyncView<K : Any, I : Any> {
   suspend fun delete(
     item: I,
     deleteExpression: Expression? = null
-  )
+  ) = deleteAsync(item, deleteExpression).await()
 
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
-  fun loadAsync(key: K, consistentReads: Boolean) = GlobalScope.future { load(key, consistentReads) }
+  fun loadAsync(key: K, consistentReads: Boolean): CompletableFuture<I?>
 
   fun loadAsync(key: K) = loadAsync(key, false)
 
   fun saveAsync(
     item: I,
     saveExpression: Expression?
-  ) = GlobalScope.future { save(item, saveExpression) }
+  ): CompletableFuture<Void>
 
   fun saveAsync(
     item: I
@@ -82,7 +82,7 @@ interface AsyncView<K : Any, I : Any> {
   fun deleteKeyAsync(
     key: K,
     deleteExpression: Expression?
-  ) = GlobalScope.future { deleteKey(key, deleteExpression) }
+  ): CompletableFuture<I?>
 
   fun deleteKeyAsync(
     key: K
@@ -91,7 +91,7 @@ interface AsyncView<K : Any, I : Any> {
   fun deleteAsync(
     item: I,
     deleteExpression: Expression?
-  ) = GlobalScope.future { delete(item, deleteExpression) }
+  ): CompletableFuture<I?>
 
   fun deleteAsync(
     item: I

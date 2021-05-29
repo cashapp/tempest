@@ -21,7 +21,7 @@ import app.cash.tempest2.AsyncScannable
 import app.cash.tempest2.Offset
 import app.cash.tempest2.Page
 import app.cash.tempest2.Scannable
-import kotlinx.coroutines.reactive.awaitFirst
+import org.reactivestreams.Publisher
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable
 import software.amazon.awssdk.enhanced.dynamodb.Expression
@@ -66,20 +66,19 @@ internal class DynamoDbScannable<K : Any, I : Any, R : Any>(
     private val dynamoDbTable: DynamoDbAsyncTable<R>
   ) : AsyncScannable<K, I> {
 
-    override suspend fun scan(
+    override fun scanAsync(
       pageSize: Int,
       consistentRead: Boolean,
       filterExpression: Expression?,
       initialOffset: Offset<K>?
-    ): Page<K, I> {
+    ): Publisher<Page<K, I>> {
       val request = toScanRequest(consistentRead, pageSize, filterExpression, initialOffset)
-      val page = if (secondaryIndexName != null) {
+      return if (secondaryIndexName != null) {
         dynamoDbTable.index(secondaryIndexName).scan(request)
       } else {
         dynamoDbTable.scan(request)
       }
-        .limit(1).awaitFirst()
-      return toScanResponse(page)
+        .limit(1).map(::toScanResponse)
     }
   }
 

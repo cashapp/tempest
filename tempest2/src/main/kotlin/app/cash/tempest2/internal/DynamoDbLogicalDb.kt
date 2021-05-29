@@ -29,8 +29,7 @@ import app.cash.tempest2.LogicalTable
 import app.cash.tempest2.TransactionWriteSet
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.CLOBBER
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.DELETE
-import kotlinx.coroutines.future.await
-import kotlinx.coroutines.reactive.awaitFirst
+import org.reactivestreams.Publisher
 import software.amazon.awssdk.enhanced.dynamodb.Document
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
@@ -54,6 +53,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException
+import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KClass
 
 internal class DynamoDbLogicalDb(
@@ -122,36 +122,40 @@ internal class DynamoDbLogicalDb(
     logicalTableFactory: AsyncLogicalTable.Factory
   ) : AsyncLogicalDb, AsyncLogicalTable.Factory by logicalTableFactory {
 
-    override suspend fun batchLoad(
+    override fun batchLoadAsync(
       keys: KeySet,
       consistentReads: Boolean
-    ): ItemSet {
+    ): Publisher<ItemSet> {
       val (requests, requestsByTable, batchRequest) = toBatchLoadRequest(keys, consistentReads)
-      val page = dynamoDbEnhancedClient.batchGetItem(batchRequest).limit(1).awaitFirst()
-      return toBatchLoadResponse(requestsByTable, requests, page)
+      return dynamoDbEnhancedClient.batchGetItem(batchRequest)
+        .limit(1)
+        .map { page -> toBatchLoadResponse(requestsByTable, requests, page) }
     }
 
-    override suspend fun batchWrite(
+    override fun batchWriteAsync(
       writeSet: BatchWriteSet
-    ): app.cash.tempest2.BatchWriteResult {
+    ): CompletableFuture<app.cash.tempest2.BatchWriteResult> {
       val (requestsByTable, batchRequest) = toBatchWriteRequest(writeSet)
-      val result = dynamoDbEnhancedClient.batchWriteItem(batchRequest).await()
-      return toBatchWriteResponse(requestsByTable, result)
+      return dynamoDbEnhancedClient.batchWriteItem(batchRequest)
+        .thenApply { result -> toBatchWriteResponse(requestsByTable, result) }
     }
 
-    override suspend fun transactionLoad(keys: KeySet): ItemSet {
+    override fun transactionLoadAsync(keys: KeySet): CompletableFuture<ItemSet> {
       val (requests, batchRequest) = toTransactionLoadRequest(keys)
-      val documents = dynamoDbEnhancedClient.transactGetItems(batchRequest).await()
-      return toTransactionLoadResponse(documents, requests)
+      return dynamoDbEnhancedClient.transactGetItems(batchRequest)
+        .thenApply { documents -> toTransactionLoadResponse(documents, requests) }
     }
 
-    override suspend fun transactionWrite(writeSet: TransactionWriteSet) {
+    override fun transactionWriteAsync(writeSet: TransactionWriteSet): CompletableFuture<Void> {
       val writeRequest = toTransactionWriteRequest(writeSet)
-      try {
-        dynamoDbEnhancedClient.transactWriteItems(writeRequest).await()
-      } catch (e: TransactionCanceledException) {
-        toTransactionWriteException(writeSet, e)
-      }
+      return dynamoDbEnhancedClient.transactWriteItems(writeRequest)
+        .exceptionally { e ->
+          if (e is TransactionCanceledException) {
+            toTransactionWriteException(writeSet, e) as Void
+          } else {
+            throw e
+          }
+        }
     }
   }
 
@@ -263,7 +267,7 @@ internal class DynamoDbLogicalDb(
   ): ItemSet {
     val results = mutableSetOf<Any>()
     for ((document, request) in documents.zip(requests)) {
-      val result = document.getItem(mappedTableResource<Any>(request.tableType)) ?: continue
+      val result = document.getItem(mappedTableResource(request.tableType)) ?: continue
       val decoded = request.resultType.codec.toApp(result)
       results.add(decoded)
     }
@@ -289,7 +293,7 @@ internal class DynamoDbLogicalDb(
       .build()
   }
 
-  private fun toTransactionWriteException(writeSet: TransactionWriteSet, e: TransactionCanceledException) {
+  fun toTransactionWriteException(writeSet: TransactionWriteSet, e: TransactionCanceledException) {
     // We don't want to wrap these exceptions but only add a more useful message so upstream callers can themselves
     // parse the potentially concurrency related TransactionCancelledExceptions
     // https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/dynamodbv2/model/TransactionCanceledException.html

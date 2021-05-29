@@ -128,7 +128,8 @@ class DynamoDbAsyncViewTest {
     )
     musicTable.albumInfo.save(albumInfo)
 
-    musicTable.albumInfo.deleteKey(albumInfo.key)
+    val deleted = musicTable.albumInfo.deleteKey(albumInfo.key)
+    assertThat(deleted).isEqualTo(albumInfo)
 
     val loadedAlbumInfo = musicTable.albumInfo.load(albumInfo.key)
     assertThat(loadedAlbumInfo).isNull()

@@ -20,20 +20,25 @@ import app.cash.tempest2.AsyncQueryable
 import app.cash.tempest2.KeyCondition
 import app.cash.tempest2.Offset
 import app.cash.tempest2.Page
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.reactive.asPublisher
+import org.reactivestreams.Publisher
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import kotlin.reflect.KClass
 
 internal class UnsupportedAsyncQueryable<K : Any, I : Any>(
   private val rawType: KClass<*>
 ) : AsyncQueryable<K, I> {
-  override suspend fun query(
+  override fun queryAsync(
     keyCondition: KeyCondition<K>,
     asc: Boolean,
     pageSize: Int,
     consistentRead: Boolean,
     filterExpression: Expression?,
     initialOffset: Offset<K>?
-  ): Page<K, I> {
-    throw UnsupportedOperationException("Require $rawType to have a range key. You can query a table or an index only if it has a composite primary key (partition key and sort key)")
+  ): Publisher<Page<K, I>> {
+    return flow<Page<K, I>> {
+      throw UnsupportedOperationException("Require $rawType to have a range key. You can query a table or an index only if it has a composite primary key (partition key and sort key)")
+    }.asPublisher()
   }
 }
