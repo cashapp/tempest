@@ -25,24 +25,24 @@ import app.cash.tempest.internal.ProxyFactory
 import app.cash.tempest.internal.RawItemType
 import app.cash.tempest.internal.Schema
 import app.cash.tempest.internal.declaredMembers
-import app.cash.tempest2.InlineView
-import app.cash.tempest2.LogicalDb
-import app.cash.tempest2.LogicalTable
-import app.cash.tempest2.Queryable
-import app.cash.tempest2.Scannable
-import app.cash.tempest2.SecondaryIndex
-import app.cash.tempest2.View
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable
+import app.cash.tempest2.AsyncInlineView
+import app.cash.tempest2.AsyncLogicalDb
+import app.cash.tempest2.AsyncLogicalTable
+import app.cash.tempest2.AsyncQueryable
+import app.cash.tempest2.AsyncScannable
+import app.cash.tempest2.AsyncSecondaryIndex
+import app.cash.tempest2.AsyncView
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 import java.lang.reflect.Method
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.jvmErasure
 
-internal class LogicalDbFactory(
-  private val dynamoDbEnhancedClient: DynamoDbEnhancedClient
-) : LogicalTable.Factory {
+internal class AsyncLogicalDbFactory(
+  private val dynamoDbEnhancedClient: DynamoDbEnhancedAsyncClient
+) : AsyncLogicalTable.Factory {
   private val schema = Schema.create(
     V2StringAttributeValue,
     V2MapAttributeValue.Factory,
@@ -51,17 +51,17 @@ internal class LogicalDbFactory(
     V2RawItemTypeFactory()
   )
 
-  fun <DB : LogicalDb> logicalDb(dbType: KClass<DB>): DB {
+  fun <DB : AsyncLogicalDb> logicalDb(dbType: KClass<DB>): DB {
     val logicalDb = DynamoDbLogicalDb(
       DynamoDbLogicalDb.MappedTableResourceFactory.simple(dynamoDbEnhancedClient::table),
       schema,
-    ).sync(dynamoDbEnhancedClient, this)
+    ).async(dynamoDbEnhancedClient, this)
     val methodHandlers = mutableMapOf<Method, MethodHandler>()
     for (member in dbType.declaredMembers) {
-      if (!member.returnType.jvmErasure.isSubclassOf(LogicalTable::class)) {
+      if (!member.returnType.jvmErasure.isSubclassOf(AsyncLogicalTable::class)) {
         continue
       }
-      val tableType = member.returnType.jvmErasure as KClass<LogicalTable<Any>>
+      val tableType = member.returnType.jvmErasure as KClass<AsyncLogicalTable<Any>>
       val tableName = getTableName(member, dbType)
       val table = logicalTable(tableName, tableType)
       methodHandlers[member.javaMethod] = GetterMethodHandler(table)
@@ -69,31 +69,31 @@ internal class LogicalDbFactory(
     return ProxyFactory.create(dbType, methodHandlers.toMap(), logicalDb)
   }
 
-  override fun <T : LogicalTable<RI>, RI : Any> logicalTable(tableName: String, tableType: KClass<T>): T {
+  override fun <T : AsyncLogicalTable<RI>, RI : Any> logicalTable(tableName: String, tableType: KClass<T>): T {
     val rawItemType = schema.addRawItem(tableName, tableType.rawItemType)
     val tableSchema = TableSchema.fromClass(rawItemType.type.java)
     val dynamoDbTable = dynamoDbEnhancedClient.table(rawItemType.tableName, tableSchema)
     val logicalTable =
       object :
-        LogicalTable<RI>,
-        View<RI, RI> by DynamoDbView(
+        AsyncLogicalTable<RI>,
+        AsyncView<RI, RI> by DynamoDbView(
           rawItemType.codec as Codec<RI, Any>,
           rawItemType.codec as Codec<RI, Any>,
           tableSchema,
-        ).sync(dynamoDbTable),
-        InlineView.Factory by InlineViewFactory(rawItemType, tableSchema, dynamoDbTable),
-        SecondaryIndex.Factory by SecondaryIndexFactory(rawItemType, tableSchema, dynamoDbTable) {
+        ).async(dynamoDbTable),
+        AsyncInlineView.Factory by InlineViewFactory(rawItemType, tableSchema, dynamoDbTable),
+        AsyncSecondaryIndex.Factory by SecondaryIndexFactory(rawItemType, tableSchema, dynamoDbTable) {
         override fun <T : Any> codec(type: KClass<T>): app.cash.tempest2.Codec<T, RI> = CodecAdapter(schema.codec(type))
       }
     val methodHandlers = mutableMapOf<Method, MethodHandler>()
     for (member in tableType.declaredMembers) {
       val component = when (member.returnType.jvmErasure) {
-        InlineView::class -> {
+        AsyncInlineView::class -> {
           val keyType = member.returnType.arguments[0].type?.jvmErasure!!
           val itemType = member.returnType.arguments[1].type?.jvmErasure!!
           logicalTable.inlineView(keyType, itemType)
         }
-        SecondaryIndex::class -> {
+        AsyncSecondaryIndex::class -> {
           val keyType = member.returnType.arguments[0].type?.jvmErasure!!
           val itemType = member.returnType.arguments[1].type?.jvmErasure!!
           logicalTable.secondaryIndex(keyType, itemType)
@@ -108,30 +108,30 @@ internal class LogicalDbFactory(
   inner class InlineViewFactory(
     private val rawItemType: RawItemType,
     private val tableSchema: TableSchema<Any>,
-    private val dynamoDbTable: DynamoDbTable<Any>,
-  ) : InlineView.Factory {
+    private val dynamoDbTable: DynamoDbAsyncTable<Any>,
+  ) : AsyncInlineView.Factory {
 
     override fun <K : Any, I : Any> inlineView(
       keyType: KClass<K>,
       itemType: KClass<I>
-    ): InlineView<K, I> {
+    ): AsyncInlineView<K, I> {
       val item = schema.addItem(itemType, rawItemType.type)
       val key = schema.addKey(keyType, itemType)
       return object :
-        InlineView<K, I>,
-        View<K, I> by DynamoDbView(
+        AsyncInlineView<K, I>,
+        AsyncView<K, I> by DynamoDbView(
           key.codec as Codec<K, Any>,
           item.codec as Codec<I, Any>,
           tableSchema,
-        ).sync(dynamoDbTable),
-        Queryable<K, I> by queryable(
+        ).async(dynamoDbTable),
+        AsyncQueryable<K, I> by queryable(
           rawItemType,
           item,
           key,
           tableSchema,
           dynamoDbTable,
         ),
-        Scannable<K, I> by scannable(
+        AsyncScannable<K, I> by scannable(
           item,
           key,
           tableSchema,
@@ -143,25 +143,25 @@ internal class LogicalDbFactory(
   inner class SecondaryIndexFactory(
     private val rawItemType: RawItemType,
     private val tableSchema: TableSchema<Any>,
-    private val dynamoDbTable: DynamoDbTable<Any>,
-  ) : SecondaryIndex.Factory {
+    private val dynamoDbTable: DynamoDbAsyncTable<Any>,
+  ) : AsyncSecondaryIndex.Factory {
 
     override fun <K : Any, I : Any> secondaryIndex(
       keyType: KClass<K>,
       itemType: KClass<I>
-    ): SecondaryIndex<K, I> {
+    ): AsyncSecondaryIndex<K, I> {
       val item = schema.addItem(itemType, rawItemType.type)
       val key = schema.addKey(keyType, itemType)
       return object :
-        SecondaryIndex<K, I>,
-        Queryable<K, I> by queryable(
+        AsyncSecondaryIndex<K, I>,
+        AsyncQueryable<K, I> by queryable(
           rawItemType,
           item,
           key,
           tableSchema,
           dynamoDbTable,
         ),
-        Scannable<K, I> by scannable(
+        AsyncScannable<K, I> by scannable(
           item,
           key,
           tableSchema,
@@ -175,10 +175,10 @@ internal class LogicalDbFactory(
     itemType: ItemType,
     keyType: KeyType,
     tableSchema: TableSchema<Any>,
-    dynamoDbTable: DynamoDbTable<Any>,
-  ): Queryable<K, I> {
+    dynamoDbTable: DynamoDbAsyncTable<Any>,
+  ): AsyncQueryable<K, I> {
     if (keyType.rangeKeyName == null) {
-      return UnsupportedQueryable(rawItemType.type)
+      return UnsupportedAsyncQueryable(rawItemType.type)
     }
     return DynamoDbQueryable(
       keyType.secondaryIndexName,
@@ -186,24 +186,24 @@ internal class LogicalDbFactory(
       keyType.codec as Codec<K, Any>,
       itemType.codec as Codec<I, Any>,
       tableSchema,
-    ).sync(dynamoDbTable)
+    ).async(dynamoDbTable)
   }
 
   private fun <K : Any, I : Any> scannable(
     itemType: ItemType,
     keyType: KeyType,
     tableSchema: TableSchema<Any>,
-    dynamoDbTable: DynamoDbTable<Any>,
-  ): Scannable<K, I> {
+    dynamoDbTable: DynamoDbAsyncTable<Any>,
+  ): AsyncScannable<K, I> {
     return DynamoDbScannable(
       keyType.secondaryIndexName,
       itemType.attributeNames,
       keyType.codec as Codec<K, Any>,
       itemType.codec as Codec<I, Any>,
       tableSchema,
-    ).sync(dynamoDbTable)
+    ).async(dynamoDbTable)
   }
 
-  private val <T : LogicalTable<RI>, RI : Any> KClass<T>.rawItemType: KClass<RI>
+  private val <T : AsyncLogicalTable<RI>, RI : Any> KClass<T>.rawItemType: KClass<RI>
     get() = supertypes[0].arguments[0].type?.jvmErasure!! as KClass<RI>
 }

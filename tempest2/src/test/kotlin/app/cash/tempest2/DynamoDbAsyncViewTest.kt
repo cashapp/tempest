@@ -18,10 +18,11 @@ package app.cash.tempest2
 
 import app.cash.tempest2.musiclibrary.AlbumInfo
 import app.cash.tempest2.musiclibrary.AlbumTrack
-import app.cash.tempest2.musiclibrary.MusicDb
+import app.cash.tempest2.musiclibrary.AsyncMusicDb
 import app.cash.tempest2.musiclibrary.PlaylistInfo
 import app.cash.tempest2.musiclibrary.testDb
-import app.cash.tempest2.testing.logicalDb
+import app.cash.tempest2.testing.asyncLogicalDb
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Test
@@ -31,16 +32,16 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException
 import java.time.LocalDate
 
-class DynamoDbViewTest {
+class DynamoDbAsyncViewTest {
 
   @RegisterExtension
   @JvmField
   val db = testDb()
 
-  private val musicTable by lazy { db.logicalDb<MusicDb>().music }
+  private val musicTable by lazy { db.asyncLogicalDb<AsyncMusicDb>().music }
 
   @Test
-  fun loadAfterSave() {
+  fun loadAfterSave() = runBlocking {
     val albumInfo = AlbumInfo(
       "ALBUM_1",
       "after hours - EP",
@@ -60,7 +61,7 @@ class DynamoDbViewTest {
   }
 
   @Test
-  fun saveIfNotExist() {
+  fun saveIfNotExist() = runBlocking {
     val albumInfo = AlbumInfo(
       "ALBUM_1",
       "after hours - EP",
@@ -73,12 +74,14 @@ class DynamoDbViewTest {
     // This fails because the album info already exists.
     assertThatExceptionOfType(ConditionalCheckFailedException::class.java)
       .isThrownBy {
-        musicTable.albumInfo.save(albumInfo, ifNotExist())
+        runBlocking {
+          musicTable.albumInfo.save(albumInfo, ifNotExist())
+        }
       }
   }
 
   @Test
-  fun optimisticLocking() {
+  fun optimisticLocking() = runBlocking {
     val playlistInfoV1 = PlaylistInfo(
       "PLAYLIST_1",
       "WFH Music",
@@ -105,15 +108,17 @@ class DynamoDbViewTest {
     // This fails because playlist_size is already 1.
     assertThatExceptionOfType(ConditionalCheckFailedException::class.java)
       .isThrownBy {
-        musicTable.playlistInfo.save(
-          playlistInfoV2,
-          ifPlaylistVersionIs(playlistInfoV1.playlist_version)
-        )
+        runBlocking {
+          musicTable.playlistInfo.save(
+            playlistInfoV2,
+            ifPlaylistVersionIs(playlistInfoV1.playlist_version)
+          )
+        }
       }
   }
 
   @Test
-  fun delete() {
+  fun delete() = runBlocking {
     val albumInfo = AlbumInfo(
       "ALBUM_1",
       "after hours - EP",

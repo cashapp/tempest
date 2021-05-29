@@ -18,11 +18,16 @@ package app.cash.tempest2.testing
 
 import app.cash.tempest2.LogicalDb
 import com.google.common.util.concurrent.Service
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClientExtension
+import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.streams.DynamoDbStreamsAsyncClient
 import software.amazon.awssdk.services.dynamodb.streams.DynamoDbStreamsClient
 import kotlin.reflect.KClass
+
+typealias AsyncLogicalDb = app.cash.tempest2.AsyncLogicalDb
 
 interface TestDynamoDbClient : Service {
   val tables: List<TestTable>
@@ -30,8 +35,14 @@ interface TestDynamoDbClient : Service {
   /** A DynamoDB instance that is usable while this service is running. */
   val dynamoDb: DynamoDbClient
 
+  /** A DynamoDB instance that is usable while this service is running. */
+  val asyncDynamoDb: DynamoDbAsyncClient
+
   /** A DynamoDB streams instance that is usable while this service is running. */
   val dynamoDbStreams: DynamoDbStreamsClient
+
+  /** A DynamoDB streams instance that is usable while this service is running. */
+  val asyncDynamoDbStreams: DynamoDbStreamsAsyncClient
 
   fun <DB : LogicalDb> logicalDb(type: KClass<DB>): DB {
     return logicalDb(type, emptyList())
@@ -66,6 +77,40 @@ interface TestDynamoDbClient : Service {
   ): DB {
     return logicalDb(type.kotlin, extensions)
   }
+
+  fun <DB : AsyncLogicalDb> asyncLogicalDb(type: KClass<DB>): DB {
+    return asyncLogicalDb(type, emptyList())
+  }
+
+  fun <DB : AsyncLogicalDb> asyncLogicalDb(type: KClass<DB>, vararg extensions: DynamoDbEnhancedClientExtension): DB {
+    return asyncLogicalDb(type, extensions.toList())
+  }
+
+  fun <DB : AsyncLogicalDb> asyncLogicalDb(
+    type: KClass<DB>,
+    extensions: List<DynamoDbEnhancedClientExtension>
+  ): DB {
+    val enhancedClient = DynamoDbEnhancedAsyncClient.builder()
+      .dynamoDbClient(asyncDynamoDb)
+      .extensions(extensions)
+      .build()
+    return app.cash.tempest2.AsyncLogicalDb.create(type, enhancedClient)
+  }
+
+  fun <DB : AsyncLogicalDb> asyncLogicalDb(type: Class<DB>): DB {
+    return asyncLogicalDb(type.kotlin)
+  }
+
+  fun <DB : AsyncLogicalDb> asyncLogicalDb(type: Class<DB>, vararg extensions: DynamoDbEnhancedClientExtension): DB {
+    return asyncLogicalDb(type.kotlin, extensions.toList())
+  }
+
+  fun <DB : AsyncLogicalDb> asyncLogicalDb(
+    type: Class<DB>,
+    extensions: List<DynamoDbEnhancedClientExtension>
+  ): DB {
+    return asyncLogicalDb(type.kotlin, extensions)
+  }
 }
 
 inline fun <reified DB : LogicalDb> TestDynamoDbClient.logicalDb(vararg extensions: DynamoDbEnhancedClientExtension): DB {
@@ -74,4 +119,12 @@ inline fun <reified DB : LogicalDb> TestDynamoDbClient.logicalDb(vararg extensio
 
 inline fun <reified DB : LogicalDb> TestDynamoDbClient.logicalDb(extensions: List<DynamoDbEnhancedClientExtension>): DB {
   return logicalDb(DB::class, extensions)
+}
+
+inline fun <reified DB : AsyncLogicalDb> TestDynamoDbClient.asyncLogicalDb(vararg extensions: DynamoDbEnhancedClientExtension): DB {
+  return asyncLogicalDb(extensions.toList())
+}
+
+inline fun <reified DB : AsyncLogicalDb> TestDynamoDbClient.asyncLogicalDb(extensions: List<DynamoDbEnhancedClientExtension>): DB {
+  return asyncLogicalDb(DB::class, extensions)
 }

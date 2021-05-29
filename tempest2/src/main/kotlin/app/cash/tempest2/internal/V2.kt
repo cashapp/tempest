@@ -17,6 +17,8 @@
 package app.cash.tempest2.internal
 
 import app.cash.tempest.internal.AttributeAnnotation
+import app.cash.tempest.internal.ClassMember
+import app.cash.tempest.internal.Codec
 import app.cash.tempest.internal.ForIndexAnnotation
 import app.cash.tempest.internal.ItemType
 import app.cash.tempest.internal.MapAttributeValue
@@ -24,6 +26,7 @@ import app.cash.tempest.internal.RawItemType
 import app.cash.tempest.internal.StringAttributeValue
 import app.cash.tempest2.Attribute
 import app.cash.tempest2.ForIndex
+import app.cash.tempest2.TableName
 import software.amazon.awssdk.enhanced.dynamodb.TableMetadata
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
@@ -81,4 +84,20 @@ internal class V2RawItemTypeFactory : RawItemType.Factory {
         }.associateBy { it.name }
     )
   }
+}
+
+internal fun getTableName(member: ClassMember, dbType: KClass<*>): String {
+  val tableName = member.annotations.filterIsInstance<TableName>().singleOrNull()?.value
+  requireNotNull(tableName) {
+    "Please annotate ${member.javaMethod} in $dbType with `@TableName`"
+  }
+  return tableName
+}
+
+internal class CodecAdapter<A : Any, D : Any>(
+  private val internal: Codec<A, D>
+) : app.cash.tempest2.Codec<A, D> {
+  override fun toDb(appItem: A): D = internal.toDb(appItem)
+
+  override fun toApp(dbItem: D): A = internal.toApp(dbItem)
 }

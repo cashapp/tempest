@@ -16,16 +16,18 @@
 
 package app.cash.tempest2
 
+import kotlinx.coroutines.future.await
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.enhanced.dynamodb.extensions.VersionedRecordExtension
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import java.util.concurrent.CompletableFuture
 
-interface View<K : Any, I : Any> {
+interface AsyncView<K : Any, I : Any> {
   /**
    * Returns an item whose keys match those of the prototype key object given, or null if no
    * such item exists.
    */
-  fun load(key: K, consistentReads: Boolean = false): I?
+  suspend fun load(key: K, consistentReads: Boolean = false): I? = loadAsync(key, consistentReads).await()
 
   /**
    * Saves an item in DynamoDB. This method uses [DynamoDbClient.putItem] to clear
@@ -35,10 +37,10 @@ interface View<K : Any, I : Any> {
    * Any options specified in the [saveExpression] parameter will be overlaid on any constraints due
    * to versioned attributes.
    */
-  fun save(
+  suspend fun save(
     item: I,
     saveExpression: Expression? = null
-  )
+  ) = saveAsync(item, saveExpression).await()
 
   /**
    * Deletes the item identified by [key] from its DynamoDB table using [deleteExpression]. Any
@@ -48,33 +50,50 @@ interface View<K : Any, I : Any> {
    * If the item to be deleted has versioned attributes, load the item and use [delete] instead.
    * For more information, see [VersionedRecordExtension].
    */
-  fun deleteKey(
+  suspend fun deleteKey(
     key: K,
     deleteExpression: Expression? = null
-  ): I?
+  ) = deleteKeyAsync(key, deleteExpression).await()
 
   /**
    * Deletes [item] from its DynamoDB table using [deleteExpression]. Any options specified in the
    * [deleteExpression] parameter will be overlaid on any constraints due to versioned attributes.
    */
-  fun delete(
+  suspend fun delete(
     item: I,
     deleteExpression: Expression? = null
-  ): I?
+  ) = deleteAsync(item, deleteExpression).await()
 
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
-  fun load(key: K) = load(key, false)
+  fun loadAsync(key: K, consistentReads: Boolean): CompletableFuture<I?>
 
-  fun save(
+  fun loadAsync(key: K) = loadAsync(key, false)
+
+  fun saveAsync(
+    item: I,
+    saveExpression: Expression?
+  ): CompletableFuture<Void>
+
+  fun saveAsync(
     item: I
-  ) = save(item, saveExpression = null)
+  ) = saveAsync(item, saveExpression = null)
 
-  fun deleteKey(
+  fun deleteKeyAsync(
+    key: K,
+    deleteExpression: Expression?
+  ): CompletableFuture<I?>
+
+  fun deleteKeyAsync(
     key: K
-  ) = deleteKey(key, deleteExpression = null)
+  ) = deleteKeyAsync(key, deleteExpression = null)
 
-  fun delete(
+  fun deleteAsync(
+    item: I,
+    deleteExpression: Expression?
+  ): CompletableFuture<I?>
+
+  fun deleteAsync(
     item: I
-  ) = delete(item, deleteExpression = null)
+  ) = deleteAsync(item, deleteExpression = null)
 }

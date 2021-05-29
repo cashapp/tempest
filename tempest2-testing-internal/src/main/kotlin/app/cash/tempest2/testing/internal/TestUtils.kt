@@ -23,8 +23,10 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 import software.amazon.awssdk.enhanced.dynamodb.model.CreateTableEnhancedRequest
 import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput
+import software.amazon.awssdk.services.dynamodb.streams.DynamoDbStreamsAsyncClient
 import software.amazon.awssdk.services.dynamodb.streams.DynamoDbStreamsClient
 import java.net.ServerSocket
 import java.net.URI
@@ -47,8 +49,28 @@ fun connect(port: Int): DynamoDbClient {
     .build()
 }
 
+fun connectAsync(port: Int): DynamoDbAsyncClient {
+  return DynamoDbAsyncClient.builder()
+    // The values that you supply for the AWS access key and the Region are only used to name
+    // the database file.
+    .credentialsProvider(AWS_CREDENTIALS_PROVIDER)
+    .region(Region.US_WEST_2)
+    .endpointOverride(URI.create("http://localhost:$port"))
+    .build()
+}
+
 fun connectToStreams(port: Int): DynamoDbStreamsClient {
   return DynamoDbStreamsClient.builder()
+    // The values that you supply for the AWS access key and the Region are only used to name
+    // the database file.
+    .credentialsProvider(AWS_CREDENTIALS_PROVIDER)
+    .region(Region.US_WEST_2)
+    .endpointOverride(URI.create("http://localhost:$port"))
+    .build()
+}
+
+fun connectToStreamsAsync(port: Int): DynamoDbStreamsAsyncClient {
+  return DynamoDbStreamsAsyncClient.builder()
     // The values that you supply for the AWS access key and the Region are only used to name
     // the database file.
     .credentialsProvider(AWS_CREDENTIALS_PROVIDER)
