@@ -27,7 +27,6 @@ import app.cash.tempest2.musiclibrary.givenAlbums
 import app.cash.tempest2.musiclibrary.testDb
 import app.cash.tempest2.musiclibrary.trackTitles
 import app.cash.tempest2.testing.asyncLogicalDb
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -44,7 +43,7 @@ class DynamoDbAsyncScannableTest {
   private val musicTable by lazy { db.asyncLogicalDb<AsyncMusicDb>().music }
 
   @Test
-  fun primaryIndex() = runBlocking {
+  fun primaryIndex() = runBlockingTest {
     musicTable.givenAlbums(
       THE_DARK_SIDE_OF_THE_MOON,
       THE_WALL,
@@ -65,7 +64,7 @@ class DynamoDbAsyncScannableTest {
   }
 
   @Test
-  fun localSecondaryIndex() = runBlocking {
+  fun localSecondaryIndex() = runBlockingTest {
     musicTable.givenAlbums(THE_WALL)
     val expectedTrackTitles = THE_WALL.trackTitles.sorted()
 
@@ -84,7 +83,7 @@ class DynamoDbAsyncScannableTest {
   }
 
   @Test
-  fun localSecondaryIndexWithFilter() = runBlocking {
+  fun localSecondaryIndexWithFilter() = runBlockingTest {
     musicTable.givenAlbums(THE_WALL)
     val expectedTrackTitles = THE_WALL.tracks
       .filter { it.run_length > Duration.ofMinutes(3) }
@@ -100,7 +99,7 @@ class DynamoDbAsyncScannableTest {
   }
 
   @Test
-  fun globalSecondaryIndex() = runBlocking {
+  fun globalSecondaryIndex() = runBlockingTest {
     musicTable.givenAlbums(
       THE_DARK_SIDE_OF_THE_MOON,
       THE_WALL,
@@ -122,7 +121,7 @@ class DynamoDbAsyncScannableTest {
   }
 
   @Test
-  fun globalSecondaryIndexWithFilter() = runBlocking {
+  fun globalSecondaryIndexWithFilter() = runBlockingTest {
     musicTable.givenAlbums(
       THE_DARK_SIDE_OF_THE_MOON,
       THE_WALL,

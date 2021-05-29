@@ -22,7 +22,6 @@ import app.cash.tempest2.musiclibrary.AsyncMusicDb
 import app.cash.tempest2.musiclibrary.PlaylistInfo
 import app.cash.tempest2.musiclibrary.testDb
 import app.cash.tempest2.testing.asyncLogicalDb
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Test
@@ -41,7 +40,7 @@ class DynamoDbAsyncViewTest {
   private val musicTable by lazy { db.asyncLogicalDb<AsyncMusicDb>().music }
 
   @Test
-  fun loadAfterSave() = runBlocking {
+  fun loadAfterSave() = runBlockingTest {
     val albumInfo = AlbumInfo(
       "ALBUM_1",
       "after hours - EP",
@@ -61,7 +60,7 @@ class DynamoDbAsyncViewTest {
   }
 
   @Test
-  fun saveIfNotExist() = runBlocking {
+  fun saveIfNotExist() = runBlockingTest {
     val albumInfo = AlbumInfo(
       "ALBUM_1",
       "after hours - EP",
@@ -74,14 +73,14 @@ class DynamoDbAsyncViewTest {
     // This fails because the album info already exists.
     assertThatExceptionOfType(ConditionalCheckFailedException::class.java)
       .isThrownBy {
-        runBlocking {
+        runBlockingTest {
           musicTable.albumInfo.save(albumInfo, ifNotExist())
         }
       }
   }
 
   @Test
-  fun optimisticLocking() = runBlocking {
+  fun optimisticLocking() = runBlockingTest {
     val playlistInfoV1 = PlaylistInfo(
       "PLAYLIST_1",
       "WFH Music",
@@ -108,7 +107,7 @@ class DynamoDbAsyncViewTest {
     // This fails because playlist_size is already 1.
     assertThatExceptionOfType(ConditionalCheckFailedException::class.java)
       .isThrownBy {
-        runBlocking {
+        runBlockingTest {
           musicTable.playlistInfo.save(
             playlistInfoV2,
             ifPlaylistVersionIs(playlistInfoV1.playlist_version)
@@ -118,7 +117,7 @@ class DynamoDbAsyncViewTest {
   }
 
   @Test
-  fun delete() = runBlocking {
+  fun delete() = runBlockingTest {
     val albumInfo = AlbumInfo(
       "ALBUM_1",
       "after hours - EP",

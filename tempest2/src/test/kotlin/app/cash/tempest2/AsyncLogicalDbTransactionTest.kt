@@ -21,7 +21,6 @@ import app.cash.tempest2.musiclibrary.AsyncMusicDb
 import app.cash.tempest2.musiclibrary.PlaylistInfo
 import app.cash.tempest2.musiclibrary.testDb
 import app.cash.tempest2.testing.asyncLogicalDb
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Test
@@ -41,7 +40,7 @@ class AsyncLogicalDbTransactionTest {
   private val musicTable by lazy { musicDb.music }
 
   @Test
-  fun transactionLoad() = runBlocking {
+  fun transactionLoad() = runBlockingTest {
     val albumTracks = listOf(
       AlbumTrack(
         "ALBUM_1",
@@ -83,7 +82,7 @@ class AsyncLogicalDbTransactionTest {
   }
 
   @Test
-  fun transactionLoadAfterTransactionWrite() = runBlocking {
+  fun transactionLoadAfterTransactionWrite() = runBlockingTest {
     val albumTracks = listOf(
       AlbumTrack(
         "ALBUM_1",
@@ -127,7 +126,7 @@ class AsyncLogicalDbTransactionTest {
   }
 
   @Test
-  fun conditionalUpdateInTransactionWrite() = runBlocking {
+  fun conditionalUpdateInTransactionWrite() = runBlockingTest {
     val playlistInfoV1 =
       PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
     musicTable.playlistInfo.save(playlistInfoV1)
@@ -162,7 +161,7 @@ class AsyncLogicalDbTransactionTest {
   }
 
   @Test
-  fun conditionalUpdateFailureInTransactionWrite() = runBlocking {
+  fun conditionalUpdateFailureInTransactionWrite() = runBlockingTest {
     val playlistInfoV1 =
       PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
     musicTable.playlistInfo.save(playlistInfoV1)
@@ -191,7 +190,7 @@ class AsyncLogicalDbTransactionTest {
 
     assertThatExceptionOfType(TransactionCanceledException::class.java)
       .isThrownBy {
-        runBlocking {
+        runBlockingTest {
           musicDb.transactionWrite(writeTransaction)
         }
       }
@@ -204,7 +203,7 @@ class AsyncLogicalDbTransactionTest {
   }
 
   @Test
-  fun conditionCheckInTransactionWrite() = runBlocking {
+  fun conditionCheckInTransactionWrite() = runBlockingTest {
     val playlistInfoV1 =
       PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
     musicTable.playlistInfo.save(playlistInfoV1)
@@ -238,7 +237,7 @@ class AsyncLogicalDbTransactionTest {
   }
 
   @Test
-  fun conditionCheckFailureInTransactionWrite() = runBlocking {
+  fun conditionCheckFailureInTransactionWrite() = runBlockingTest {
     val playlistInfoV1 =
       PlaylistInfo("PLAYLIST_1", "WFH Music", emptyList())
     musicTable.playlistInfo.save(playlistInfoV1)
@@ -261,7 +260,7 @@ class AsyncLogicalDbTransactionTest {
 
     assertThatExceptionOfType(TransactionCanceledException::class.java)
       .isThrownBy {
-        runBlocking {
+        runBlockingTest {
           musicDb.transactionWrite(writeTransaction)
         }
       }
