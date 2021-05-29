@@ -1,8 +1,7 @@
 package app.cash.tempest2.guides
 
-import app.cash.tempest2.musiclibrary.PlaylistInfo
 import app.cash.tempest2.musiclibrary.AsyncMusicTable
-import kotlinx.coroutines.runBlocking
+import app.cash.tempest2.musiclibrary.PlaylistInfo
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 

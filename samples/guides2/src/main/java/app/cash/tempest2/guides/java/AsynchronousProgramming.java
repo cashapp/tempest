@@ -4,7 +4,6 @@ import app.cash.tempest2.musiclibrary.java.AsyncMusicTable;
 import app.cash.tempest2.musiclibrary.java.PlaylistInfo;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import kotlin.Unit;
 import software.amazon.awssdk.enhanced.dynamodb.Expression;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
@@ -16,7 +15,7 @@ public class AsynchronousProgramming {
     this.table = table;
   }
 
-  public CompletableFuture<Unit> changePlaylistName(String playlistToken, String newName) {
+  public CompletableFuture<Void> changePlaylistName(String playlistToken, String newName) {
     // Read.
     return table.playlistInfo()
         .loadAsync(new PlaylistInfo.Key(playlistToken))

@@ -93,7 +93,7 @@ Write familiar code that is asynchronous under the hood.
     ```java
     private final AsyncMusicTable table;
 
-    public CompletableFuture<Unit> changePlaylistName(String playlistToken, String newName) {
+    public CompletableFuture<Void> changePlaylistName(String playlistToken, String newName) {
       // Read.
       return table.playlistInfo()
           .loadAsync(new PlaylistInfo.Key(playlistToken))
