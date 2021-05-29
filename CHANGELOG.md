@@ -1,5 +1,10 @@
 # Change Log
 
+## [1.5.0] - 2021-05-28
+
+* New: Add async and suspending APIs for SDK 2.x (#48)
+* New: In SDK 1.x, save now returns a copy of locally updated attributes (#55).
+
 ## [1.4.1] - 2021-04-22
 
 * Fixed: Improve error message (#44)
