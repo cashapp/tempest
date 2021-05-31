@@ -86,7 +86,9 @@ class QueryNScan(
       .expression("run_length > :duration")
       .expressionValues(
         mapOf(
-          ":duration" to AttributeValue.builder().s(duration.toString()).build()))
+          ":duration" to AttributeValue.builder().s(duration.toString()).build()
+        )
+      )
       .build()
   }
 
