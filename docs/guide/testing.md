@@ -449,7 +449,7 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 // ...
 
-class JUnit5TestDynamoDb private constructor(
+class JUnit5TestDynamoDb(
   private val testTables: List<TestTable>,
 ) : BeforeEachCallback, AfterEachCallback {
 
