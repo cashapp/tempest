@@ -16,48 +16,25 @@
 
 package app.cash.tempest2.testing
 
-import app.cash.tempest2.testing.internal.DefaultTestDynamoDbClient
-import app.cash.tempest2.testing.internal.getLogger
-import app.cash.tempest2.testing.internal.pickRandomPort
+import app.cash.tempest2.testing.internal.TestDynamoDbService
 import org.junit.rules.ExternalResource
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * This JUnit rule spins up a DynamoDB server in tests. It shares the server across tests and
  * keeps the server running until the process exits.
  */
 class TestDynamoDb private constructor(
-  private val client: TestDynamoDbClient,
-  private val server: TestDynamoDbServer
-) : TestDynamoDbClient by client, ExternalResource() {
+  private val service: TestDynamoDbService,
+) : TestDynamoDbClient by service.client, ExternalResource() {
 
   override fun before() {
-    server.startIfNeeded()
-    client.startAsync()
-    client.awaitRunning()
+    service.startAsync()
+    service.awaitRunning()
   }
 
   override fun after() {
-    client.stopAsync()
-    client.awaitTerminated()
-  }
-
-  private fun TestDynamoDbServer.startIfNeeded() {
-    if (runningServers.contains(id)) {
-      log.info { "$id already running, not starting anything" }
-      return
-    }
-    log.info { "starting $id" }
-    startAsync()
-    awaitRunning()
-    Runtime.getRuntime().addShutdownHook(
-      Thread {
-        log.info { "stopping $id" }
-        stopAsync()
-        awaitTerminated()
-      }
-    )
-    runningServers.add(id)
+    service.stopAsync()
+    service.awaitTerminated()
   }
 
   class Builder(
@@ -79,22 +56,9 @@ class TestDynamoDb private constructor(
     }
 
     fun build(): TestDynamoDb {
-      val port = port ?: defaultPort(serverFactory.toString())
       return TestDynamoDb(
-        DefaultTestDynamoDbClient(tables, port),
-        serverFactory.create(port)
+        TestDynamoDbService.create(serverFactory, tables, port)
       )
     }
-  }
-
-  companion object {
-    private val defaultPorts = ConcurrentHashMap<String, Int>()
-    fun defaultPort(key: String): Int {
-      // Only pick random port once to share one test server with multiple tests.
-      return defaultPorts.getOrPut(key, ::pickRandomPort)
-    }
-
-    private val runningServers = ConcurrentHashMap.newKeySet<String>()
-    private val log = getLogger<TestDynamoDb>()
   }
 }
