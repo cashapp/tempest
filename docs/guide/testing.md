@@ -441,8 +441,31 @@ fun testDb() = TestDynamoDb.Builder(DockerDynamoDbServer.Factory)
 
 ## Other Testing Frameworks
 
-Tempest testing is compatible with other testing frameworks. You'll need to write your own integration code. Feel free to reference the implementations above.
+Tempest testing is compatible with other testing frameworks. You'll need to write your own integration code. Feel free to reference the implementations above. Here is a simpler example:
 
+```kotlin
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
+// ...
+
+class JUnit5TestDynamoDb(
+  private val testTables: List<TestTable>,
+) : BeforeEachCallback, AfterEachCallback {
+
+  private val service = TestDynamoDbService.create(JvmDynamoDbServer.Factory, testTables, 8000)
+          
+  override fun beforeEach(context: ExtensionContext) {
+    service.startAsync()
+    service.awaitRunning()
+  }
+
+  override fun afterEach(context: ExtensionContext?) {
+    service.stopAsync()
+    service.awaitTerminated()
+  }
+}
+```
 ---
 
 Check out the code samples on Github:
