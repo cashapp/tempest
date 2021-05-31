@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.5.1] - 2021-05-31
+
+* Fixed: To share one test server with multiple tests (#57).
+
 ## [1.5.0] - 2021-05-28
 
 * New: Add async and suspending APIs for SDK 2.x (#48)
