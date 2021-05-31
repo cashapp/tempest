@@ -81,7 +81,7 @@ class TestDynamoDb private constructor(
     }
 
     fun build(): TestDynamoDb {
-      val port = port ?: pickRandomPort()
+      val port = port ?: DEFAULT_PORT
       return TestDynamoDb(
         DefaultTestDynamoDbClient(tables, port),
         serverFactory.create(port)
@@ -90,6 +90,8 @@ class TestDynamoDb private constructor(
   }
 
   companion object {
+    // Only pick random port once to share one test server with multiple tests.
+    private val DEFAULT_PORT = pickRandomPort()
     private val runningServers = ConcurrentHashMap.newKeySet<String>()
     private val log = getLogger<TestDynamoDb>()
   }
