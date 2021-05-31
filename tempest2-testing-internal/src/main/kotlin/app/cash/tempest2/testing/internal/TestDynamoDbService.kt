@@ -55,7 +55,7 @@ class TestDynamoDbService(
     private val log = getLogger<TestDynamoDbService>()
 
     @JvmStatic
-    fun create(serverFactory: TestDynamoDbServer.Factory<*>, tables: List<TestTable>, port: Int?): TestDynamoDbService {
+    fun create(serverFactory: TestDynamoDbServer.Factory<*>, tables: List<TestTable>, port: Int? = null): TestDynamoDbService {
       val port = port ?: defaultPort(serverFactory.toString())
       return TestDynamoDbService(
         DefaultTestDynamoDbClient(tables, port),

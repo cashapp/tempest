@@ -466,6 +466,7 @@ class JUnit5TestDynamoDb(
   }
 }
 ```
+
 ---
 
 Check out the code samples on Github:
