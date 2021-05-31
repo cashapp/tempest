@@ -150,8 +150,9 @@ internal class DynamoDbLogicalDb(
       val writeRequest = toTransactionWriteRequest(writeSet)
       return dynamoDbEnhancedClient.transactWriteItems(writeRequest)
         .exceptionally { e ->
-          if (e is TransactionCanceledException) {
-            toTransactionWriteException(writeSet, e) as Void
+          // `e` is a java.util.concurrent.CancellationException.
+          if (e.cause is TransactionCanceledException) {
+            toTransactionWriteException(writeSet, e.cause as TransactionCanceledException) as Void
           } else {
             throw e
           }
