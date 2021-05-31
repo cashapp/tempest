@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.5.2] - 2021-05-31
+
+* Fixed: Make it easy to integrate with other testing frameworks (#58).
+
 ## [1.5.1] - 2021-05-31
 
 * Fixed: To share one test server with multiple tests (#57).
