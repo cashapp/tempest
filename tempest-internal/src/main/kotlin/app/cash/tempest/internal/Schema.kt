@@ -146,7 +146,7 @@ data class KeyType(
         val attribute = requireNotNull(
           itemType.attributes[property.name]
         ) {
-          "Expect ${property.name}, required by $keyType, to be declared in ${itemType.type}." +
+          "Expect ${property.name}, required by $keyType, to be declared in ${itemType.type}. But found ${itemType.attributes.keys}." +
             " Use @Transient to exclude it."
         }
         val expectedReturnType =
@@ -167,7 +167,7 @@ data class KeyType(
       val secondaryIndexName = forIndexAnnotation.secondaryIndexName(keyType)
       val (hashKeyName, rangeKeyName) = if (secondaryIndexName != null) {
         val secondaryIndex =
-          requireNotNull(itemType.secondaryIndexes[secondaryIndexName]) { "Expect to $itemType have secondary index $secondaryIndexName" }
+          requireNotNull(itemType.secondaryIndexes[secondaryIndexName]) { "Expect ${itemType.rawItemType} to have secondary index $secondaryIndexName" }
         for (keyAttribute in itemType.keyAttributes(secondaryIndex)) {
           require(attributeNames.containsAll(keyAttribute.names)) { "Expect $keyType to have property ${keyAttribute.propertyName}" }
         }
@@ -293,7 +293,7 @@ data class ItemType(
       for (expectedAttribute in expectedRawItemAttributes) {
         require(rawItemType.propertyNames.contains(expectedAttribute)) {
           "Expect $expectedAttribute, required by $itemType, to be declared in " +
-            "${rawItemType.type}. Use @Transient to exclude it."
+            "${rawItemType.type}. But found ${rawItemType.propertyNames}. Use @Transient to exclude it."
         }
       }
       return Attribute(property.name, expectedRawItemAttributes, prefix, property.returnType)

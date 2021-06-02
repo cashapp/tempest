@@ -72,7 +72,7 @@ internal class V2RawItemTypeFactory : RawItemType.Factory {
       tableName,
       tableSchema.tableMetadata().primaryPartitionKey(),
       tableSchema.tableMetadata().primarySortKey().orElse(null),
-      tableSchema.attributeNames(),
+      tableSchema.attributeNames().sorted(),
       tableSchema.tableMetadata().indices()
         .filter { it.name() != TableMetadata.primaryIndexName() }
         .map {

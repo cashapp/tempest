@@ -72,7 +72,7 @@ private fun <T : Annotation> AttributeAnnotation<T>.annotatedNames(annotation: T
   val name = name(annotation)
   return when {
     names.isNotEmpty() -> {
-      require(name.isEmpty()) { "Attribute annotation is ambiguous. name: $name, names: $names" }
+      require(name.isEmpty()) { "Attribute annotation is ambiguous. name: $name, names: ${names.toList()}" }
       names.toSet()
     }
     name.isNotEmpty() -> setOf(name)

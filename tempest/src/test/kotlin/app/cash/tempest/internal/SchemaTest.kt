@@ -39,66 +39,66 @@ class SchemaTest {
   fun badKeyType() {
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.secondaryIndex(BadIndexOffset1::class, AlbumInfo::class)
-    }.withMessageContaining("album_token")
+    }.withMessage("Expect class app.cash.tempest.internal.BadIndexOffset1 to have property album_token")
 
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.secondaryIndex(BadIndexOffset2::class, AlbumInfo::class)
-    }.withMessageContaining("sort_key")
+    }.withMessage("Expect class app.cash.tempest.internal.BadIndexOffset2 to have property sort_key")
 
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.secondaryIndex(BadIndexOffset3::class, AlbumInfo::class)
-    }.withMessageContaining("artist_name")
+    }.withMessage("Expect the return type of class app.cash.tempest.internal.BadIndexOffset3.artist_name to be kotlin.String but was kotlin.Int")
 
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.secondaryIndex(BadIndexOffset4::class, AlbumInfo::class)
-    }.withMessageContaining("nonexistent_attribute")
+    }.withMessage("Expect nonexistent_attribute, required by class app.cash.tempest.internal.BadIndexOffset4, to be declared in class app.cash.tempest.musiclibrary.AlbumInfo. But found [album_title, album_token, artist_name, genre_name, release_date, sort_key]. Use @Transient to exclude it.")
 
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.secondaryIndex(BadIndexOffset5::class, AlbumInfo::class)
-    }.withMessageContaining("nonexistent_index_name")
+    }.withMessage("Expect class app.cash.tempest.musiclibrary.MusicItem to have secondary index nonexistent_index_name")
 
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.secondaryIndex(BadIndexOffset6::class, AlbumInfo::class)
-    }.withMessageContaining("sort_key")
+    }.withMessage("Please move Attribute annotation from class app.cash.tempest.internal.BadIndexOffset6.sort_key to class app.cash.tempest.musiclibrary.AlbumInfo.sort_key")
 
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.secondaryIndex(BadIndexOffset7::class, AlbumInfo::class)
-    }.withMessageContaining("constructor")
+    }.withMessage("class app.cash.tempest.internal.BadIndexOffset7 must have a constructor")
   }
 
   @Test
   fun badItemType() {
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.inlineView(Any::class, BadItem1::class)
-    }.withMessageContaining("partition_key")
+    }.withMessage("Expect class app.cash.tempest.internal.BadItem1 to map to class app.cash.tempest.musiclibrary.MusicItem's hash key partition_key")
 
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.inlineView(Any::class, BadItem2::class)
-    }.withMessageContaining("sort_key")
+    }.withMessage("Expect class app.cash.tempest.internal.BadItem2 to map to class app.cash.tempest.musiclibrary.MusicItem's range key sort_key")
 
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.inlineView(Any::class, BadItem3::class)
-    }.withMessageContaining("ambiguous")
+    }.withMessage("Attribute annotation is ambiguous. name: partition_key, names: [partition_key]")
 
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.inlineView(Any::class, BadItem4::class)
-    }.withMessageContaining("album_title")
+    }.withMessage("Expect the return type of class app.cash.tempest.internal.BadItem4.album_title to be kotlin.String but was kotlin.Int")
 
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.inlineView(Any::class, BadItem5::class)
-    }.withMessageContaining("nonexistent_attribute")
+    }.withMessage("Expect nonexistent_attribute, required by class app.cash.tempest.internal.BadItem5, to be declared in class app.cash.tempest.musiclibrary.MusicItem. But found [album_title, artist_name, genre_name, partition_key, playlist_name, playlist_size, playlist_tracks, playlist_version, release_date, run_length, sort_key, track_title, track_token]. Use @Transient to exclude it.")
 
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.inlineView(Any::class, BadItem6::class)
-    }.withMessageContaining("prefix")
+    }.withMessage("Expect class app.cash.tempest.internal.BadItem6.sort_key to be annotated with a prefix")
 
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.inlineView(Any::class, BadItem7::class)
-    }.withMessageContaining("constructor")
+    }.withMessage("class app.cash.tempest.internal.BadItem7 must have a constructor")
 
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.inlineView(Any::class, BadItem8::class)
-    }.withMessageContainingAll("mapped properties", "album_title", "playlist_size")
+    }.withMessage("Expect mapped properties of album_title to have the same type: [album_title, playlist_size]")
   }
 }
 
