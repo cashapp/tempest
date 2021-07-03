@@ -21,6 +21,7 @@ import app.cash.tempest2.Between;
 import app.cash.tempest2.Offset;
 import app.cash.tempest2.Page;
 import app.cash.tempest2.QueryConfig;
+import app.cash.tempest2.musiclibrary.java.AlbumInfoOrTrack;
 import app.cash.tempest2.musiclibrary.java.AlbumTrack;
 import app.cash.tempest2.musiclibrary.java.MusicTable;
 import java.time.Duration;
@@ -155,6 +156,15 @@ public class QueryNScan {
       tracks.addAll(page.getContents());
     } while (page.getHasMorePages());
     return tracks;
+  }
+
+  // Query - Mixed types
+  public List<AlbumInfoOrTrack> loadAlbumInfoAndTracks(String albumToken) {
+    Page<AlbumInfoOrTrack.Key, AlbumInfoOrTrack> page = table.albumInfoOrTracks().query(
+        // keyCondition.
+        new BeginsWith<>(new AlbumInfoOrTrack.Key(albumToken))
+    );
+    return page.getContents();
   }
 
   // Scan.

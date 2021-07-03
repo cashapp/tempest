@@ -30,14 +30,15 @@ annotation class TableName(
  *
  * If this mapped to a primary range key, it must have a prefix. Tempest
  * automatically adds the prefix before database writes and removes it after
- * database reads.
+ * database reads. To disable this behavior (not typesafe!), set `noPrefix` to true.
  */
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Attribute(
   val name: String = "",
   val names: Array<String> = [],
-  val prefix: String = ""
+  val prefix: String = "",
+  val noPrefix: Boolean = false,
 )
 
 /**

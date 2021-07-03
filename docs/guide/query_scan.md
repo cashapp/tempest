@@ -375,6 +375,10 @@ This find all tracks in the given album that last longer than 3 minutes, sorted 
 
 ### Pagination
 
+DynamoDB paginates the results from Query operations. With pagination, the Query results are divided
+into "pages" of data that are 1 MB in size (or less). An application can process the first page of
+results, then the second page, and so on.
+
 === "Kotlin"
     
     ```kotlin
@@ -382,16 +386,15 @@ This find all tracks in the given album that last longer than 3 minutes, sorted 
     
     fun loadAlbumTracks(albumToken: String): List<AlbumTrack> {
       val tracks = mutableListOf<AlbumTrack>()
-      var page: Page<AlbumTrack.Key, AlbumTrack>? = null
+      lateinit var page: Page<AlbumTrack.Key, AlbumTrack>
       do {
         page = table.albumTracks.query(
           keyCondition = BeginsWith(AlbumTrack.Key(albumToken)),
           pageSize = 10,
-          initialOffset = page?.offset
+          initialOffset = page.offset
         )
         tracks.addAll(page.contents)
-      } while(page?.hasMorePages == true)
-      return tracks.toList()
+      } while (page.hasMorePages)
     }
     ```
 
@@ -429,16 +432,16 @@ This find all tracks in the given album that last longer than 3 minutes, sorted 
     
     fun loadAlbumTracksAfterTrack(albumToken: String, trackToken: String): List<AlbumTrack> {
       val tracks = mutableListOf<AlbumTrack>()
-      var page: Page<AlbumTrack.Key, AlbumTrack>? = null
+      lateinit var page: Page<AlbumTrack.Key, AlbumTrack>
       val offset = Offset(AlbumTrack.Key(trackToken))
       do {
         page = table.albumTracks.query(
           keyCondition = BeginsWith(AlbumTrack.Key(albumToken)),
           pageSize = 10,
-          initialOffset = page?.offset ?: offset
+          initialOffset = page.offset ?: offset
         )
         tracks.addAll(page.contents)
-      } while (page?.hasMorePages == true)
+      } while (page.hasMorePages)
       return tracks.toList()
     }
     ```
@@ -467,6 +470,155 @@ This find all tracks in the given album that last longer than 3 minutes, sorted 
         tracks.addAll(page.getContents());
       } while (page.getHasMorePages());
       return tracks;
+    }
+    ```
+
+### Mixed types
+
+In previous examples, queries only return one logical type. i.e. `AlbumTrack`. This is type safe. 
+However, sometimes fetching multiple types in one API call is more efficient.
+
+To fetch an album's info and tracks in one query, create a view that is a union of both types and 
+has no sort key prefix. You'd need to explicitly convert this union type to albums or tracks.
+
+
+=== "Kotlin"
+
+    ```kotlin
+    interface MusicTable : LogicalTable<MusicItem> {
+      val albumTracks: InlineView<AlbumTrack.Key, AlbumTrack>
+      // Mixed type view.
+      val albumInfoOrTracks: InlineView<AlbumInfoOrTrack.Key, AlbumInfoOrTrack>
+    }
+    
+    data class AlbumInfoOrTrack(
+      @Attribute(name = "partition_key")
+      val album_token: String,
+      @Attribute(noPrefix = true)
+      val sort_key: String,
+      val album_title: String?,
+      val artist_name: String?,
+      val release_date: LocalDate?,
+      val genre_name: String?,
+      val track_title: String?,
+      val run_length: Duration?
+    ) {
+    
+      @Transient
+      val key = Key(album_token, sort_key)
+    
+      @Transient
+      val albumInfo: AlbumInfo? = if (sort_key == "INFO_") {
+        AlbumInfo(album_token, album_title!!, artist_name!!, release_date!!, genre_name!!)
+      } else {
+        null
+      }
+    
+      @Transient
+      val albumTrack: AlbumTrack? = if (sort_key.startsWith("TRACK_")) {
+        AlbumTrack(album_token, sort_key.removePrefix("TRACK_"), track_title!!, run_length!!)
+      } else {
+        null
+      }
+    
+      data class Key(
+        val album_token: String,
+        val sort_key: String = "",
+      )
+    }
+    ```
+
+=== "Java"
+
+    ```java
+    public interface MusicTable extends LogicalTable<MusicItem> {
+      InlineView<AlbumTrack.Key, AlbumTrack> albumTracks();
+      // Mixed type view.
+      InlineView<AlbumInfoOrTrack.Key, AlbumInfoOrTrack> albumInfoOrTracks();
+    }
+
+    public class AlbumInfoOrTrack {
+    
+      @Attribute(name = "partition_key")
+      public final String album_token;
+      public final String sort_key;
+      public final String album_title;
+      public final String artist_name;
+      public final LocalDate release_date;
+      public final String genre_name;
+      public final String track_title;
+      public final Duration run_length;
+      public final transient Key key;
+    
+      public AlbumInfoOrTrack(
+          String album_token,
+          String sort_key,
+          String album_title,
+          String artist_name,
+          LocalDate release_date,
+          String genre_name,
+          String track_title,
+          Duration run_length) {
+        this.album_token = album_token;
+        this.sort_key = sort_key;
+        this.album_title = album_title;
+        this.artist_name = artist_name;
+        this.release_date = release_date;
+        this.genre_name = genre_name;
+        this.track_title = track_title;
+        this.run_length = run_length;
+        key = new Key(album_token);
+      }
+    
+      public AlbumInfo albumInfo() {
+        if (sort_key.equals("INFO_")) {
+          return new AlbumInfo(album_token, album_title, artist_name, release_date, genre_name);
+        }
+        return null;
+      }
+    
+      public AlbumTrack albumTrack() {
+        if (sort_key.startsWith("TRACK_")) {
+          return new AlbumTrack(album_token, sort_key.substring("TRACK_".length()), track_title, run_length);
+        }
+        return null;
+      }
+    
+      public static class Key {
+        public final String album_token;
+        public final String sort_key = "";
+    
+        public Key(String album_token) {
+          this.album_token = album_token;
+        }
+      }
+    }
+    ```
+
+This uses the primary index to find the info item and tracks in the given album, sorted by the sort key.
+
+=== "Kotlin"
+
+    ```kotlin
+    fun loadAlbumInfoAndTracks(albumToken: String): List<AlbumInfoOrTrack> {
+      val page = table.albumInfoOrTracks.query(
+        keyCondition = BeginsWith(
+          prefix = AlbumInfoOrTrack.Key(albumToken)
+        )
+      )
+      return page.contents
+    }
+    ```
+
+=== "Java"
+
+    ```java
+    public List<AlbumInfoOrTrack> loadAlbumInfoAndTracks(String albumToken) {
+      Page<AlbumInfoOrTrack.Key, AlbumInfoOrTrack> page = table.albumInfoOrTracks().query(
+          // keyCondition.
+          new BeginsWith<>(new AlbumInfoOrTrack.Key(albumToken))
+      );
+      return page.getContents();
     }
     ```
 
@@ -581,6 +733,10 @@ See query filter expression above.
 ### Pagination
 
 See query pagination above.
+
+### Mixed types
+
+See query mixed types above.
 
 ---
 

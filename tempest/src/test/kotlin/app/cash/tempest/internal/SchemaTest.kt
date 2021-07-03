@@ -99,6 +99,10 @@ class SchemaTest {
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.inlineView(Any::class, BadItem8::class)
     }.withMessage("Expect mapped properties of album_title to have the same type: [album_title, playlist_size]")
+
+    assertThatIllegalArgumentException().isThrownBy {
+      musicDb.music.inlineView(Any::class, BadItem9::class)
+    }.withMessage("Expect class app.cash.tempest.internal.BadItem9.sort_key to have no prefix.")
   }
 }
 
@@ -246,5 +250,18 @@ data class BadItem8(
   val genre_name: String
 ) {
   @Attribute(prefix = "INFO_")
+  val sort_key: String = ""
+}
+
+data class BadItem9(
+  @Attribute(name = "partition_key")
+  val album_token: String,
+  val album_title: String,
+  val artist_name: String,
+  val release_date: LocalDate,
+  val genre_name: String
+) {
+  // When `noPrefix` is true, `prefix` should be empty.
+  @Attribute(prefix = "INFO_", noPrefix = true)
   val sort_key: String = ""
 }
