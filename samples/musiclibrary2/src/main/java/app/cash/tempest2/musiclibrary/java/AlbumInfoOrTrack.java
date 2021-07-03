@@ -8,6 +8,7 @@ public class AlbumInfoOrTrack {
 
   @Attribute(name = "partition_key")
   public final String album_token;
+  @Attribute(noPrefix = true)
   public final String sort_key;
   public final String album_title;
   public final String artist_name;

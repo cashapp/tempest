@@ -541,6 +541,7 @@ has no sort key prefix. You'd need to explicitly convert this union type to albu
     
       @Attribute(name = "partition_key")
       public final String album_token;
+      @Attribute(noPrefix = true)
       public final String sort_key;
       public final String album_title;
       public final String artist_name;
