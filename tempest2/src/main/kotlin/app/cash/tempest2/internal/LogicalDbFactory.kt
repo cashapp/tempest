@@ -71,7 +71,7 @@ internal class LogicalDbFactory(
 
   override fun <T : LogicalTable<RI>, RI : Any> logicalTable(tableName: String, tableType: KClass<T>): T {
     val rawItemType = schema.addRawItem(tableName, tableType.rawItemType)
-    val tableSchema = TableSchema.fromClass(rawItemType.type.java)
+    val tableSchema = TableSchemaFactory.create<Any>(rawItemType.type.java)
     val dynamoDbTable = dynamoDbEnhancedClient.table(rawItemType.tableName, tableSchema)
     val logicalTable =
       object :

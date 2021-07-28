@@ -58,7 +58,7 @@ internal class V2MapAttributeValue<DB : Any>(
 
   object Factory : MapAttributeValue.Factory {
     override fun <T : Any, DB : Any> create(type: KClass<DB>): MapAttributeValue<T, DB> {
-      return V2MapAttributeValue(TableSchema.fromClass(type.java)) as MapAttributeValue<T, DB>
+      return V2MapAttributeValue(TableSchemaFactory.create(type.java)) as MapAttributeValue<T, DB>
     }
   }
 }
@@ -66,7 +66,7 @@ internal class V2MapAttributeValue<DB : Any>(
 internal class V2RawItemTypeFactory : RawItemType.Factory {
 
   override fun create(tableName: String, rawItemType: KClass<*>): RawItemType {
-    val tableSchema = TableSchema.fromClass(rawItemType.java) as TableSchema<Any>
+    val tableSchema = TableSchemaFactory.create<Any>(rawItemType.java)
     return RawItemType(
       rawItemType as KClass<Any>,
       tableName,

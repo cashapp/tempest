@@ -330,7 +330,7 @@ internal class DynamoDbLogicalDb(
     val rawItemType = schema.getRawItem(tableType)!!
     return mappedTableResourceFactory.mappedTableResource(
       rawItemType.tableName,
-      TableSchema.fromClass(rawItemType.type.java) as TableSchema<T>
+      TableSchemaFactory.create(rawItemType.type.java)
     )
   }
 
