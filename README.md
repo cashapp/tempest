@@ -19,49 +19,49 @@ Let's build a music library with the following features:
 
 We express it like this in code:
 
-=== "Kotlin"
+#### Kotlin
 
-    ```kotlin
-    interface MusicLibrary {
-      fun getAlbum(key: AlbumKey): Album
-      fun getTrack(key: TrackKey): Track
-    }
-    
-    data class Album(
-      val album_title: String,
-      val album_artist: String,
-      val release_date: String,
-      val genre: String,
-      val tracks: List<Track>
-    )
-    
-    data class Track(
-      val track_title: String,
-      val run_length: String
-    )
-    ```
+```kotlin
+interface MusicLibrary {
+  fun getAlbum(key: AlbumKey): Album
+  fun getTrack(key: TrackKey): Track
+}
 
-=== "Java"
+data class Album(
+  val album_title: String,
+  val album_artist: String,
+  val release_date: String,
+  val genre: String,
+  val tracks: List<Track>
+)
 
-    ```java
-    public interface MusicLibrary {
-      Album getAlbum(AlbumKey key);
-      Track getTrack(TrackKey key); 
-    }
-    
-    public class Album {
-      public final String album_title;
-      public final String album_artist;
-      public final String release_date;
-      public final String genre;
-      public final List<Track> tracks; 
-    }
-    
-    public class Track(
-      public final String track_title;
-      public final String run_length;
-    )
-    ```
+data class Track(
+  val track_title: String,
+  val run_length: String
+)
+```
+
+#### Java
+
+```java
+public interface MusicLibrary {
+  Album getAlbum(AlbumKey key);
+  Track getTrack(TrackKey key); 
+}
+
+public class Album {
+  public final String album_title;
+  public final String album_artist;
+  public final String release_date;
+  public final String genre;
+  public final List<Track> tracks; 
+}
+
+public class Track(
+  public final String track_title;
+  public final String run_length;
+)
+```
 
 We optimize for this access pattern by putting albums and tracks in the same table:
 
@@ -69,7 +69,7 @@ We optimize for this access pattern by putting albums and tracks in the same tab
   <tbody>
     <tr>
       <td colspan=2 align="center">Primary Key</td>
-      <td rowspan=2 colspan=4 align="center" valign="top">Attributes</td>
+      <td rowspan=2 colspan=4 align="center" valign="middle">Attributes</td>
     </tr>
     <tr>
       <td><strong>partition_key</strong></td>
@@ -197,129 +197,129 @@ For locality, we smashed together several entity types in the same table. This i
 
 [`DynamoDBMapper`](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.html) / [`DynamoDbEnhancedClient`](https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/enhanced/dynamodb/DynamoDbEnhancedClient.html), the official Java API, forces you to write weakly-typed code that models the actual persistence type.
 
-=== "Kotlin"
+#### Kotlin
 
-    ```kotlin
-    // NOTE: This is not Tempest! It is an example used for comparison.
-    @DynamoDBTable(tableName = "music_library_items")
-    class MusicLibraryItem {
-      // All Items.
-      @DynamoDBHashKey
-      var partition_key: String? = null
-      @DynamoDBRangeKey
-      var sort_key: String? = null
-    
-      // AlbumInfo.
-      @DynamoDBAttribute
-      var album_title: String? = null
-      @DynamoDBAttribute
-      var album_artist: String? = null
-      @DynamoDBAttribute
-      var release_date: String? = null
-      @DynamoDBAttribute
-      var genre: String? = null
-    
-      // AlbumTrack.
-      @DynamoDBAttribute
-      var track_title: String? = null
-      @DynamoDBAttribute
-      var run_length: String? = null
-    }
-    ```
+```kotlin
+// NOTE: This is not Tempest! It is an example used for comparison.
+@DynamoDBTable(tableName = "music_library_items")
+class MusicLibraryItem {
+  // All Items.
+  @DynamoDBHashKey
+  var partition_key: String? = null
+  @DynamoDBRangeKey
+  var sort_key: String? = null
 
-=== "Java"
+  // AlbumInfo.
+  @DynamoDBAttribute
+  var album_title: String? = null
+  @DynamoDBAttribute
+  var album_artist: String? = null
+  @DynamoDBAttribute
+  var release_date: String? = null
+  @DynamoDBAttribute
+  var genre: String? = null
 
-    ```java
-    // NOTE: This is not Tempest! It is an example used for comparison.
-    @DynamoDBTable(tableName = "music_library_items")
-    public class MusicLibraryItem {
-      // All Items.
-      String partition_key = null;
-      String sort_key = null;
-    
-      // AlbumInfo.
-      String album_title = null;
-      String artist_name = null;
-      String release_date = null;
-      String genre_name = null;
-    
-      // AlbumTrack.
-      String track_title = null;
-      String run_length = null;
-      
-      @DynamoDBHashKey(attributeName = "partition_key")
-      public String getPartitionKey() {
-        return partition_key;
-      }
-    
-      public void setPartitionKey(String partition_key) {
-        this.partition_key = partition_key;
-      }
-    
-      @DynamoDBRangeKey(attributeName = "sort_key")
-      public String getSortKey() {
-        return sort_key;
-      }
-    
-      public void setSortKey(String sort_key) {
-        this.sort_key = sort_key;
-      }
-    
-      @DynamoDBAttribute(attributeName = "album_title")
-      public String getAlbumTitle() {
-        return album_title;
-      }
-    
-      public void setAlbumTitle(String album_title) {
-        this.album_title = album_title;
-      }
-    
-      @DynamoDBAttribute(attributeName = "artist_name")
-      public String getArtistName() {
-        return artist_name;
-      }
-    
-      public void setArtistName(String artist_name) {
-        this.artist_name = artist_name;
-      }
-    
-      @DynamoDBAttribute(attributeName = "release_date")
-      public String getReleaseDate() {
-        return release_date;
-      }
-    
-      public void setReleaseDate(String release_date) {
-        this.release_date = release_date;
-      }
-    
-      @DynamoDBAttribute(attributeName = "genre_name")
-      public String getGenreName() {
-        return genre_name;
-      }
-    
-      public void setGenreName(String genre_name) {
-        this.genre_name = genre_name;
-      }
-    
-      @DynamoDBAttribute(attributeName = "track_title")
-      public String getTrackTitle() {
-        return track_title;
-      }
-    
-      public void setTrackTitle(String track_title) {
-        this.track_title = track_title;
-      }
-    
-      @DynamoDBAttribute(attributeName = "run_length")
-      public String getRunLength() {
-        return run_length;
-      }
-    
-      public void setRunLength(String run_length) {
-        this.run_length = run_length;
-      }
-    }
-    ```
+  // AlbumTrack.
+  @DynamoDBAttribute
+  var track_title: String? = null
+  @DynamoDBAttribute
+  var run_length: String? = null
+}
+```
+
+#### Java
+
+```java
+// NOTE: This is not Tempest! It is an example used for comparison.
+@DynamoDBTable(tableName = "music_library_items")
+public class MusicLibraryItem {
+  // All Items.
+  String partition_key = null;
+  String sort_key = null;
+
+  // AlbumInfo.
+  String album_title = null;
+  String artist_name = null;
+  String release_date = null;
+  String genre_name = null;
+
+  // AlbumTrack.
+  String track_title = null;
+  String run_length = null;
+
+  @DynamoDBHashKey(attributeName = "partition_key")
+  public String getPartitionKey() {
+    return partition_key;
+  }
+
+  public void setPartitionKey(String partition_key) {
+    this.partition_key = partition_key;
+  }
+
+  @DynamoDBRangeKey(attributeName = "sort_key")
+  public String getSortKey() {
+    return sort_key;
+  }
+
+  public void setSortKey(String sort_key) {
+    this.sort_key = sort_key;
+  }
+
+  @DynamoDBAttribute(attributeName = "album_title")
+  public String getAlbumTitle() {
+    return album_title;
+  }
+
+  public void setAlbumTitle(String album_title) {
+    this.album_title = album_title;
+  }
+
+  @DynamoDBAttribute(attributeName = "artist_name")
+  public String getArtistName() {
+    return artist_name;
+  }
+
+  public void setArtistName(String artist_name) {
+    this.artist_name = artist_name;
+  }
+
+  @DynamoDBAttribute(attributeName = "release_date")
+  public String getReleaseDate() {
+    return release_date;
+  }
+
+  public void setReleaseDate(String release_date) {
+    this.release_date = release_date;
+  }
+
+  @DynamoDBAttribute(attributeName = "genre_name")
+  public String getGenreName() {
+    return genre_name;
+  }
+
+  public void setGenreName(String genre_name) {
+    this.genre_name = genre_name;
+  }
+
+  @DynamoDBAttribute(attributeName = "track_title")
+  public String getTrackTitle() {
+    return track_title;
+  }
+
+  public void setTrackTitle(String track_title) {
+    this.track_title = track_title;
+  }
+
+  @DynamoDBAttribute(attributeName = "run_length")
+  public String getRunLength() {
+    return run_length;
+  }
+
+  public void setRunLength(String run_length) {
+    this.run_length = run_length;
+  }
+}
+```
 
 Note that `MusicLibraryItem` is a union type of all the entity types: `AlbumInfo` and `AlbumTrack`. Because all of its attributes are nullable and mutable, code that interacts with it is brittle and error prone.
 
@@ -327,159 +327,159 @@ Note that `MusicLibraryItem` is a union type of all the entity types: `AlbumInfo
 
 Tempest restores maintainability without losing locality. It lets you declare strongly-typed key and item classes for each logical type in the domain layer.
 
-=== "Kotlin"
+#### Kotlin
     
-    ```kotlin
-    data class AlbumInfo(
-      @Attribute(name = "partition_key")
-      val album_token: String,
-      val album_title: String,
-      val album_artist: String,
-      val release_date: String,
-      val genre_name: String
-    ) {
-      @Attribute(prefix = "INFO_")
-      val sort_key: String = ""
-    
-      data class Key(
-        val album_token: String
-      ) {
-        val sort_key: String = ""
-      }
-    }
-    
-    data class AlbumTrack(
-      @Attribute(name = "partition_key")
-      val album_token: String,
-      @Attribute(name = "sort_key", prefix = "TRACK_")
-      val track_token: String,
-      val track_title: String,
-      val run_length: String
-    ) {
-      data class Key(
-        val album_token: String,
-        val track_token: String
-      )
-    }
-    ```
+```kotlin
+data class AlbumInfo(
+  @Attribute(name = "partition_key")
+  val album_token: String,
+  val album_title: String,
+  val album_artist: String,
+  val release_date: String,
+  val genre_name: String
+) {
+  @Attribute(prefix = "INFO_")
+  val sort_key: String = ""
 
-=== "Java"
+  data class Key(
+    val album_token: String
+  ) {
+    val sort_key: String = ""
+  }
+}
 
-    ```java
-    public class AlbumInfo {
-      @Attribute(name = "partition_key")
-      public final String album_token;
-      public final String album_title;
-      public final String artist_name;
-      public final String release_date;
-      public final String genre_name;
-    
-      @Attribute(prefix = "INFO_")
-      public final String sort_key = "";
-    
-      public static class Key {
-        public final String album_token;
-        public final String sort_key = "";
-      }
-    }
-    
-    public class AlbumTrack {
-      @Attribute(name = "partition_key")
-      public final String album_token;
-      @Attribute(name = "sort_key", prefix = "TRACK_")
-      public final String track_token;
-      public final String track_title;
-      public final String run_length;
-    
-      public static class Key {
-        public final String album_token;
-        public final String track_token;
-      }
-    }
-    ```
+data class AlbumTrack(
+  @Attribute(name = "partition_key")
+  val album_token: String,
+  @Attribute(name = "sort_key", prefix = "TRACK_")
+  val track_token: String,
+  val track_title: String,
+  val run_length: String
+) {
+  data class Key(
+    val album_token: String,
+    val track_token: String
+  )
+}
+```
+
+#### Java
+
+```java
+public class AlbumInfo {
+  @Attribute(name = "partition_key")
+  public final String album_token;
+  public final String album_title;
+  public final String artist_name;
+  public final String release_date;
+  public final String genre_name;
+
+  @Attribute(prefix = "INFO_")
+  public final String sort_key = "";
+
+  public static class Key {
+    public final String album_token;
+    public final String sort_key = "";
+  }
+}
+
+public class AlbumTrack {
+  @Attribute(name = "partition_key")
+  public final String album_token;
+  @Attribute(name = "sort_key", prefix = "TRACK_")
+  public final String track_token;
+  public final String track_title;
+  public final String run_length;
+
+  public static class Key {
+    public final String album_token;
+    public final String track_token;
+  }
+}
+```
 
 You build business logic with logical types. Tempest handles mapping them to the underlying persistence type.
 
-=== "Kotlin"
+#### Kotlin
 
-    ```kotlin
-    interface MusicLibraryTable : LogicalTable<MusicLibraryItem> {
-      val albumInfo: InlineView<AlbumInfo.Key, AlbumInfo>
-      val albumTracks: InlineView<AlbumTrack.Key, AlbumTrack>
-    }
-    
-    private val musicLibrary: MusicLibraryTable
-    
-    // Load.
-    fun getAlbumTitle(albumToken: String): String? {
-      val key = AlbumInfo.Key(albumToken)
-      val albumInfo = musicLibrary.albumInfo.load(key) ?: return null
-      return albumInfo.album_title
-    }
-    
-    // Update.
-    fun addAlbumTrack(
-      albumToken: String, 
-      track_token: String, 
-      track_title: String, 
-      run_length: String
-    ) {
-      val newAlbumTrack = AlbumTrack(albumToken, track_token, track_title, run_length)
-      musicLibrary.albumTracks.save(newAlbumTrack)
-    } 
-    
-    // Query.
-    fun getAlbumTrackTitles(albumToken: String): List<String> {
-      val page = musicLibrary.albumTracks.query(
-        keyCondition = BeginsWith(AlbumTrack.Key(albumToken))
+```kotlin
+interface MusicLibraryTable : LogicalTable<MusicLibraryItem> {
+  val albumInfo: InlineView<AlbumInfo.Key, AlbumInfo>
+  val albumTracks: InlineView<AlbumTrack.Key, AlbumTrack>
+}
+
+private val musicLibrary: MusicLibraryTable
+
+// Load.
+fun getAlbumTitle(albumToken: String): String? {
+  val key = AlbumInfo.Key(albumToken)
+  val albumInfo = musicLibrary.albumInfo.load(key) ?: return null
+  return albumInfo.album_title
+}
+
+// Update.
+fun addAlbumTrack(
+  albumToken: String, 
+  track_token: String, 
+  track_title: String, 
+  run_length: String
+) {
+  val newAlbumTrack = AlbumTrack(albumToken, track_token, track_title, run_length)
+  musicLibrary.albumTracks.save(newAlbumTrack)
+} 
+
+// Query.
+fun getAlbumTrackTitles(albumToken: String): List<String> {
+  val page = musicLibrary.albumTracks.query(
+    keyCondition = BeginsWith(AlbumTrack.Key(albumToken))
+  )
+  return page.contents.map { it.track_title }
+}
+```
+
+#### Java
+
+```java
+public interface MusicLibraryTable extends LogicalTable<MusicLibraryItem> {
+  InlineView<AlbumInfo.Key, AlbumInfo> albumInfo();
+  InlineView<AlbumTrack.Key, AlbumTrack> albumTracks();
+}
+
+private MusicLibraryTable musicLibrary; 
+
+// Load.
+@Nullable
+public String getAlbumTitle(String albumToken) {
+  AlbumInfo albumInfo = table.albumInfo().load(new AlbumInfo.Key(albumToken));
+  if (albumInfo == null) {
+    return null;
+  }
+  return albumInfo.album_title;
+}
+
+// Update.
+public void addAlbumTrack(
+  String albumToken, 
+  String track_token, 
+  String track_title, 
+  String run_length
+) {
+  AlbumTrack newAlbumTrack = new AlbumTrack(albumToken, track_token, track_title, run_length);
+  musicLibrary.albumTracks().save(newAlbumTrack);
+}
+
+// Query.
+public List<String> getAlbumTrackTitles(String albumToken) {
+  Page<AlbumTrack.Key, AlbumTrack> page = musicLibrary.albumTracks().query(
+      // keyCondition.
+      new BeginsWith<>(
+          // prefix.
+          new AlbumTrack.Key(albumToken)
       )
-      return page.contents.map { it.track_title }
-    }
-    ```
-
-=== "Java"
-
-    ```java
-    public interface MusicLibraryTable extends LogicalTable<MusicLibraryItem> {
-      InlineView<AlbumInfo.Key, AlbumInfo> albumInfo();
-      InlineView<AlbumTrack.Key, AlbumTrack> albumTracks();
-    }
-    
-    private MusicLibraryTable musicLibrary; 
-    
-    // Load.
-    @Nullable
-    public String getAlbumTitle(String albumToken) {
-      AlbumInfo albumInfo = table.albumInfo().load(new AlbumInfo.Key(albumToken));
-      if (albumInfo == null) {
-        return null;
-      }
-      return albumInfo.album_title;
-    }
-    
-    // Update.
-    public void addAlbumTrack(
-      String albumToken, 
-      String track_token, 
-      String track_title, 
-      String run_length
-    ) {
-      AlbumTrack newAlbumTrack = new AlbumTrack(albumToken, track_token, track_title, run_length);
-      musicLibrary.albumTracks().save(newAlbumTrack);
-    }
-    
-    // Query.
-    public List<String> getAlbumTrackTitles(String albumToken) {
-      Page<AlbumTrack.Key, AlbumTrack> page = musicLibrary.albumTracks().query(
-          // keyCondition.
-          new BeginsWith<>(
-              // prefix.
-              new AlbumTrack.Key(albumToken)
-          )
-      );
-      return page.getContents().stream().map(track -> track.track_title).collect(Collectors.toList());
-    }
-    ```
+  );
+  return page.getContents().stream().map(track -> track.track_title).collect(Collectors.toList());
+}
+```
 
 ## Get Tempest
 
