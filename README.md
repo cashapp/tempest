@@ -82,7 +82,7 @@ We optimize for this access pattern by putting albums and tracks in the same tab
       <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_1</td>
       <td rowspan=2 style="vertical-align:bottom;" valign="bottom">INFO</td>
       <td><strong>album_title</strong></td>
-      <td><strong>album_artiest</strong></td>
+      <td><strong>album_artist</strong></td>
       <td><strong>release_date</strong></td>
       <td><strong>genre</strong></td>
     </tr>
@@ -141,7 +141,7 @@ We optimize for this access pattern by putting albums and tracks in the same tab
       <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_2</td>
       <td rowspan=2 style="vertical-align:bottom;" valign="bottom">INFO</td>
       <td><strong>album_title</strong></td>
-      <td><strong>album_artiest</strong></td>
+      <td><strong>album_artist</strong></td>
       <td><strong>release_date</strong></td>
       <td><strong>genre</strong></td>
     </tr>
