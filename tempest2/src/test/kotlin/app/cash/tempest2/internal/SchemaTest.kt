@@ -86,7 +86,7 @@ class SchemaTest {
 
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.inlineView(Any::class, BadItem5::class)
-    }.withMessage("Expect nonexistent_attribute, required by class app.cash.tempest2.internal.BadItem5, to be declared in class app.cash.tempest2.musiclibrary.MusicItem. But found [album_title, artist_name, genre_name, partition_key, playlist_name, playlist_size, playlist_tracks, playlist_version, release_date, run_length, sort_key, track_title, track_token]. Use @Transient to exclude it.You might see this error message if the property name starts with `is`.See: https://github.com/cashapp/tempest/issues/53.")
+    }.withMessage("Expect nonexistent_attribute, required by class app.cash.tempest2.internal.BadItem5, to be declared in class app.cash.tempest2.musiclibrary.MusicItem. But found [album_title, artist_name, genre_name, partition_key, playlist_name, playlist_size, playlist_tracks, playlist_version, release_date, run_length, sort_key, track_title, track_token]. Use @Transient to exclude it. You might see this error message if the property name starts with `is`. See: https://github.com/cashapp/tempest/issues/53.")
 
     assertThatIllegalArgumentException().isThrownBy {
       musicDb.music.inlineView(Any::class, BadItem6::class)

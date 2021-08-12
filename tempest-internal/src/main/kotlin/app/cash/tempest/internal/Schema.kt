@@ -293,8 +293,8 @@ data class ItemType(
       for (expectedAttribute in expectedRawItemAttributes) {
         require(rawItemType.propertyNames.contains(expectedAttribute)) {
           "Expect $expectedAttribute, required by $itemType, to be declared in " +
-            "${rawItemType.type}. But found ${rawItemType.propertyNames}. Use @Transient to exclude it." +
-            "You might see this error message if the property name starts with `is`." +
+            "${rawItemType.type}. But found ${rawItemType.propertyNames}. Use @Transient to exclude it. " +
+            "You might see this error message if the property name starts with `is`. " +
             "See: https://github.com/cashapp/tempest/issues/53."
         }
       }
