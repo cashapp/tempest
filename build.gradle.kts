@@ -74,7 +74,7 @@ subprojects {
   }
 
   afterEvaluate {
-    val dokka by tasks.getting(DokkaTask::class) {
+    tasks.withType(DokkaTask::class).configureEach {
       outputDirectory = "$rootDir/docs/1.x/"
       outputFormat = "gfm"
       externalDocumentationLink {
