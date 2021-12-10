@@ -25,7 +25,7 @@ object Dependencies {
   val nettyBom = "io.netty:netty-bom:4.1.34.Final"
   val okio = "com.squareup.okio:okio:2.10.0"
   val shadowJarPlugin = "com.github.jengelman.gradle.plugins:shadow:6.1.0"
-  val log4jCore = "org.apache.logging.log4j:log4j-core:2.14.0"
+  val log4jCore = "org.apache.logging.log4j:log4j-core:2.15.0"
   val spotlessPlugin = "com.diffplug.spotless:spotless-plugin-gradle:4.5.1"
   val wireGradlePlugin = "com.squareup.wire:wire-gradle-plugin:3.6.0"
 }
