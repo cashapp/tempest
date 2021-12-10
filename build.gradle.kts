@@ -14,7 +14,7 @@ buildscript {
     classpath(Dependencies.kotlinGradlePlugin)
     classpath(Dependencies.mavenPublishGradlePlugin)
     classpath(Dependencies.shadowJarPlugin)
-    classpath(Dependencies.spotlessPlugin)
+    classpath(Dependencies.spotless5Plugin)
     classpath(Dependencies.wireGradlePlugin)
   }
 }
@@ -22,7 +22,7 @@ buildscript {
 subprojects {
   apply(plugin = "java")
   apply(plugin = "kotlin")
-  apply(plugin = "com.diffplug.gradle.spotless")
+  apply(plugin = "com.diffplug.spotless")
   apply(plugin = "org.jetbrains.dokka")
 
   repositories {
