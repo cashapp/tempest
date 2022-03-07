@@ -123,6 +123,26 @@ class CodecTest {
   }
 
   @Test
+  internal fun keyCodecSkipPrefixer() {
+    val keyCodec = musicTable.codec(AlbumInfo.Key::class)
+
+    val musicItem = MusicItem().apply {
+      partition_key = "ALBUM_1"
+      sort_key = "TRACK_0000000000000001"
+    }
+
+    // Apply AlbumInfo.Key codec to an AlbumTrack.Key by skipping prefixer.
+    // This can happen in a scan.
+    val appKey = keyCodec.toApp(musicItem, true)
+    assertThat(appKey.album_token).isEqualTo("ALBUM_1")
+    assertThat(appKey.sort_key).isEqualTo("TRACK_0000000000000001")
+
+    val dbKey = keyCodec.toDb(appKey, true)
+    assertThat(dbKey.partition_key).isEqualTo("ALBUM_1")
+    assertThat(dbKey.sort_key).isEqualTo("TRACK_0000000000000001")
+  }
+
+  @Test
   internal fun unexpectedType() {
     assertThatIllegalArgumentException().isThrownBy {
       musicTable.codec(AlbumColor::class)

@@ -49,13 +49,13 @@ interface MapAttributeValue<T : Any, DB : Any> {
  * converted to the target type. If it cannot be, the behavior of this codec is undefined.
  */
 interface Codec<A : Any, D : Any> {
-  fun toDb(appItem: A): D
-  fun toApp(dbItem: D): A
+  fun toDb(appItem: A, skipPrefixer: Boolean? = false): D
+  fun toApp(dbItem: D, skipPrefixer: Boolean? = false): A
 }
 
 internal object IdentityCodec : Codec<Any, Any> {
-  override fun toDb(appItem: Any): Any = appItem
-  override fun toApp(dbItem: Any): Any = dbItem
+  override fun toDb(appItem: Any, skipPrefixer: Boolean?): Any = appItem
+  override fun toApp(dbItem: Any, skipPrefixer: Boolean?): Any = dbItem
 }
 
 /**
@@ -74,7 +74,7 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
   private val prefixer: Prefixer<Any, D>
 ) : Codec<A, D> {
 
-  override fun toDb(appItem: A): D {
+  override fun toDb(appItem: A, skipPrefixer: Boolean?): D {
     val dbItem = dbItemConstructor?.call() ?: dbItemClassFactory.newInstance()
     for (binding in constructorParameters) {
       binding.setDb(dbItem, binding.getApp(appItem))
@@ -85,11 +85,13 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
     for (binding in valBindings) {
       binding.setDb(dbItem, binding.getApp(appItem))
     }
-    return prefixer.addPrefix(dbItem)
+
+    return if (skipPrefixer == true) dbItem else prefixer.addPrefix(dbItem)
   }
 
-  override fun toApp(dbItem: D): A {
-    val dbItem = prefixer.removePrefix(dbItem)
+  override fun toApp(dbItem: D, skipPrefixer: Boolean?): A {
+    val dbItem = if (skipPrefixer == true) dbItem else prefixer.removePrefix(dbItem)
+
     val constructorArgs = constructorParameters
       .map { it.parameter to it.getDb(dbItem) }
       .toMap()
@@ -102,6 +104,7 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
     for (binding in varBindings) {
       binding.setApp(appItem, binding.getDb(dbItem))
     }
+
     return appItem
   }
 

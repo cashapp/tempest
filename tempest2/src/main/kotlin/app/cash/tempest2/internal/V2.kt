@@ -97,7 +97,7 @@ internal fun getTableName(member: ClassMember, dbType: KClass<*>): String {
 internal class CodecAdapter<A : Any, D : Any>(
   private val internal: Codec<A, D>
 ) : app.cash.tempest2.Codec<A, D> {
-  override fun toDb(appItem: A): D = internal.toDb(appItem)
+  override fun toDb(appItem: A, skipPrefixer: Boolean?): D = internal.toDb(appItem, skipPrefixer)
 
-  override fun toApp(dbItem: D): A = internal.toApp(dbItem)
+  override fun toApp(dbItem: D, skipPrefixer: Boolean?): A = internal.toApp(dbItem, skipPrefixer)
 }

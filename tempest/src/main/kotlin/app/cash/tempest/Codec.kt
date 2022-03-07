@@ -23,6 +23,6 @@ package app.cash.tempest
  * converted to the target type. If it cannot be, the behavior of this codec is undefined.
  */
 interface Codec<A : Any, D : Any> {
-  fun toDb(appItem: A): D
-  fun toApp(dbItem: D): A
+  fun toDb(appItem: A, skipPrefixer: Boolean? = false): D
+  fun toApp(dbItem: D, skipPrefixer: Boolean? = false): A
 }

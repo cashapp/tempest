@@ -72,6 +72,8 @@ class DynamoDbScannableTest {
       pageSize = 20
     )
     assertThat(page1.hasMorePages).isTrue()
+    assertThat(page1.offset!!.key.album_token).isEqualTo(THE_WALL.album_token)
+    assertThat(page1.offset!!.key.track_token).isEqualTo("TRACK_0000000000000004")
     assertThat(page1.trackTitles).containsAll(expectedTrackTitles.slice(0..19))
 
     val page2 = musicTable.albumTracksByTitle.scan(
