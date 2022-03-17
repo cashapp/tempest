@@ -1,6 +1,7 @@
-apply(plugin = "java-library")
-apply(plugin = "kotlin")
-apply(plugin = "com.vanniktech.maven.publish")
+plugins {
+  kotlin("jvm")
+  `java-library`
+}
 
 dependencies {
   api(Dependencies.awsDynamodb)
@@ -18,5 +19,3 @@ dependencies {
   testImplementation(Dependencies.assertj)
   testImplementation(Dependencies.junitEngine)
 }
-
-apply(from = "$rootDir/gradle-mvn-publish.gradle")

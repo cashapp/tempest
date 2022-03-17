@@ -1,6 +1,7 @@
-apply(plugin = "java-library")
-apply(plugin = "kotlin")
-apply(plugin = "com.vanniktech.maven.publish")
+plugins {
+  kotlin("jvm")
+  `java-library`
+}
 
 dependencies {
   api(Dependencies.findbugsJsr305)
@@ -11,5 +12,3 @@ dependencies {
   testImplementation(Dependencies.junitApi)
   testImplementation(Dependencies.junitEngine)
 }
-
-apply(from = "$rootDir/gradle-mvn-publish.gradle")

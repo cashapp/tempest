@@ -1,5 +1,7 @@
-apply(plugin = "java-library")
-apply(plugin = "kotlin")
+plugins {
+  kotlin("jvm")
+  `java-library`
+}
 
 dependencies {
   api(Dependencies.findbugsJsr305)
