@@ -58,6 +58,7 @@ class JvmDynamoDbServer private constructor(
    * Observed values of os.arch include:
    *  * x86_64
    *  * amd64
+   *  * aarch64
    *
    * Observed values of os.name include:
    *  * Linux
@@ -76,7 +77,7 @@ class JvmDynamoDbServer private constructor(
 
     return when {
       osName == "Linux" && osArch == "amd64" -> "libsqlite4java-linux-amd64-"
-      osName == "Mac OS X" && osArch == "x86_64" -> "libsqlite4java-osx-"
+      osName == "Mac OS X" && osArch in listOf("x86_64", "aarch64") -> "libsqlite4java-osx-"
       else -> throw IllegalStateException("unexpected platform: os.name=$osName os.arch=$osArch")
     }
   }
