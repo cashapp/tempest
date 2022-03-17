@@ -2,14 +2,16 @@ package app.cash.tempest.testing
 
 import app.cash.tempest.testing.internal.getLogger
 import com.github.dockerjava.api.DockerClient
+import com.github.dockerjava.api.async.ResultCallbackTemplate
 import com.github.dockerjava.api.command.CreateContainerCmd
+import com.github.dockerjava.api.command.PullImageResultCallback
+import com.github.dockerjava.api.command.WaitContainerResultCallback
 import com.github.dockerjava.api.exception.NotFoundException
 import com.github.dockerjava.api.model.Frame
-import com.github.dockerjava.core.DockerClientBuilder
-import com.github.dockerjava.core.async.ResultCallbackTemplate
-import com.github.dockerjava.core.command.PullImageResultCallback
-import com.github.dockerjava.core.command.WaitContainerResultCallback
-import com.github.dockerjava.netty.NettyDockerCmdExecFactory
+import com.github.dockerjava.core.DefaultDockerClientConfig
+import com.github.dockerjava.core.DockerClientImpl
+import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
+import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -25,7 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * See [Composer] for an example.
  */
-internal data class Container(
+data class Container(
   val createCmd: CreateContainerCmd.() -> Unit,
   val beforeStartHook: (docker: DockerClient, id: String) -> Unit
 ) {
@@ -43,20 +45,18 @@ internal data class Container(
  *
  * ```
  *     val zkContainer = Container {
- *       this
- *         .withImage("confluentinc/cp-zookeeper")
- *         .withName("zookeeper")
- *         .withEnv("ZOOKEEPER_CLIENT_PORT=2181")
+ *         withImage("confluentinc/cp-zookeeper")
+ *         withName("zookeeper")
+ *         withEnv("ZOOKEEPER_CLIENT_PORT=2181")
  *     }
  *     val kafka = Container {
- *       this
- *         .withImage("confluentinc/cp-kafka"
- *         .withName("kafka")
- *         .withExposedPorts(ExposedPort.tcp(port))
- *         .withPortBindings(Ports().apply {
+ *         withImage("confluentinc/cp-kafka")
+ *         withName("kafka")
+ *         withExposedPorts(ExposedPort.tcp(port))
+ *         withPortBindings(Ports().apply {
  *           bind(ExposedPort.tcp(9102), Ports.Binding.bindPort(9102))
  *         })
- *         .withEnv(
+ *         withEnv(
  *           "KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181",
  *           "KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9102")
  *         }
@@ -64,14 +64,14 @@ internal data class Container(
  *     composer.start()
  * ```
  */
-internal class Composer(private val name: String, private vararg val containers: Container) {
+class Composer(private val name: String, private vararg val containers: Container) {
 
   private val network = DockerNetwork(
     "$name-net",
     docker
   )
   private val containerIds = mutableMapOf<String, String>()
-  private val running = AtomicBoolean(false)
+  val running = AtomicBoolean(false)
 
   fun start() {
     if (!running.compareAndSet(false, true)) return
@@ -140,26 +140,23 @@ internal class Composer(private val name: String, private vararg val containers:
 
     for (container in containers) {
       val name = container.name()
-      val id = containerIds[name]!!
-      log.info { "killing $name with container id $id" }
-      docker.removeContainerCmd(id).withForce(true).exec()
+      containerIds[name]?.let {
+        try {
+          log.info { "killing $name with container id $it" }
+          docker.killContainerCmd(it).exec()
+        } catch (th: Throwable) {
+          log.error(th) { "could not kill $name with container id $it" }
+        }
 
-      try {
-        log.info { "waiting for $name to terminate" }
-        docker.waitContainerCmd(id).exec(
-          GracefulWaitContainerResultCallback()
-        ).awaitCompletion()
-      } catch (th: Throwable) {
-        log.error(th) { "could not kill $name with container id $id" }
+        log.info { "killed $name with container id $it" }
       }
-
-      log.info { "killed $name with container id $id" }
     }
 
     network.stop()
   }
 
-  private class LogContainerResultCallback : ResultCallbackTemplate<LogContainerResultCallback, Frame>() {
+  private class LogContainerResultCallback :
+    ResultCallbackTemplate<LogContainerResultCallback, Frame>() {
     override fun onNext(item: Frame) {
       String(item.payload).trim().split('\r', '\n').filter { it.isNotBlank() }.forEach {
         log.info(it)
@@ -179,9 +176,17 @@ internal class Composer(private val name: String, private vararg val containers:
 
   private companion object {
     private val log = getLogger<Composer>()
-    private val docker: DockerClient = DockerClientBuilder.getInstance()
-      .withDockerCmdExecFactory(NettyDockerCmdExecFactory())
+    private val defaultDockerClientConfig =
+      DefaultDockerClientConfig.createDefaultConfigBuilder().build()
+    private val httpClient = ApacheDockerHttpClient.Builder()
+      .dockerHost(defaultDockerClientConfig.dockerHost)
+      .sslConfig(defaultDockerClientConfig.sslConfig)
+      .maxConnections(100)
+      .connectionTimeout(Duration.ofSeconds(60))
+      .responseTimeout(Duration.ofSeconds(120))
       .build()
+    private val docker: DockerClient =
+      DockerClientImpl.getInstance(defaultDockerClientConfig, httpClient)
   }
 }
 

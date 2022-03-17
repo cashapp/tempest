@@ -1,6 +1,9 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-apply(plugin = "kotlin")
+plugins {
+  kotlin("jvm")
+  `java-library`
+}
 
 dependencies {
   implementation(project(":tempest2"))

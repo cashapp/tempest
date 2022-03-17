@@ -1,5 +1,7 @@
-apply(plugin = "java-library")
-apply(plugin = "kotlin")
+plugins {
+  kotlin("jvm")
+  `java-library`
+}
 
 dependencies {
   api(project(":tempest-testing"))
@@ -17,5 +19,3 @@ dependencies {
 tasks.withType<Test> {
   useJUnit()
 }
-
-apply(from = "$rootDir/gradle-mvn-publish.gradle")
