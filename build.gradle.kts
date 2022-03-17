@@ -42,7 +42,7 @@ subprojects {
         }
 
         dependencies {
-            add("api", enforcedPlatform(Dependencies.nettyBom))
+            add("api", platform(Dependencies.nettyBom))
         }
     }
 
