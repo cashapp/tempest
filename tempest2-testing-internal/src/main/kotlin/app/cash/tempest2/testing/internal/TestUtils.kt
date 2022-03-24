@@ -29,6 +29,7 @@ import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput
 import software.amazon.awssdk.services.dynamodb.streams.DynamoDbStreamsAsyncClient
 import software.amazon.awssdk.services.dynamodb.streams.DynamoDbStreamsClient
 import java.net.ServerSocket
+import java.net.Socket
 import java.net.URI
 
 fun pickRandomPort(): Int {
@@ -39,43 +40,88 @@ private val AWS_CREDENTIALS_PROVIDER = StaticCredentialsProvider.create(
   AwsBasicCredentials.create("key", "secret")
 )
 
+fun isServerListening(host: String, port: Int): Boolean {
+  var s: Socket? = null
+  return try {
+    s = Socket(host, port)
+    true
+  } catch (e: Exception) {
+    false
+  } finally {
+    if (s != null) try {
+      s.close()
+    } catch (e: Exception) {
+      println("failed to close socket file")
+    }
+  }
+}
+
 fun connect(port: Int): DynamoDbClient {
+  if (isServerListening("host.docker.internal", port))
+    return connect("host.docker.internal", port)
+  else
+    return connect("localhost", port)
+}
+
+fun connect(host: String, port: Int): DynamoDbClient {
   return DynamoDbClient.builder()
     // The values that you supply for the AWS access key and the Region are only used to name
     // the database file.
     .credentialsProvider(AWS_CREDENTIALS_PROVIDER)
     .region(Region.US_WEST_2)
-    .endpointOverride(URI.create("http://localhost:$port"))
+    .endpointOverride(URI.create("http://$host:$port"))
     .build()
 }
 
 fun connectAsync(port: Int): DynamoDbAsyncClient {
+  if (isServerListening("host.docker.internal", port))
+    return connectAsync("host.docker.internal", port)
+  else
+    return connectAsync("localhost", port)
+}
+
+fun connectAsync(host: String, port: Int): DynamoDbAsyncClient {
   return DynamoDbAsyncClient.builder()
     // The values that you supply for the AWS access key and the Region are only used to name
     // the database file.
     .credentialsProvider(AWS_CREDENTIALS_PROVIDER)
     .region(Region.US_WEST_2)
-    .endpointOverride(URI.create("http://localhost:$port"))
+    .endpointOverride(URI.create("http://$host:$port"))
     .build()
 }
 
 fun connectToStreams(port: Int): DynamoDbStreamsClient {
+  if (isServerListening("host.docker.internal", port))
+    return connectToStreams("host.docker.internal", port)
+  else
+    return connectToStreams("localhost", port)
+}
+
+fun connectToStreams(host: String, port: Int): DynamoDbStreamsClient {
   return DynamoDbStreamsClient.builder()
     // The values that you supply for the AWS access key and the Region are only used to name
     // the database file.
     .credentialsProvider(AWS_CREDENTIALS_PROVIDER)
     .region(Region.US_WEST_2)
-    .endpointOverride(URI.create("http://localhost:$port"))
+    .endpointOverride(URI.create("http://$host:$port"))
     .build()
 }
 
 fun connectToStreamsAsync(port: Int): DynamoDbStreamsAsyncClient {
+  if (isServerListening("host.docker.internal", port))
+    return connectToStreamsAsync("host.docker.internal", port)
+  else
+    return connectToStreamsAsync("localhost", port)
+
+}
+
+fun connectToStreamsAsync(host: String, port: Int): DynamoDbStreamsAsyncClient {
   return DynamoDbStreamsAsyncClient.builder()
     // The values that you supply for the AWS access key and the Region are only used to name
     // the database file.
     .credentialsProvider(AWS_CREDENTIALS_PROVIDER)
     .region(Region.US_WEST_2)
-    .endpointOverride(URI.create("http://localhost:$port"))
+    .endpointOverride(URI.create("http://$host:$port"))
     .build()
 }
 

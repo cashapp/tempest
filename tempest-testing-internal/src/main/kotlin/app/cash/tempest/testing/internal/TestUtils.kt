@@ -29,24 +29,55 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput
 import java.net.ServerSocket
+import java.net.Socket
 
 fun pickRandomPort(): Int {
   ServerSocket(0).use { socket -> return socket.localPort }
 }
 
+fun isServerListening(host: String, port: Int): Boolean {
+  var s: Socket? = null
+  return try {
+    s = Socket(host, port)
+    true
+  } catch (e: Exception) {
+    false
+  } finally {
+    if (s != null) try {
+      s.close()
+    } catch (e: Exception) {
+      println("failed to close socket file")
+    }
+  }
+}
+
 fun connect(port: Int): AmazonDynamoDB {
+  if (isServerListening("host.docker.internal", port))
+    return connect("host.docker.internal", port)
+  else
+    return connect("localhost", port)
+}
+
+fun connect(host: String, port: Int): AmazonDynamoDB {
   return AmazonDynamoDBClientBuilder.standard()
     // The values that you supply for the AWS access key and the Region are only used to name
     // the database file.
     .withCredentials(AWS_CREDENTIALS_PROVIDER)
-    .withEndpointConfiguration(endpointConfiguration(port))
+    .withEndpointConfiguration(endpointConfiguration(host, port))
     .build()
 }
 
 fun connectToStreams(port: Int): AmazonDynamoDBStreams {
+  if (isServerListening("host.docker.internal", port))
+    return connectToStreams("host.docker.internal", port)
+  else
+    return connectToStreams("localhost", port)
+}
+
+fun connectToStreams(host: String, port: Int): AmazonDynamoDBStreams {
   return AmazonDynamoDBStreamsClientBuilder.standard()
     .withCredentials(AWS_CREDENTIALS_PROVIDER)
-    .withEndpointConfiguration(endpointConfiguration(port))
+    .withEndpointConfiguration(endpointConfiguration(host, port))
     .build()
 }
 
@@ -54,9 +85,9 @@ private val AWS_CREDENTIALS_PROVIDER = AWSStaticCredentialsProvider(
   BasicAWSCredentials("key", "secret")
 )
 
-private fun endpointConfiguration(port: Int): AwsClientBuilder.EndpointConfiguration {
+private fun endpointConfiguration(host: String, port: Int): AwsClientBuilder.EndpointConfiguration {
   return AwsClientBuilder.EndpointConfiguration(
-    "http://localhost:$port",
+    "http://$host:$port",
     Regions.US_WEST_2.toString()
   )
 }
