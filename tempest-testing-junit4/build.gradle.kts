@@ -19,3 +19,5 @@ dependencies {
 tasks.withType<Test> {
   useJUnit()
 }
+
+apply(from = "$rootDir/gradle-mvn-publish.gradle")
