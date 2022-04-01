@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.6.2] - 2022-04.01
+
+* Fixed: Fixing release, making sure we run the publication logic (#100)
+
+## [1.6.1] - 2022-04.01
+
+* Fixed: Fixing release logic (#99)
+
 ## [1.6.0] - 2022-03-30
 
 * New: Adds the correct sqlite4java dep when running on M1 Macs (#96).
