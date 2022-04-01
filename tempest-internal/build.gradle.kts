@@ -12,3 +12,5 @@ dependencies {
   testImplementation(Dependencies.junitApi)
   testImplementation(Dependencies.junitEngine)
 }
+
+apply(from = "$rootDir/gradle-mvn-publish.gradle")
