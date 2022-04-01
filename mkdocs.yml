@@ -50,7 +50,7 @@ plugins:
 
 extra:
   versions:
-    tempest: '1.5.2'
+    tempest: '1.6.0'
 
 nav:
   - 'Overview': index.md
