@@ -1,4 +1,3 @@
-// Auto-generated from polyrepo's master-dependencies.json. Update via polyrepo dep-add and polyrepo dep-upgrade.
 object Dependencies {
   val assertj = "org.assertj:assertj-core:3.20.2"
   val aws2Dynamodb = "software.amazon.awssdk:dynamodb:2.17.134"
@@ -29,4 +28,3 @@ object Dependencies {
   val okio = "com.squareup.okio:okio:3.0.0"
   val wireGradlePlugin = "com.squareup.wire:wire-gradle-plugin:4.2.0"
 }
-// Auto-generated from polyrepo's master-dependencies.json. Update via polyrepo dep-add and polyrepo dep-upgrade.
