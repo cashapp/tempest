@@ -6,9 +6,9 @@ object Dependencies {
   val awsDynamodb = "com.amazonaws:aws-java-sdk-dynamodb:1.11.960"
   val awsDynamodbLocal = "com.amazonaws:DynamoDBLocal:1.13.5"
   val clikt = "com.github.ajalt:clikt:2.8.0"
-  val dokkaGradlePlugin = "org.jetbrains.dokka:dokka-gradle-plugin:1.6.10"
   val dockerCore = "com.github.docker-java:docker-java-core:3.2.13"
   val dockerTransport = "com.github.docker-java:docker-java-transport-httpclient5:3.2.13"
+  val dokkaGradlePlugin = "org.jetbrains.dokka:dokka-gradle-plugin:1.6.10"
   val findbugsJsr305 = "com.google.code.findbugs:jsr305:3.0.2"
   val guava = "com.google.guava:guava:31.0.1-jre"
   val junit4Api = "junit:junit:4.13.2"
@@ -25,8 +25,11 @@ object Dependencies {
   val log4jCore = "org.apache.logging.log4j:log4j-core:2.17.1"
   val loggingApi = "io.github.microutils:kotlin-logging:2.0.10"
   val mavenPublishGradlePlugin = "com.vanniktech:gradle-maven-publish-plugin:0.18.0"
+  val moshi = "com.squareup.moshi:moshi-kotlin:1.13.0"
+  val moshiKotlin = "com.squareup.moshi:moshi-kotlin:1.13.0"
   val nettyBom = "io.netty:netty-bom:4.1.75.Final"
   val okio = "com.squareup.okio:okio:3.0.0"
   val wireGradlePlugin = "com.squareup.wire:wire-gradle-plugin:4.2.0"
+  val wireMoshiAdapter = "com.squareup.wire:wire-moshi-adapter:4.4.0-square02"
 }
 // Auto-generated from polyrepo's master-dependencies.json. Update via polyrepo dep-add and polyrepo dep-upgrade.
