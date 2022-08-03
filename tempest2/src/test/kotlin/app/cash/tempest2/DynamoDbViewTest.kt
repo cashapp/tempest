@@ -24,6 +24,7 @@ import app.cash.tempest2.musiclibrary.testDb
 import app.cash.tempest2.testing.logicalDb
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import software.amazon.awssdk.enhanced.dynamodb.Expression
@@ -56,6 +57,61 @@ class DynamoDbViewTest {
     assertThat(loadedAlbumInfo.album_token).isEqualTo(albumInfo.album_token)
     assertThat(loadedAlbumInfo.artist_name).isEqualTo(albumInfo.artist_name)
     assertThat(loadedAlbumInfo.release_date).isEqualTo(albumInfo.release_date)
+    assertThat(loadedAlbumInfo.genre_name).isEqualTo(albumInfo.genre_name)
+  }
+
+  @Test
+  fun updateReturnUpdatedItem() {
+    val firstDate = LocalDate.of(2020, 2, 21)
+    val updatedDate = LocalDate.of(2021, 2, 21)
+    val albumInfo = AlbumInfo(
+      "ALBUM_1",
+      "after hours - EP",
+      "53 Thieves",
+      firstDate,
+      "Contemporary R&B"
+    )
+    musicTable.albumInfo.save(albumInfo)
+    val loadedAlbumInfo = musicTable.albumInfo.load(albumInfo.key)!!
+    assertThat(loadedAlbumInfo.release_date).isEqualTo(albumInfo.release_date)
+
+    // Query the movies created.
+    val updatedAlbumInfo = musicTable.albumInfo.update(albumInfo.copy(release_date = updatedDate))
+    assertThat(updatedAlbumInfo.release_date).isEqualTo(updatedDate)
+    assertThat(updatedAlbumInfo.album_token).isEqualTo(albumInfo.album_token)
+    assertThat(updatedAlbumInfo.artist_name).isEqualTo(albumInfo.artist_name)
+    assertThat(updatedAlbumInfo.genre_name).isEqualTo(albumInfo.genre_name)
+  }
+
+  @Test
+  fun updateWithExpression() {
+    val artistName = "53 Thieves"
+    val albumTitle = "after hours - EP"
+    val albumInfo = AlbumInfo(
+      "ALBUM_1",
+      albumTitle,
+      artistName,
+      LocalDate.of(2020, 2, 21),
+      "Contemporary R&B"
+    )
+    musicTable.albumInfo.save(albumInfo)
+    val wrongAlbumAttribute = AttributeValue.builder().s("another title").build();
+    // Check that we pass along expressions.
+    assertThatThrownBy {
+      musicTable.albumInfo.update(
+        albumInfo.copy(artist_name = "$artistName.2"),
+        Expression.builder()
+          .expression("album_title = :albumTitle")
+          .putExpressionValue(":albumTitle", wrongAlbumAttribute)
+          .build()
+      )
+    }.isInstanceOf(ConditionalCheckFailedException::class.java)
+
+    // The movie was not updated.
+    val loadedAlbumInfo = musicTable.albumInfo.load(albumInfo.key)!!
+    assertThat(loadedAlbumInfo.release_date).isEqualTo(albumInfo.release_date)
+    assertThat(loadedAlbumInfo.album_token).isEqualTo(albumInfo.album_token)
+    assertThat(loadedAlbumInfo.artist_name).isEqualTo(albumInfo.artist_name)
     assertThat(loadedAlbumInfo.genre_name).isEqualTo(albumInfo.genre_name)
   }
 

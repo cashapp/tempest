@@ -29,8 +29,7 @@ interface View<K : Any, I : Any> {
 
   /**
    * Saves an item in DynamoDB. This method uses [DynamoDbClient.putItem] to clear
-   * and replace all attributes, including unmodeled ones, on save. Partial update, i.e.
-   * [DynamoDbClient.updateItem], is not supported yet.
+   * and replace all attributes, including unmodeled ones, on save.
    *
    * Any options specified in the [saveExpression] parameter will be overlaid on any constraints due
    * to versioned attributes.
@@ -39,6 +38,20 @@ interface View<K : Any, I : Any> {
     item: I,
     saveExpression: Expression? = null
   )
+
+  /**
+   * Saves an item in DynamoDB. This method uses [DynamoDbClient.updateItem] to create the item or
+   * if it exists, to replace the attributes included in [item].
+   *
+   * It returns the updated item.
+   *
+   * Any options specified in the [updateExpression] parameter will be overlaid on any constraints due
+   * to versioned attributes.
+   */
+  fun update(
+    item: I,
+    updateExpression: Expression? = null
+  ): I
 
   /**
    * Deletes the item identified by [key] from its DynamoDB table using [deleteExpression]. Any
@@ -69,6 +82,10 @@ interface View<K : Any, I : Any> {
   fun save(
     item: I
   ) = save(item, saveExpression = null)
+
+  fun update(
+    item: I
+  ) = update(item, updateExpression = null)
 
   fun deleteKey(
     key: K

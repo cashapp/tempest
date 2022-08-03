@@ -29,6 +29,7 @@ import software.amazon.awssdk.enhanced.dynamodb.internal.EnhancedClientUtils
 import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest
+import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest
 import java.util.concurrent.CompletableFuture
 
 internal class DynamoDbView<K : Any, I : Any, R : Any>(
@@ -54,6 +55,15 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
     ) {
       val request = toSaveRequest(item, saveExpression)
       dynamoDbTable.putItem(request)
+    }
+
+    override fun update(
+      item: I,
+      updateExpression: Expression?
+    ): I {
+      val request = toUpdateRequest(item, updateExpression)
+      val updateItem = dynamoDbTable.updateItem(request)
+      return itemCodec.toApp(updateItem)
     }
 
     override fun deleteKey(
@@ -130,6 +140,14 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
   private fun toSaveRequest(item: I, saveExpression: Expression?): PutItemEnhancedRequest<R> {
     val itemObject = itemCodec.toDb(item)
     return PutItemEnhancedRequest.builder(tableSchema.itemType().rawClass())
+      .item(itemObject)
+      .conditionExpression(saveExpression)
+      .build()
+  }
+
+  private fun toUpdateRequest(item: I, saveExpression: Expression?): UpdateItemEnhancedRequest<R> {
+    val itemObject = itemCodec.toDb(item)
+    return UpdateItemEnhancedRequest.builder(tableSchema.itemType().rawClass())
       .item(itemObject)
       .conditionExpression(saveExpression)
       .build()
