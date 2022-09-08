@@ -495,6 +495,10 @@ For AWS SDK 2.x:
 implementation "app.cash.tempest:tempest2:1.6.2"
 ```
 
+## Migrating From Tempest 1 to Tempest 2
+
+Please follow the [Migration Guide](docs/guide/v2_upgrade_guide.md) that has been set up to upgrade from Tempest 1 (AWS SDK 1.x) to Tempest 2 (AWS SDK 2.x)
+
 ## License
 
     Copyright 2020 Square, Inc.
