@@ -246,3 +246,47 @@ val entity = dyDatabase.dyTable.dyEntitiy.load(
 + consistentReads = true
 )
 ```
+
+## Changes to Misk
+
+If you are using [Misk](https://github.com/cashapp/misk) you will need to update your dependencies and DI configuration
+
+### Dependencies
+
+```diff
+-val miskAwsDynamodb = "com.squareup.misk:misk-aws-dynamodb:VERSION"
+-val miskAwsDynamodbTesting = "com.squareup.misk:misk-aws-dynamodb-testing:VERSION"
++val miskAws2Dynamodb = "com.squareup.misk:misk-aws2-dynamodb:VERSION"
++val miskAws2DynamodbTesting = "com.squareup.misk:misk-aws2-dynamodb-testing:VERSION"
+```
+
+### DynamoDbModule
+
+
+```diff
+-val clientConfig = ClientConfiguration()
+-  .withMaxErrorRetry(DYNAMO_CLIENT_MAX_ERROR_RETRIES)
+-  // Set a timeout per retry.
+-  .withRequestTimeout(DYNAMO_REQUEST_TIMEOUT_MILLIS)
+-  .withRetryPolicy(
+-    PredefinedRetryPolicies
+-      .getDynamoDBDefaultRetryPolicyWithCustomMaxRetries(DYNAMO_CLIENT_MAX_ERROR_RETRIES)
+-  )
+-install(
+-  RealDynamoDbModule(
+-    clientConfig,
+-    DyItem::class
+-  )
+-)
++install(
++  RealDynamoDbModule(
++    ClientOverrideConfiguration.builder()
++      .retryPolicy(RetryPolicy.defaultRetryPolicy().copy{ it.numRetries(DYNAMO_CLIENT_MAX_ERROR_RETRIES)})
++      .apiCallTimeout(Duration.ofMillis(DYNAMO_REQUEST_TIMEOUT_MILLIS.toLong()))
++      .build(),
++    listOf(
++      Constants.DyTable,
++    ).map { RequiredDynamoDbTable(it) }
++  )
++)
+```
