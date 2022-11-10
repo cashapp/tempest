@@ -138,10 +138,10 @@ internal class DynamoDbLogicalDb(
       // TODO: Replace this with publisher stream concatenation
       // This is a hack, I don't have a good way to combine publishers currently without blocking
       // which violates the async contract
-      // Prior to the paging support 25 was the max page size, aws-sdk would throw
+      // Prior to the paging support 100 was the max page size, aws-sdk would throw
       // So this isn't a loss of functionality
-      if (maxPageSize > 25 || keys.size > 25) {
-        throw IllegalArgumentException("batchLoadAsync currently only supports page sizes <= 25")
+      if (maxPageSize > 100 || keys.size > 100) {
+        throw IllegalArgumentException("batchLoadAsync currently only supports page sizes <= 100")
       }
       val (requests, requestsByTable, batchRequests) = toBatchLoadRequests(keys, consistentReads, maxPageSize)
 
