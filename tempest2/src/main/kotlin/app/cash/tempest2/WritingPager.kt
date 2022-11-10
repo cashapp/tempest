@@ -75,7 +75,9 @@ class WritingPager<T> @JvmOverloads constructor(
     handler.finishPage(writeSet)
     check(writeSet.size <= maxTransactionItems) { "finishPage wrote too many items" }
 
-    db.transactionWrite(writeSet.build())
+    val page = writeSet.build()
+    db.transactionWrite(page)
+    handler.pageWritten(page)
 
     return appliedUpdates.size
   }
@@ -102,8 +104,18 @@ class WritingPager<T> @JvmOverloads constructor(
 
     /**
      * Invoked after a page of items has been computed.
+     *
+     * NB: the page has _not_ been written at this point. This method is called just prior
+     * to writing the page. Use [pageWritten] for handling a page after it has written successfully.
      */
     fun finishPage(builder: TransactionWriteSet.Builder)
+
+    /**
+     * Invoked after a page of items has been written.
+     */
+    fun pageWritten(writeSet: TransactionWriteSet) {
+      // default NOOP
+    }
   }
 }
 
