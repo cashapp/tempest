@@ -63,6 +63,29 @@ class LogicalDbBatchTest {
   }
 
   @Test
+  fun `batchLoad greater than max batch size`() = runBlockingTest {
+    val albumTracks = (1..105).map {
+      AlbumTrack("ALBUM_1", it.toLong(), "track $it", Duration.parse("PT3M28S"))
+    }
+    for (albumTrack in albumTracks) {
+      musicTable.albumTracks.save(albumTrack)
+    }
+    val playlistInfo = PlaylistInfo(
+      playlist_token = "PLAYLIST_1",
+      playlist_name = "WFH Music",
+      playlist_tracks = listOf(AlbumTrack.Key("ALBUM_1", 1))
+    )
+    musicTable.playlistInfo.save(playlistInfo)
+
+    val loadedItems = musicDb.batchLoad(
+      PlaylistInfo.Key("PLAYLIST_1"),
+      *(albumTracks.map { AlbumTrack.Key("ALBUM_1", track_number = it.track_number) }.toTypedArray())
+    )
+    assertThat(loadedItems.getItems<AlbumTrack>()).containsAll(albumTracks)
+    assertThat(loadedItems.getItems<PlaylistInfo>()).containsExactly(playlistInfo)
+  }
+
+  @Test
   fun batchLoadMultipleTables() {
     val albumTracks = listOf(
       AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S")),
@@ -103,6 +126,20 @@ class LogicalDbBatchTest {
       AlbumTrack.Key("ALBUM_1", track_number = 1),
       AlbumTrack.Key("ALBUM_1", track_number = 2),
       AlbumTrack.Key("ALBUM_1", track_number = 3)
+    )
+    assertThat(items).containsAll(albumTracks)
+  }
+
+  @Test
+  fun `batchWrite greater than max batch size`() {
+    val albumTracks = (1..30).map {
+      AlbumTrack("ALBUM_1", it.toLong(), "track $it", Duration.parse("PT3M28S"))
+    }
+    val result = musicDb.batchWrite(BatchWriteSet.Builder().clobber(albumTracks).build())
+    assertThat(result.isSuccessful).isTrue()
+
+    val items = musicDb.batchLoad(
+      *(albumTracks.map { AlbumTrack.Key("ALBUM_1", track_number = it.track_number) }.toTypedArray())
     )
     assertThat(items).containsAll(albumTracks)
   }

@@ -27,6 +27,9 @@ import java.util.concurrent.CompletableFuture
 import javax.annotation.CheckReturnValue
 import kotlin.reflect.KClass
 
+private const val MAX_BATCH_READ = 100
+private const val MAX_BATCH_WRITE = 25
+
 /**
  * A collection of tables that implement the DynamoDB best practice of putting multiple
  * item types into the same storage table. This makes it possible to perform aggregate operations
@@ -47,21 +50,24 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
    */
   suspend fun batchLoad(
     keys: KeySet,
-    consistentReads: Boolean = false
-  ): ItemSet = batchLoadAsync(keys, consistentReads).awaitFirst()
+    consistentReads: Boolean = false,
+    maxPageSize: Int = MAX_BATCH_READ
+  ): ItemSet = batchLoadAsync(keys, consistentReads, maxPageSize).awaitFirst()
 
   suspend fun batchLoad(
     keys: Iterable<Any>,
-    consistentReads: Boolean = false
+    consistentReads: Boolean = false,
+    maxPageSize: Int = MAX_BATCH_READ
   ): ItemSet {
-    return batchLoad(KeySet(keys), consistentReads)
+    return batchLoad(KeySet(keys), consistentReads, maxPageSize)
   }
 
   suspend fun batchLoad(
     vararg keys: Any,
-    consistentReads: Boolean = false
+    consistentReads: Boolean = false,
+    maxPageSize: Int = MAX_BATCH_READ
   ): ItemSet {
-    return batchLoad(keys.toList(), consistentReads)
+    return batchLoad(keys.toList(), consistentReads, maxPageSize)
   }
 
   /**
@@ -82,7 +88,8 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
    */
   @CheckReturnValue
   suspend fun batchWrite(
-    writeSet: BatchWriteSet
+    writeSet: BatchWriteSet,
+    maxPageSize: Int = MAX_BATCH_WRITE
   ): BatchWriteResult = batchWriteAsync(writeSet).await()
 
   /**
@@ -150,13 +157,19 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
 
   fun batchLoadAsync(
     keys: KeySet,
-    consistentReads: Boolean
+    consistentReads: Boolean,
+    maxPageSize: Int
   ): Publisher<ItemSet>
+
+  fun batchLoadAsync(
+    keys: KeySet,
+    consistentReads: Boolean
+  ) = batchLoadAsync(keys, consistentReads, MAX_BATCH_READ)
 
   fun batchLoadAsync(
     keys: Iterable<Any>,
     consistentReads: Boolean
-  ) = batchLoadAsync(KeySet(keys), consistentReads)
+  ) = batchLoadAsync(KeySet(keys), consistentReads, MAX_BATCH_READ)
 
   fun batchLoadAsync(
     vararg keys: Any,
@@ -168,7 +181,8 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
   ) = batchLoadAsync(keys, consistentReads = false)
 
   fun batchWriteAsync(
-    writeSet: BatchWriteSet
+    writeSet: BatchWriteSet,
+    maxPageSize: Int = MAX_BATCH_WRITE
   ): CompletableFuture<BatchWriteResult>
 
   fun transactionLoadAsync(keys: KeySet): CompletableFuture<ItemSet>

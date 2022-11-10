@@ -23,6 +23,9 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import javax.annotation.CheckReturnValue
 import kotlin.reflect.KClass
 
+private const val MAX_BATCH_READ = 100
+private const val MAX_BATCH_WRITE = 25
+
 /**
  * A collection of tables that implement the DynamoDB best practice of putting multiple
  * item types into the same storage table. This makes it possible to perform aggregate operations
@@ -43,22 +46,30 @@ interface LogicalDb : LogicalTable.Factory {
    */
   fun batchLoad(
     keys: KeySet,
-    consistentReads: Boolean = false
+    consistentReads: Boolean = false,
+    maxPageSize: Int = MAX_BATCH_READ
   ): ItemSet
 
   fun batchLoad(
     keys: Iterable<Any>,
-    consistentReads: Boolean = false
+    consistentReads: Boolean = false,
+    maxPageSize: Int = MAX_BATCH_READ
   ): ItemSet {
-    return batchLoad(KeySet(keys), consistentReads)
+    return batchLoad(KeySet(keys), consistentReads, maxPageSize)
   }
 
   fun batchLoad(
     vararg keys: Any,
-    consistentReads: Boolean = false
+    consistentReads: Boolean = false,
+    maxPageSize: Int = MAX_BATCH_READ
   ): ItemSet {
-    return batchLoad(keys.toList(), consistentReads)
+    return batchLoad(keys.toList(), consistentReads, maxPageSize)
   }
+
+  // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
+  fun batchLoad(
+    keys: Iterable<Any>
+  ) = batchLoad(keys, consistentReads = false)
 
   /**
    * Saves and deletes the objects given using one or more calls to the
@@ -78,7 +89,8 @@ interface LogicalDb : LogicalTable.Factory {
    */
   @CheckReturnValue
   fun batchWrite(
-    writeSet: BatchWriteSet
+    writeSet: BatchWriteSet,
+    maxPageSize: Int = MAX_BATCH_WRITE
   ): BatchWriteResult
 
   /**
@@ -139,12 +151,6 @@ interface LogicalDb : LogicalTable.Factory {
       dynamoDbEnhancedClient: DynamoDbEnhancedClient
     ) = create(dbType.kotlin, dynamoDbEnhancedClient)
   }
-
-  // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
-
-  fun batchLoad(
-    keys: Iterable<Any>
-  ) = batchLoad(keys, consistentReads = false)
 }
 
 /**
