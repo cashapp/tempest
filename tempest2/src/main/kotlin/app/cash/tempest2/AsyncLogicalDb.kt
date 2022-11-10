@@ -27,8 +27,6 @@ import java.util.concurrent.CompletableFuture
 import javax.annotation.CheckReturnValue
 import kotlin.reflect.KClass
 
-private const val MAX_BATCH_READ = 100
-private const val MAX_BATCH_WRITE = 25
 
 /**
  * A collection of tables that implement the DynamoDB best practice of putting multiple

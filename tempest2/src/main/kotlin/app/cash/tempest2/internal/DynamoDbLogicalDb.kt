@@ -26,10 +26,10 @@ import app.cash.tempest2.ItemSet
 import app.cash.tempest2.KeySet
 import app.cash.tempest2.LogicalDb
 import app.cash.tempest2.LogicalTable
+import app.cash.tempest2.MAX_BATCH_READ
 import app.cash.tempest2.TransactionWriteSet
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.CLOBBER
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.DELETE
-import org.reactivestreams.FlowAdapters.toFlowPublisher
 import org.reactivestreams.Publisher
 import software.amazon.awssdk.enhanced.dynamodb.Document
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient
@@ -140,7 +140,7 @@ internal class DynamoDbLogicalDb(
       // which violates the async contract
       // Prior to the paging support 100 was the max page size, aws-sdk would throw
       // So this isn't a loss of functionality
-      if (maxPageSize > 100 || keys.size > 100) {
+      if (maxPageSize > MAX_BATCH_READ || keys.size > MAX_BATCH_READ) {
         throw IllegalArgumentException("batchLoadAsync currently only supports page sizes <= 100")
       }
       val (requests, requestsByTable, batchRequests) = toBatchLoadRequests(keys, consistentReads, maxPageSize)
