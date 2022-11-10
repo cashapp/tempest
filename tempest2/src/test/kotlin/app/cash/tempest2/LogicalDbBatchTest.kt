@@ -64,7 +64,7 @@ class LogicalDbBatchTest {
 
   @Test
   fun `batchLoad greater than max batch size`() = runBlockingTest {
-    val albumTracks = (1..105).map {
+    val albumTracks = (1..(MAX_BATCH_READ + 5)).map {
       AlbumTrack("ALBUM_1", it.toLong(), "track $it", Duration.parse("PT3M28S"))
     }
     for (albumTrack in albumTracks) {
@@ -132,7 +132,7 @@ class LogicalDbBatchTest {
 
   @Test
   fun `batchWrite greater than max batch size`() {
-    val albumTracks = (1..30).map {
+    val albumTracks = (1..(MAX_BATCH_WRITE + 5)).map {
       AlbumTrack("ALBUM_1", it.toLong(), "track $it", Duration.parse("PT3M28S"))
     }
     val result = musicDb.batchWrite(BatchWriteSet.Builder().clobber(albumTracks).build())

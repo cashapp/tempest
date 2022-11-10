@@ -135,7 +135,7 @@ internal class DynamoDbLogicalDb(
       consistentReads: Boolean,
       maxPageSize: Int
     ): Publisher<ItemSet> {
-      // TODO: Replace this with publisher stream concatenation
+      // TODO: Replace this with publisher stream concatenation, see https://github.com/cashapp/tempest/issues/124
       // This is a hack, I don't have a good way to combine publishers currently without blocking
       // which violates the async contract
       // Prior to the paging support 100 was the max page size, aws-sdk would throw

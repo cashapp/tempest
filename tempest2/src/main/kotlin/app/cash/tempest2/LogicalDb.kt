@@ -23,7 +23,17 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import javax.annotation.CheckReturnValue
 import kotlin.reflect.KClass
 
+/**
+ * The maximum number of items for a single call to [BatchGetItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html)
+ * is 100 as of 2022-11-10
+ */
 internal const val MAX_BATCH_READ = 100
+
+/**
+ * The maximum number of items for a single call to [BatchWriteItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html)
+ * is 100 as of 2022-11-10
+ *
+ */
 internal const val MAX_BATCH_WRITE = 25
 
 /**
@@ -66,10 +76,7 @@ interface LogicalDb : LogicalTable.Factory {
     return batchLoad(keys.toList(), consistentReads, maxPageSize)
   }
 
-  // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
-  fun batchLoad(
-    keys: Iterable<Any>
-  ) = batchLoad(keys, consistentReads = false)
+
 
   /**
    * Saves and deletes the objects given using one or more calls to the
@@ -92,6 +99,16 @@ interface LogicalDb : LogicalTable.Factory {
     writeSet: BatchWriteSet,
     maxPageSize: Int = MAX_BATCH_WRITE
   ): BatchWriteResult
+
+  // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
+
+  fun batchLoad(
+    keys: Iterable<Any>
+  ) = batchLoad(keys, consistentReads = false)
+
+  fun batchWrite(
+    writeSet: BatchWriteSet
+  ) = batchWrite(writeSet, MAX_BATCH_WRITE)
 
   /**
    * Transactionally loads objects specified by transactionLoadRequest by calling
