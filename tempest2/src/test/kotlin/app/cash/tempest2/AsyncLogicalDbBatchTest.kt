@@ -133,6 +133,7 @@ class AsyncLogicalDbBatchTest {
     assertThat(items).containsAll(albumTracks)
   }
 
+  // Disabled pending https://github.com/cashapp/tempest/issues/124
   @Disabled
   @Test
   fun `batchWrite greater than max batch size`() = runBlockingTest {
