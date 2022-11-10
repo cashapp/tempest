@@ -26,6 +26,7 @@ import app.cash.tempest2.ItemSet
 import app.cash.tempest2.KeySet
 import app.cash.tempest2.LogicalDb
 import app.cash.tempest2.LogicalTable
+import app.cash.tempest2.MAX_BATCH_READ
 import app.cash.tempest2.TransactionWriteSet
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.CLOBBER
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.DELETE
@@ -84,19 +85,26 @@ internal class DynamoDbLogicalDb(
 
     override fun batchLoad(
       keys: KeySet,
-      consistentReads: Boolean
+      consistentReads: Boolean,
+      maxPageSize: Int
     ): ItemSet {
-      val (requests, requestsByTable, batchRequest) = toBatchLoadRequest(keys, consistentReads)
-      val page = dynamoDbEnhancedClient.batchGetItem(batchRequest).iterator().next()
-      return toBatchLoadResponse(requestsByTable, requests, page)
+
+      val (requestKeys, keysByTable, batchRequests) = toBatchLoadRequests(keys, consistentReads, maxPageSize)
+      val pages = batchRequests.map {
+        dynamoDbEnhancedClient.batchGetItem(it).iterator().next()
+      }
+      return toBatchLoadResponse(keysByTable, requestKeys, pages)
     }
 
     override fun batchWrite(
-      writeSet: BatchWriteSet
+      writeSet: BatchWriteSet,
+      maxPageSize: Int
     ): app.cash.tempest2.BatchWriteResult {
-      val (requestsByTable, batchRequest) = toBatchWriteRequest(writeSet)
-      val result = dynamoDbEnhancedClient.batchWriteItem(batchRequest)
-      return toBatchWriteResponse(requestsByTable, result)
+      val (requestsByTable, batchRequests) = toBatchWriteRequests(writeSet, maxPageSize)
+      val pages = batchRequests.map {
+        dynamoDbEnhancedClient.batchWriteItem(it)
+      }
+      return toBatchWriteResponse(requestsByTable, pages)
     }
 
     override fun transactionLoad(keys: KeySet): ItemSet {
@@ -124,20 +132,42 @@ internal class DynamoDbLogicalDb(
 
     override fun batchLoadAsync(
       keys: KeySet,
-      consistentReads: Boolean
+      consistentReads: Boolean,
+      maxPageSize: Int
     ): Publisher<ItemSet> {
-      val (requests, requestsByTable, batchRequest) = toBatchLoadRequest(keys, consistentReads)
-      return dynamoDbEnhancedClient.batchGetItem(batchRequest)
+      // TODO: Replace this with publisher stream concatenation, see https://github.com/cashapp/tempest/issues/124
+      // This is a hack, I don't have a good way to combine publishers currently without blocking
+      // which violates the async contract
+      // Prior to the paging support 100 was the max page size, aws-sdk would throw
+      // So this isn't a loss of functionality
+      if (maxPageSize > MAX_BATCH_READ || keys.size > MAX_BATCH_READ) {
+        throw IllegalArgumentException("batchLoadAsync currently only supports page sizes <= 100")
+      }
+      val (requests, requestsByTable, batchRequests) = toBatchLoadRequests(keys, consistentReads, maxPageSize)
+
+      return dynamoDbEnhancedClient.batchGetItem(batchRequests.first())
         .limit(1)
-        .map { page -> toBatchLoadResponse(requestsByTable, requests, page) }
+        .map { page -> toBatchLoadResponse(requestsByTable, requests, listOf(page))}
+
     }
 
     override fun batchWriteAsync(
-      writeSet: BatchWriteSet
+      writeSet: BatchWriteSet,
+      maxPageSize: Int
     ): CompletableFuture<app.cash.tempest2.BatchWriteResult> {
-      val (requestsByTable, batchRequest) = toBatchWriteRequest(writeSet)
-      return dynamoDbEnhancedClient.batchWriteItem(batchRequest)
-        .thenApply { result -> toBatchWriteResponse(requestsByTable, result) }
+      val (requestsByTable, batchRequests) = toBatchWriteRequests(writeSet, maxPageSize)
+      val requests = batchRequests.map {
+        dynamoDbEnhancedClient.batchWriteItem(it)
+          .thenApply { result -> toBatchWriteResponse(requestsByTable, listOf(result)) }
+      }
+      return CompletableFuture.allOf(*requests.toTypedArray()).thenApply {
+        val results = requests.map { it.join() }
+
+        return@thenApply app.cash.tempest2.BatchWriteResult(
+          results.flatMap { it.unprocessedClobbers },
+          results.flatMap { it.unprocessedDeletes },
+        )
+      }
     }
 
     override fun transactionLoadAsync(keys: KeySet): CompletableFuture<ItemSet> {
@@ -160,90 +190,109 @@ internal class DynamoDbLogicalDb(
     }
   }
 
-  private fun toBatchLoadRequest(
+  private fun toBatchLoadRequests(
     keys: KeySet,
-    consistentReads: Boolean
-  ): Triple<List<LoadRequest>, Map<KClass<*>, List<LoadRequest>>, BatchGetItemEnhancedRequest> {
-    val requests = keys.map { LoadRequest(it.encodeAsKey().rawItemKey(), it.expectedItemType()) }
-    val requestsByTable = requests.groupBy { it.tableType }
-    val batchRequest = BatchGetItemEnhancedRequest.builder()
-      .readBatches(
-        requestsByTable.map { (tableType, requestsForTable) ->
-          ReadBatch.builder(tableType.java)
-            .mappedTableResource(mappedTableResource(tableType))
-            .apply {
-              for (request in requestsForTable) {
-                addGetItem(request.key.key, consistentReads)
+    consistentReads: Boolean,
+    maxPageSize: Int
+  ): Triple<List<LoadRequest>, Map<KClass<*>, List<LoadRequest>>, List<BatchGetItemEnhancedRequest>> {
+    val requestKeys = keys.map { LoadRequest(it.encodeAsKey().rawItemKey(), it.expectedItemType()) }
+    val keysByTable = mutableMapOf<KClass<*>, List<LoadRequest>>()
+
+    val batchRequests = requestKeys.chunked(maxPageSize).map { chunk ->
+      val batchByTable = chunk.groupBy { it.tableType }
+      keysByTable.putAll(batchByTable)
+      BatchGetItemEnhancedRequest.builder()
+        .readBatches(
+          batchByTable.map { (tableType, requestsForTable) ->
+            ReadBatch.builder(tableType.java)
+              .mappedTableResource(mappedTableResource(tableType))
+              .apply {
+                for (request in requestsForTable) {
+                  addGetItem(request.key.key, consistentReads)
+                }
               }
-            }
-            .build()
-        }
-      )
-      .build()
-    return Triple(requests, requestsByTable, batchRequest)
+              .build()
+          }
+        )
+        .build()
+    }
+    return Triple(requestKeys, keysByTable, batchRequests)
   }
 
   private fun toBatchLoadResponse(
-    requestsByTable: Map<KClass<*>, List<LoadRequest>>,
-    requests: List<LoadRequest>,
-    page: BatchGetResultPage
+    keysByTable: Map<KClass<*>, List<LoadRequest>>,
+    requestKeys: List<LoadRequest>,
+    pages: List<BatchGetResultPage>
   ): ItemSet {
     val results = mutableSetOf<Any>()
-    val tableTypes = requestsByTable.keys
-    val resultTypes = requests.map { it.key to it.resultType }.toMap()
-    for (tableType in tableTypes) {
-      for (result in page.resultsForTable(mappedTableResource<Any>(tableType))) {
-        val resultType = resultTypes[result.rawItemKey()]!!
-        val decoded = resultType.codec.toApp(result)
-        results.add(decoded)
+    val tableTypes = keysByTable.keys
+    val resultTypes = requestKeys.associate { it.key to it.resultType }
+    for (page in pages) {
+      for (tableType in tableTypes) {
+        for (result in page.resultsForTable(mappedTableResource<Any>(tableType))) {
+          val resultType = resultTypes[result.rawItemKey()]!!
+          val decoded = resultType.codec.toApp(result)
+          results.add(decoded)
+        }
       }
     }
     return ItemSet(results)
   }
 
-  private fun toBatchWriteRequest(writeSet: BatchWriteSet): Pair<Map<KClass<out Any>, List<WriteRequest>>, BatchWriteItemEnhancedRequest> {
+  private fun toBatchWriteRequests(
+    writeSet: BatchWriteSet,
+    maxPageSize: Int
+  ): Pair<Map<KClass<out Any>, List<WriteRequest>>, List<BatchWriteItemEnhancedRequest>> {
     val clobberRequests = writeSet.itemsToClobber.map { WriteRequest(it.encodeAsItem(), CLOBBER) }
     val deleteRequests = writeSet.keysToDelete.map { WriteRequest(it.encodeAsKey(), DELETE) }
     val requests = clobberRequests + deleteRequests
-    val requestsByTable = requests.groupBy { it.rawItem::class }
-    val batchRequest = BatchWriteItemEnhancedRequest.builder()
-      .writeBatches(
-        requestsByTable.map { (tableType, writeRequestsForTable) ->
-          WriteBatch.builder(tableType.java)
-            .mappedTableResource(mappedTableResource(tableType))
-            .apply {
-              for (request in writeRequestsForTable) {
-                when (request.op) {
-                  CLOBBER -> addPutItem(request.rawItem)
-                  DELETE -> addDeleteItem(request.rawItem)
+    val requestsByTable = mutableMapOf<KClass<out Any>, List<WriteRequest>>()
+
+    val batchRequests = requests.chunked(maxPageSize).map { chunk ->
+      val batchByTable = chunk.groupBy { it.rawItem::class }
+      requestsByTable.putAll(batchByTable)
+      BatchWriteItemEnhancedRequest.builder()
+        .writeBatches(
+          batchByTable.map { (tableType, writeRequestsForTable) ->
+            WriteBatch.builder(tableType.java)
+              .mappedTableResource(mappedTableResource(tableType))
+              .apply {
+                for (request in writeRequestsForTable) {
+                  when (request.op) {
+                    CLOBBER -> addPutItem(request.rawItem)
+                    DELETE -> addDeleteItem(request.rawItem)
+                  }
                 }
               }
-            }
-            .build()
-        }
-      )
-      .build()
-    return Pair(requestsByTable, batchRequest)
+              .build()
+          }
+        )
+        .build()
+    }
+
+    return Pair(requestsByTable, batchRequests)
   }
 
   private fun toBatchWriteResponse(
     requestsByTable: Map<KClass<out Any>, List<WriteRequest>>,
-    result: BatchWriteResult
+    results: List<BatchWriteResult>
   ): app.cash.tempest2.BatchWriteResult {
     val unprocessedClobbers = mutableListOf<Key>()
     val unprocessedDeletes = mutableListOf<Key>()
     val tableTypes = requestsByTable.keys
+
     for (tableType in tableTypes) {
       val table = mappedTableResource<Any>(tableType)
-      val rawClobbersItems = result.unprocessedPutItemsForTable(table)
+      val rawClobbersItems = results.flatMap { it.unprocessedPutItemsForTable(table) }
       for (rawItem in rawClobbersItems) {
         unprocessedClobbers.add(rawItem.rawItemKey().key)
       }
-      val rawDeleteItems = result.unprocessedDeleteItemsForTable(table)
+      val rawDeleteItems = results.flatMap { it.unprocessedDeleteItemsForTable(table) }
       for (rawItem in rawDeleteItems) {
         unprocessedDeletes.add(rawItem.rawItemKey().key)
       }
     }
+
     return app.cash.tempest2.BatchWriteResult(
       unprocessedClobbers,
       unprocessedDeletes

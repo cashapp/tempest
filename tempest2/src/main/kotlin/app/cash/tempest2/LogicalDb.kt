@@ -24,6 +24,19 @@ import javax.annotation.CheckReturnValue
 import kotlin.reflect.KClass
 
 /**
+ * The maximum number of items for a single call to [BatchGetItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html)
+ * is 100 as of 2022-11-10
+ */
+internal const val MAX_BATCH_READ = 100
+
+/**
+ * The maximum number of items for a single call to [BatchWriteItem](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html)
+ * is 100 as of 2022-11-10
+ *
+ */
+internal const val MAX_BATCH_WRITE = 25
+
+/**
  * A collection of tables that implement the DynamoDB best practice of putting multiple
  * item types into the same storage table. This makes it possible to perform aggregate operations
  * and transactions on those item types.
@@ -43,22 +56,27 @@ interface LogicalDb : LogicalTable.Factory {
    */
   fun batchLoad(
     keys: KeySet,
-    consistentReads: Boolean = false
+    consistentReads: Boolean = false,
+    maxPageSize: Int = MAX_BATCH_READ
   ): ItemSet
 
   fun batchLoad(
     keys: Iterable<Any>,
-    consistentReads: Boolean = false
+    consistentReads: Boolean = false,
+    maxPageSize: Int = MAX_BATCH_READ
   ): ItemSet {
-    return batchLoad(KeySet(keys), consistentReads)
+    return batchLoad(KeySet(keys), consistentReads, maxPageSize)
   }
 
   fun batchLoad(
     vararg keys: Any,
-    consistentReads: Boolean = false
+    consistentReads: Boolean = false,
+    maxPageSize: Int = MAX_BATCH_READ
   ): ItemSet {
-    return batchLoad(keys.toList(), consistentReads)
+    return batchLoad(keys.toList(), consistentReads, maxPageSize)
   }
+
+
 
   /**
    * Saves and deletes the objects given using one or more calls to the
@@ -78,8 +96,31 @@ interface LogicalDb : LogicalTable.Factory {
    */
   @CheckReturnValue
   fun batchWrite(
-    writeSet: BatchWriteSet
+    writeSet: BatchWriteSet,
+    maxPageSize: Int = MAX_BATCH_WRITE
   ): BatchWriteResult
+
+  // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
+
+  fun batchLoad(
+    keys: Iterable<Any>
+  ) = batchLoad(keys, consistentReads = false, MAX_BATCH_READ)
+
+  fun batchLoad(
+    keys: Iterable<Any>,
+    consistentReads: Boolean
+  ) = batchLoad(keys, consistentReads = false, MAX_BATCH_READ)
+
+  fun batchLoad(
+    vararg keys: Any,
+    consistentReads: Boolean = false
+  ): ItemSet {
+    return batchLoad(keys.toList(), consistentReads, MAX_BATCH_READ)
+  }
+
+  fun batchWrite(
+    writeSet: BatchWriteSet
+  ) = batchWrite(writeSet, MAX_BATCH_WRITE)
 
   /**
    * Transactionally loads objects specified by transactionLoadRequest by calling
@@ -139,12 +180,6 @@ interface LogicalDb : LogicalTable.Factory {
       dynamoDbEnhancedClient: DynamoDbEnhancedClient
     ) = create(dbType.kotlin, dynamoDbEnhancedClient)
   }
-
-  // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
-
-  fun batchLoad(
-    keys: Iterable<Any>
-  ) = batchLoad(keys, consistentReads = false)
 }
 
 /**
