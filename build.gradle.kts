@@ -32,6 +32,7 @@ subprojects {
             kotlinOptions {
                 jvmTarget = "1.8"
                 allWarningsAsErrors = false
+                freeCompilerArgs = listOf("-Xjvm-default=all")
             }
         }
         val compileTestKotlin by tasks.getting(KotlinCompile::class) {

@@ -204,6 +204,8 @@ class KeySet private constructor(
   inline fun <reified K : Any> getKeys(): List<K> {
     return getKeys(K::class)
   }
+
+  override fun toString(): String = contents.toString()
 }
 
 /**
@@ -228,4 +230,6 @@ class ItemSet private constructor(
   inline fun <reified I : Any> getItems(): List<I> {
     return getItems(I::class)
   }
+
+  override fun toString(): String = contents.toString()
 }
