@@ -282,7 +282,7 @@ If you are using [Misk](https://github.com/cashapp/misk) you will need to update
 +  RealDynamoDbModule(
 +    ClientOverrideConfiguration.builder()
 +      .retryPolicy(RetryPolicy.defaultRetryPolicy().copy{ it.numRetries(DYNAMO_CLIENT_MAX_ERROR_RETRIES)})
-+      .apiCallTimeout(Duration.ofMillis(DYNAMO_REQUEST_TIMEOUT_MILLIS.toLong()))
++      .apiCallAttemptTimeout(Duration.ofMillis(DYNAMO_REQUEST_TIMEOUT_MILLIS.toLong()))
 +      .build(),
 +    listOf(
 +      Constants.DyTable,
