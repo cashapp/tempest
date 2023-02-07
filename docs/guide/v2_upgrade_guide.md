@@ -260,7 +260,7 @@ If you are using [Misk](https://github.com/cashapp/misk) you will need to update
 +val miskAws2DynamodbTesting = "com.squareup.misk:misk-aws2-dynamodb-testing:VERSION"
 ```
 
-### DynamoDbModule
+## DynamoDbModule
 
 
 ```diff
@@ -279,13 +279,21 @@ If you are using [Misk](https://github.com/cashapp/misk) you will need to update
 -  )
 -)
 +install(
-+  RealDynamoDbModule(
++  MiskDynamoModule(
 +    ClientOverrideConfiguration.builder()
-+      .retryPolicy(RetryPolicy.defaultRetryPolicy().copy{ it.numRetries(DYNAMO_CLIENT_MAX_ERROR_RETRIES)})
++      .retryPolicy(
++        RetryPolicy.defaultRetryPolicy().copy {
++          it.numRetries(
++            DYNAMO_CLIENT_MAX_ERROR_RETRIES
++          )
++        }
++      )
 +      .apiCallAttemptTimeout(Duration.ofMillis(DYNAMO_REQUEST_TIMEOUT_MILLIS.toLong()))
++      .apiCallTimeout(Duration.ofMillis(DYNAMO_CLIENT_EXECUTION_TIMEOUT_MILLIS.toLong()))
 +      .build(),
 +    listOf(
-+      Constants.DyTable,
++      DynamoDbConstants.TopicTable,
++      DynamoDbConstants.ReferencableTable
 +    ).map { RequiredDynamoDbTable(it) }
 +  )
 +)
