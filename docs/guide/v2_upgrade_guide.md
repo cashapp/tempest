@@ -292,8 +292,7 @@ If you are using [Misk](https://github.com/cashapp/misk) you will need to update
 +      .apiCallTimeout(Duration.ofMillis(DYNAMO_CLIENT_EXECUTION_TIMEOUT_MILLIS.toLong()))
 +      .build(),
 +    listOf(
-+      DynamoDbConstants.TopicTable,
-+      DynamoDbConstants.ReferencableTable
++      Constants.DyTable,
 +    ).map { RequiredDynamoDbTable(it) }
 +  )
 +)
