@@ -262,24 +262,29 @@ If you are using [Misk](https://github.com/cashapp/misk) you will need to update
 
 ## DynamoDbModule
 
+Changes to the configuration of the `RealDynamoDbModule` are due to changes in the AWS SDK v2 for the Dynamo Client. An example of the changes is below
 
 ```diff
--val clientConfig = ClientConfiguration()
--  .withMaxErrorRetry(DYNAMO_CLIENT_MAX_ERROR_RETRIES)
--  // Set a timeout per retry.
--  .withRequestTimeout(DYNAMO_REQUEST_TIMEOUT_MILLIS)
--  .withRetryPolicy(
--    PredefinedRetryPolicies
--      .getDynamoDBDefaultRetryPolicyWithCustomMaxRetries(DYNAMO_CLIENT_MAX_ERROR_RETRIES)
--  )
+-import misk.dynamodb.RealDynamoDbModule
+-import com.amazonaws.ClientConfiguration
 -install(
 -  RealDynamoDbModule(
--    clientConfig,
+-    ClientConfiguration()
+-      .withMaxErrorRetry(DYNAMO_CLIENT_MAX_ERROR_RETRIES)
+-      // Set a timeout per retry.
+-      .withRequestTimeout(DYNAMO_REQUEST_TIMEOUT_MILLIS)
+-      .withRetryPolicy(
+-        PredefinedRetryPolicies
+-          .getDynamoDBDefaultRetryPolicyWithCustomMaxRetries(DYNAMO_CLIENT_MAX_ERROR_RETRIES)
+-      ),
 -    DyItem::class
 -  )
 -)
++import misk.aws2.dynamodb.RealDynamoDbModule
++import misk.aws2.dynamodb.RequiredDynamoDbTable
++import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration
 +install(
-+  MiskDynamoModule(
++  RealDynamoDbModule(
 +    ClientOverrideConfiguration.builder()
 +      .retryPolicy(
 +        RetryPolicy.defaultRetryPolicy().copy {
