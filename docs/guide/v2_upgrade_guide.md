@@ -260,7 +260,7 @@ If you are using [Misk](https://github.com/cashapp/misk) you will need to update
 +val miskAws2DynamodbTesting = "com.squareup.misk:misk-aws2-dynamodb-testing:VERSION"
 ```
 
-## DynamoDbModule
+### DynamoDbModule
 
 Changes to the configuration of the `RealDynamoDbModule` are due to changes in the AWS SDK v2 for the Dynamo Client. An example of the changes is below
 
