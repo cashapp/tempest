@@ -18,11 +18,6 @@ jobs:
       - name: Checkout the repo
         uses: actions/checkout@v3
 
-      - name: Configure JDK
-        uses: actions/setup-java@v1
-        with:
-          java-version: 14
-
       - name: Publish the artifacts
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
