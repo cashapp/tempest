@@ -60,6 +60,7 @@ subprojects {
             showExceptions = true
             showStackTraces = true
         }
+        jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED")
     }
 
     tasks.withType<DokkaTask>().configureEach {
