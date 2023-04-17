@@ -45,10 +45,11 @@ class DefaultTestDynamoDbClient(
   private var _dynamoDbStreamsAsync: DynamoDbStreamsAsyncClient? = null
 
   override fun startUp() {
-    _dynamoDb = connect(port)
-    _dynamoDbAsync = connectAsync(port)
-    _dynamoDbStreams = connectToStreams(port)
-    _dynamoDbStreamsAsync = connectToStreamsAsync(port)
+    val hostName = hostName(port)
+    _dynamoDb = connect(hostName, port)
+    _dynamoDbAsync = connectAsync(hostName, port)
+    _dynamoDbStreams = connectToStreams(hostName, port)
+    _dynamoDbStreamsAsync = connectToStreamsAsync(hostName, port)
 
     // Cleans up the tables before each run.
     for (tableName in dynamoDb.listTables().tableNames()) {

@@ -28,8 +28,10 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput
 import software.amazon.awssdk.services.dynamodb.streams.DynamoDbStreamsAsyncClient
 import software.amazon.awssdk.services.dynamodb.streams.DynamoDbStreamsClient
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.SocketAddress
 import java.net.URI
 
 fun pickRandomPort(): Int {
@@ -40,28 +42,28 @@ private val AWS_CREDENTIALS_PROVIDER = StaticCredentialsProvider.create(
   AwsBasicCredentials.create("key", "secret")
 )
 
+private const val CONNECT_TIMEOUT_MILLIS = 1_000
+
 fun isServerListening(host: String, port: Int): Boolean {
-  var s: Socket? = null
-  return try {
-    s = Socket(host, port)
-    true
-  } catch (e: Exception) {
-    false
-  } finally {
-    if (s != null) try {
-      s.close()
+  return Socket().use {
+    try {
+      it.connect(InetSocketAddress(host, port), CONNECT_TIMEOUT_MILLIS)
+      true
     } catch (e: Exception) {
-      println("failed to close socket file")
+     false
     }
   }
 }
 
-fun connect(port: Int): DynamoDbClient {
-  if (isServerListening("host.docker.internal", port))
-    return connect("host.docker.internal", port)
-  else
-    return connect("localhost", port)
+fun hostName(port: Int): String {
+  return if (isServerListening("host.docker.internal", port)) {
+    "host.docker.internal"
+  } else {
+    "localhost"
+  }
 }
+
+fun connect(port: Int): DynamoDbClient = connect(hostName(port), port)
 
 fun connect(host: String, port: Int): DynamoDbClient {
   return DynamoDbClient.builder()
@@ -73,12 +75,7 @@ fun connect(host: String, port: Int): DynamoDbClient {
     .build()
 }
 
-fun connectAsync(port: Int): DynamoDbAsyncClient {
-  if (isServerListening("host.docker.internal", port))
-    return connectAsync("host.docker.internal", port)
-  else
-    return connectAsync("localhost", port)
-}
+fun connectAsync(port: Int): DynamoDbAsyncClient = connectAsync(hostName(port), port)
 
 fun connectAsync(host: String, port: Int): DynamoDbAsyncClient {
   return DynamoDbAsyncClient.builder()
@@ -90,12 +87,7 @@ fun connectAsync(host: String, port: Int): DynamoDbAsyncClient {
     .build()
 }
 
-fun connectToStreams(port: Int): DynamoDbStreamsClient {
-  if (isServerListening("host.docker.internal", port))
-    return connectToStreams("host.docker.internal", port)
-  else
-    return connectToStreams("localhost", port)
-}
+fun connectToStreams(port: Int): DynamoDbStreamsClient = connectToStreams(hostName(port), port)
 
 fun connectToStreams(host: String, port: Int): DynamoDbStreamsClient {
   return DynamoDbStreamsClient.builder()
@@ -107,13 +99,9 @@ fun connectToStreams(host: String, port: Int): DynamoDbStreamsClient {
     .build()
 }
 
-fun connectToStreamsAsync(port: Int): DynamoDbStreamsAsyncClient {
-  if (isServerListening("host.docker.internal", port))
-    return connectToStreamsAsync("host.docker.internal", port)
-  else
-    return connectToStreamsAsync("localhost", port)
+fun connectToStreamsAsync(port: Int): DynamoDbStreamsAsyncClient =
+  connectToStreamsAsync(hostName(port), port)
 
-}
 
 fun connectToStreamsAsync(host: String, port: Int): DynamoDbStreamsAsyncClient {
   return DynamoDbStreamsAsyncClient.builder()
