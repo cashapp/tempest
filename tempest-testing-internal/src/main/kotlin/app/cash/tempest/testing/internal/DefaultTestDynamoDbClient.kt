@@ -21,6 +21,7 @@ import app.cash.tempest.testing.TestTable
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBStreams
 import com.google.common.util.concurrent.AbstractIdleService
+import com.google.common.util.concurrent.Service
 
 class DefaultTestDynamoDbClient(
   override val tables: List<TestTable>,
@@ -28,9 +29,21 @@ class DefaultTestDynamoDbClient(
 ) : AbstractIdleService(), TestDynamoDbClient {
 
   override val dynamoDb: AmazonDynamoDB
-    get() = requireNotNull(_dynamoDb) { "`dynamoDb` is only usable while the service is running" }
+    get() {
+      checkServiceHealth()
+      return requireNotNull(_dynamoDb) { "`dynamoDb` is only usable while the service is running" }
+    }
   override val dynamoDbStreams: AmazonDynamoDBStreams
-    get() = requireNotNull(_dynamoDbStreams) { "`dynamoDbStreams` is only usable while the service is running" }
+    get() {
+      checkServiceHealth()
+      return requireNotNull(_dynamoDbStreams) { "`dynamoDbStreams` is only usable while the service is running" }
+    }
+
+  private fun checkServiceHealth() {
+    if (state() == Service.State.FAILED) {
+      throw failureCause()
+    }
+  }
 
   private var _dynamoDb: AmazonDynamoDB? = null
   private var _dynamoDbStreams: AmazonDynamoDBStreams? = null
