@@ -1,5 +1,17 @@
 # Change Log
 
+## [1.7.0] - 2023-05.03
+
+* New(gradle): Add Hermit
+* New: Add `pageWritten` hook to `WritingPager.Handler`
+* New: Add paging to `batchLoad` and `batchWrite` (sync only)
+* Docs: Migration guide for v1 -> v2
+* Test: Shorter timeout on test dynamo server
+* Chore(deps): Upgrade OpenJDK to 17
+* Chore(gradle): Upgrade to 7.6.1
+* Chore(deps): Upgrade to Kotlin 1.7
+* Chore(gradle): Swap out kotlin-dsl for kotlin-jvm
+
 ## [1.6.2] - 2022-04.01
 
 * Fixed: Fixing release, making sure we run the publication logic (#100)
