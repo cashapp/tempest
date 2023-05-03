@@ -1,3 +1,5 @@
+import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import com.vanniktech.maven.publish.SonatypeHost
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -16,6 +18,13 @@ buildscript {
         classpath(Dependencies.mavenPublishGradlePlugin)
         classpath(Dependencies.wireGradlePlugin)
     }
+}
+
+apply(plugin = "com.vanniktech.maven.publish.base")
+
+allprojects {
+    group = project.property("GROUP") as String
+    version = project.property("VERSION_NAME") as String
 }
 
 subprojects {
@@ -99,3 +108,37 @@ subprojects {
         }
     }
 }
+
+allprojects {
+    plugins.withId("com.vanniktech.maven.publish.base") {
+        val publishingExtension = extensions.getByType(PublishingExtension::class.java)
+        configure<MavenPublishBaseExtension> {
+            publishToMavenCentral(SonatypeHost.DEFAULT, automaticRelease = true)
+            signAllPublications()
+            pom {
+                description.set("Typesafe DynamoDB in Kotlin")
+                name.set(project.name)
+                url.set("https://github.com/cashapp/tempest/")
+                licenses {
+                    license {
+                        name.set("The Apache Software License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        distribution.set("repo")
+                    }
+                }
+                scm {
+                    url.set("https://github.com/cashapp/tempest/")
+                    connection.set("scm:git:git://github.com/cashapp/tempest.git")
+                    developerConnection.set("scm:git:ssh://git@github.com/cashapp/tempest.git")
+                }
+                developers {
+                    developer {
+                        id.set("square")
+                        name.set("Square, Inc.")
+                    }
+                }
+            }
+        }
+    }
+}
+

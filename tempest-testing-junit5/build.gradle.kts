@@ -1,6 +1,11 @@
+import com.vanniktech.maven.publish.JavadocJar.Dokka
+import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import com.vanniktech.maven.publish.KotlinJvm
+
 plugins {
   kotlin("jvm")
   `java-library`
+  id("com.vanniktech.maven.publish.base")
 }
 
 dependencies {
@@ -17,4 +22,9 @@ dependencies {
   testImplementation(Dependencies.junitEngine)
 }
 
-apply(from = "$rootDir/gradle-mvn-publish.gradle")
+
+configure<MavenPublishBaseExtension> {
+  configure(
+    KotlinJvm(javadocJar = Dokka("dokkaGfm"))
+  )
+}
