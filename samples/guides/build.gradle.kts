@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
   kotlin("jvm")
   `java-library`
-id("com.vanniktech.maven.publish.base")
 }
 
 dependencies {

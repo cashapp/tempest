@@ -21,7 +21,7 @@ dependencies {
   testImplementation(project(":tempest2-testing-junit5"))
 }
 
-publish.KotlinJvm
+
 configure<MavenPublishBaseExtension> {
   configure(
     KotlinJvm(javadocJar = Dokka("dokkaGfm"))

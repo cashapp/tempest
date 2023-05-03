@@ -22,7 +22,7 @@ dependencies {
   testImplementation(Dependencies.junitEngine)
 }
 
-publish.KotlinJvm
+
 configure<MavenPublishBaseExtension> {
   configure(
     KotlinJvm(javadocJar = Dokka("dokkaGfm"))
