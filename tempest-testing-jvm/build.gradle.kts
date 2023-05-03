@@ -1,6 +1,6 @@
 import com.vanniktech.maven.publish.JavadocJar.Dokka
+import com.vanniktech.maven.publish.KotlinJvm
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
-import com.vanniktech.maven.publish.KotlinMultiplatform
 
 plugins {
     kotlin("jvm")
@@ -27,6 +27,6 @@ dependencies {
 
 configure<MavenPublishBaseExtension> {
   configure(
-    KotlinMultiplatform(javadocJar = Dokka("dokkaGfm"))
+    KotlinJvm(javadocJar = Dokka("dokkaGfm"))
   )
 }
