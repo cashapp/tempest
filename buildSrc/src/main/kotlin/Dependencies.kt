@@ -23,7 +23,7 @@ object Dependencies {
   val ktlintVersion = "0.40.0"
   val log4jCore = "org.apache.logging.log4j:log4j-core:2.17.1"
   val loggingApi = "io.github.microutils:kotlin-logging:2.0.10"
-  val mavenPublishGradlePlugin = "com.vanniktech:gradle-maven-publish-plugin:0.18.0"
+  val mavenPublishGradlePlugin = "com.vanniktech:gradle-maven-publish-plugin:0.25.0"
   val nettyBom = "io.netty:netty-bom:4.1.79.Final"
   val okio = "com.squareup.okio:okio:3.2.0"
   val wireGradlePlugin = "com.squareup.wire:wire-gradle-plugin:4.4.0"

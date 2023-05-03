@@ -1,6 +1,11 @@
+import com.vanniktech.maven.publish.JavadocJar.Dokka
+import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import com.vanniktech.maven.publish.KotlinMultiplatform
+
 plugins {
   kotlin("jvm")
   `java-library`
+  id("com.vanniktech.maven.publish.base")
 }
 
 dependencies {
@@ -20,4 +25,10 @@ tasks.withType<Test> {
   useJUnit()
 }
 
-apply(from = "$rootDir/gradle-mvn-publish.gradle")
+// apply(from = "$rootDir/gradle-mvn-publish.gradle")
+
+configure<MavenPublishBaseExtension> {
+  configure(
+    KotlinMultiplatform(javadocJar = Dokka("dokkaGfm"))
+  )
+}
