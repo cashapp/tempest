@@ -109,33 +109,36 @@ subprojects {
     }
 }
 
-plugins.withId("com.vanniktech.maven.publish.base") {
-    val publishingExtension = extensions.getByType(PublishingExtension::class.java)
-    configure<MavenPublishBaseExtension> {
-        publishToMavenCentral(SonatypeHost.DEFAULT, automaticRelease = true)
-        signAllPublications()
-        pom {
-            description.set("Typesafe DynamoDB in Kotlin")
-            name.set(project.name)
-            url.set("https://github.com/cashapp/tempest/")
-            licenses {
-                license {
-                    name.set("The Apache Software License, Version 2.0")
-                    url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                    distribution.set("repo")
-                }
-            }
-            scm {
+allprojects {
+    plugins.withId("com.vanniktech.maven.publish.base") {
+        val publishingExtension = extensions.getByType(PublishingExtension::class.java)
+        configure<MavenPublishBaseExtension> {
+            publishToMavenCentral(SonatypeHost.DEFAULT, automaticRelease = true)
+            signAllPublications()
+            pom {
+                description.set("Typesafe DynamoDB in Kotlin")
+                name.set(project.name)
                 url.set("https://github.com/cashapp/tempest/")
-                connection.set("scm:git:git://github.com/cashapp/tempest.git")
-                developerConnection.set("scm:git:ssh://git@github.com/cashapp/tempest.git")
-            }
-            developers {
-                developer {
-                    id.set("square")
-                    name.set("Square, Inc.")
+                licenses {
+                    license {
+                        name.set("The Apache Software License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        distribution.set("repo")
+                    }
+                }
+                scm {
+                    url.set("https://github.com/cashapp/tempest/")
+                    connection.set("scm:git:git://github.com/cashapp/tempest.git")
+                    developerConnection.set("scm:git:ssh://git@github.com/cashapp/tempest.git")
+                }
+                developers {
+                    developer {
+                        id.set("square")
+                        name.set("Square, Inc.")
+                    }
                 }
             }
         }
     }
 }
+
