@@ -26,7 +26,6 @@ dependencies {
   testImplementation(Dependencies.junitEngine)
 }
 
-// // apply(from = "$rootDir/gradle-mvn-publish.gradle")
 
 configure<MavenPublishBaseExtension> {
   configure(

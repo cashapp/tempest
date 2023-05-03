@@ -25,8 +25,7 @@ tasks.withType<Test> {
   useJUnit()
 }
 
-// apply(from = "$rootDir/gradle-mvn-publish.gradle")
-
+publish.KotlinJvm
 configure<MavenPublishBaseExtension> {
   configure(
     KotlinJvm(javadocJar = Dokka("dokkaGfm"))

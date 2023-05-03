@@ -21,7 +21,6 @@ dependencies {
   testImplementation(project(":tempest-testing-junit5"))
 }
 
-// // apply(from = "$rootDir/gradle-mvn-publish.gradle")
 
 configure<MavenPublishBaseExtension> {
   configure(

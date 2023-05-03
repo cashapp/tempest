@@ -3,7 +3,7 @@ name: Publish a release
 on:
   push:
     branches:
-      - ci-publish
+      - master
     tags:
       - '*'
 

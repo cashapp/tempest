@@ -19,7 +19,7 @@ dependencies {
   testImplementation(Dependencies.junitEngine)
 }
 
-// // apply(from = "$rootDir/gradle-mvn-publish.gradle")
+// publish.KotlinJvm
 
 configure<MavenPublishBaseExtension> {
   configure(
