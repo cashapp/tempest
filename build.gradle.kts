@@ -22,6 +22,11 @@ buildscript {
 
 apply(plugin = "com.vanniktech.maven.publish.base")
 
+allprojects {
+    group = project.property("GROUP") as String
+    version = project.property("VERSION_NAME") as String
+}
+
 subprojects {
     apply(plugin = "org.jetbrains.dokka")
 

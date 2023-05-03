@@ -1,7 +1,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
   kotlin("jvm")
-  id("com.vanniktech.maven.publish.base")
+  `java-library`
+id("com.vanniktech.maven.publish.base")
 }
 
 dependencies {
