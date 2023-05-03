@@ -112,7 +112,7 @@ subprojects {
 plugins.withId("com.vanniktech.maven.publish.base") {
     val publishingExtension = extensions.getByType(PublishingExtension::class.java)
     configure<MavenPublishBaseExtension> {
-        publishToMavenCentral(SonatypeHost.S01, automaticRelease = true)
+        publishToMavenCentral(SonatypeHost.DEFAULT, automaticRelease = true)
         signAllPublications()
         pom {
             description.set("Typesafe DynamoDB in Kotlin")
