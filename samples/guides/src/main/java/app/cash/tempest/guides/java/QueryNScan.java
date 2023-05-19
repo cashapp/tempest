@@ -24,6 +24,7 @@ import app.cash.tempest.Page;
 import app.cash.tempest.QueryConfig;
 import app.cash.tempest.ScanConfig;
 import app.cash.tempest.WorkerId;
+import app.cash.tempest.musiclibrary.java.AlbumInfoOrTrack;
 import app.cash.tempest.musiclibrary.java.AlbumTrack;
 import app.cash.tempest.musiclibrary.java.MusicTable;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
@@ -161,6 +162,15 @@ public class QueryNScan {
       tracks.addAll(page.getContents());
     } while (page.getHasMorePages());
     return tracks;
+  }
+
+  // Query - Mixed types
+  public List<AlbumInfoOrTrack> loadAlbumInfoAndTracks(String albumToken) {
+    Page<AlbumInfoOrTrack.Key, AlbumInfoOrTrack> page = table.albumInfoOrTracks().query(
+        // keyCondition.
+        new BeginsWith<>(new AlbumInfoOrTrack.Key(albumToken))
+    );
+    return page.getContents();
   }
 
   // Scan.

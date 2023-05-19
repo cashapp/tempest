@@ -42,6 +42,7 @@ internal object V2AttributeAnnotation : AttributeAnnotation<Attribute> {
   override fun name(annotation: Attribute) = annotation.name
   override fun names(annotation: Attribute) = annotation.names
   override fun prefix(annotation: Attribute) = annotation.prefix
+  override fun noPrefix(annotation: Attribute) = annotation.noPrefix
 }
 
 internal object V2StringAttributeValue : StringAttributeValue<AttributeValue> {

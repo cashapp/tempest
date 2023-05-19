@@ -217,6 +217,7 @@ data class ItemType(
     val propertyName: String,
     val names: Set<String>,
     val prefix: String,
+    val noPrefix: Boolean,
     val returnType: KType
   )
 
@@ -270,7 +271,7 @@ data class ItemType(
         requireNotNull(rangeKeyAttribute) {
           "Expect $itemType to map to ${rawItemType.type}'s range key ${primaryIndex.rangeKeyName}"
         }
-        require(rangeKeyAttribute.prefix.isNotEmpty()) {
+        require(rangeKeyAttribute.noPrefix || rangeKeyAttribute.prefix.isNotEmpty()) {
           "Expect $itemType.${primaryIndex.rangeKeyName} to be annotated with a prefix"
         }
       }
@@ -286,7 +287,7 @@ data class ItemType(
       if (property.shouldIgnore) {
         return null
       }
-      val (expectedRawItemAttributes, prefix) = attributeAnnotation.attributeMetadata(
+      val (expectedRawItemAttributes, prefix, noPrefix) = attributeAnnotation.attributeMetadata(
         property,
         constructorParameters
       )
@@ -298,7 +299,12 @@ data class ItemType(
             "See: https://github.com/cashapp/tempest/issues/53."
         }
       }
-      return Attribute(property.name, expectedRawItemAttributes, prefix, property.returnType)
+      if (noPrefix) {
+        require(prefix.isEmpty()) {
+          "Expect $itemType.${property.name} to have no prefix."
+        }
+      }
+      return Attribute(property.name, expectedRawItemAttributes, prefix, noPrefix, property.returnType)
     }
   }
 }

@@ -22,6 +22,7 @@ import app.cash.tempest.FilterExpression
 import app.cash.tempest.Offset
 import app.cash.tempest.Page
 import app.cash.tempest.WorkerId
+import app.cash.tempest.musiclibrary.AlbumInfoOrTrack
 import app.cash.tempest.musiclibrary.AlbumTrack
 import app.cash.tempest.musiclibrary.MusicTable
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
@@ -96,32 +97,42 @@ class QueryNScan(
   // Query - Pagination.
   fun loadAlbumTracks6(albumToken: String): List<AlbumTrack> {
     val tracks = mutableListOf<AlbumTrack>()
-    var page: Page<AlbumTrack.Key, AlbumTrack>? = null
+    lateinit var page: Page<AlbumTrack.Key, AlbumTrack>
     do {
       page = table.albumTracks.query(
         keyCondition = BeginsWith(AlbumTrack.Key(albumToken)),
         pageSize = 10,
-        initialOffset = page?.offset
+        initialOffset = page.offset
       )
       tracks.addAll(page.contents)
-    } while (page?.hasMorePages == true)
+    } while (page.hasMorePages)
     return tracks.toList()
   }
 
   // Query - Specified Offset
   fun loadAlbumTracksAfterTrack(albumToken: String, trackToken: String): List<AlbumTrack> {
     val tracks = mutableListOf<AlbumTrack>()
-    var page: Page<AlbumTrack.Key, AlbumTrack>? = null
+    lateinit var page: Page<AlbumTrack.Key, AlbumTrack>
     val offset = Offset(AlbumTrack.Key(trackToken))
     do {
       page = table.albumTracks.query(
         keyCondition = BeginsWith(AlbumTrack.Key(albumToken)),
         pageSize = 10,
-        initialOffset = page?.offset ?: offset
+        initialOffset = page.offset ?: offset
       )
       tracks.addAll(page.contents)
-    } while (page?.hasMorePages == true)
+    } while (page.hasMorePages)
     return tracks.toList()
+  }
+
+  // Query - Mixed types
+  fun loadAlbumInfoAndTracks(albumToken: String): List<AlbumInfoOrTrack> {
+    val page = table.albumInfoOrTracks.query(
+      keyCondition = BeginsWith(
+        prefix = AlbumInfoOrTrack.Key(albumToken)
+      )
+    )
+    return page.contents
   }
 
   // Scan.

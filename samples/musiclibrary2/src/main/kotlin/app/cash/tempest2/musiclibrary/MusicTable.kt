@@ -29,6 +29,7 @@ import kotlin.text.toLong
 interface MusicTable : LogicalTable<MusicItem> {
   val albumInfo: InlineView<AlbumInfo.Key, AlbumInfo>
   val albumTracks: InlineView<AlbumTrack.Key, AlbumTrack>
+  val albumInfoOrTracks: InlineView<AlbumInfoOrTrack.Key, AlbumInfoOrTrack>
 
   val playlistInfo: InlineView<PlaylistInfo.Key, PlaylistInfo>
 
@@ -114,6 +115,42 @@ data class AlbumTrack(
     val track_title: String? = null,
     // To uniquely identify an item in pagination.
     val track_token: String? = null
+  )
+}
+
+data class AlbumInfoOrTrack(
+  @Attribute(name = "partition_key")
+  val album_token: String,
+  @Attribute(noPrefix = true)
+  val sort_key: String,
+  val album_title: String?,
+  val artist_name: String?,
+  val release_date: LocalDate?,
+  val genre_name: String?,
+  val track_title: String?,
+  val run_length: Duration?
+) {
+
+  @Transient
+  val key = Key(album_token, sort_key)
+
+  @Transient
+  val albumInfo: AlbumInfo? = if (sort_key == "INFO_") {
+    AlbumInfo(album_token, album_title!!, artist_name!!, release_date!!, genre_name!!)
+  } else {
+    null
+  }
+
+  @Transient
+  val albumTrack: AlbumTrack? = if (sort_key.startsWith("TRACK_")) {
+    AlbumTrack(album_token, sort_key.removePrefix("TRACK_"), track_title!!, run_length!!)
+  } else {
+    null
+  }
+
+  data class Key(
+    val album_token: String,
+    val sort_key: String = "",
   )
 }
 

@@ -22,6 +22,7 @@ import app.cash.tempest.musiclibrary.THE_DARK_SIDE_OF_THE_MOON
 import app.cash.tempest.musiclibrary.THE_WALL
 import app.cash.tempest.musiclibrary.WHAT_YOU_DO_TO_ME_SINGLE
 import app.cash.tempest2.musiclibrary.AlbumInfo
+import app.cash.tempest2.musiclibrary.AlbumInfoOrTrack
 import app.cash.tempest2.musiclibrary.AlbumTrack
 import app.cash.tempest2.musiclibrary.MusicDb
 import app.cash.tempest2.musiclibrary.albumTitles
@@ -91,6 +92,20 @@ class DynamoDbQueryableTest {
     )
     assertThat(page2.hasMorePages).isFalse()
     assertThat(page2.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(2..2))
+  }
+
+  @Test
+  fun primaryIndexBeginsWithMixedTypes() {
+    musicTable.givenAlbums(AFTER_HOURS_EP)
+
+    val page1 = musicTable.albumInfoOrTracks.query(
+      keyCondition = BeginsWith(AlbumInfoOrTrack.Key(AFTER_HOURS_EP.album_token))
+    )
+    assertThat(page1.hasMorePages).isFalse()
+    val albumInfo = page1.contents.mapNotNull { it.albumInfo }.single()
+    assertThat(albumInfo.album_title).isEqualTo(AFTER_HOURS_EP.album_title)
+    val albumTracks = page1.contents.mapNotNull { it.albumTrack }
+    assertThat(albumTracks.map { it.track_title }).containsAll(AFTER_HOURS_EP.trackTitles)
   }
 
   @Test

@@ -23,6 +23,7 @@ import app.cash.tempest2.SecondaryIndex;
 public interface MusicTable extends LogicalTable<MusicItem> {
   InlineView<AlbumInfo.Key, AlbumInfo> albumInfo();
   InlineView<AlbumTrack.Key, AlbumTrack> albumTracks();
+  InlineView<AlbumInfoOrTrack.Key, AlbumInfoOrTrack> albumInfoOrTracks();
 
   InlineView<PlaylistInfo.Key, PlaylistInfo> playlistInfo();
 
