@@ -31,34 +31,9 @@ fun testDb() = TestDynamoDb.Builder(JvmDynamoDbServer.Factory)
     TestTable.create<MusicItem>("music_items") {
       it.toBuilder()
         .globalSecondaryIndices(
-          EnhancedGlobalSecondaryIndex.builder()
-            .indexName("genre_album_index")
-            .projection(
-              Projection.builder()
-                .projectionType("ALL")
-                .build()
-            )
-            .provisionedThroughput(
-              ProvisionedThroughput.builder()
-                .readCapacityUnits(1)
-                .writeCapacityUnits(1)
-                .build()
-            )
-            .build(),
-          EnhancedGlobalSecondaryIndex.builder()
-            .indexName("artist_album_index")
-            .projection(
-              Projection.builder()
-                .projectionType("ALL")
-                .build()
-            )
-            .provisionedThroughput(
-              ProvisionedThroughput.builder()
-                .readCapacityUnits(1)
-                .writeCapacityUnits(1)
-                .build()
-            )
-            .build()
+          EnhancedGSI("genre_album_index"),
+          EnhancedGSI("artist_album_index"),
+          EnhancedGSI("label_album_index"),
         )
         .localSecondaryIndices(
           EnhancedLocalSecondaryIndex.create(
@@ -72,6 +47,23 @@ fun testDb() = TestDynamoDb.Builder(JvmDynamoDbServer.Factory)
     }
   )
   .build()
+
+fun EnhancedGSI(indexName: String, projectionType: String = "ALL"): EnhancedGlobalSecondaryIndex? {
+  return EnhancedGlobalSecondaryIndex.builder()
+    .indexName(indexName)
+    .projection(
+      Projection.builder()
+        .projectionType(projectionType)
+        .build()
+    )
+    .provisionedThroughput(
+      ProvisionedThroughput.builder()
+        .readCapacityUnits(1)
+        .writeCapacityUnits(1)
+        .build()
+    )
+    .build()
+}
 
 val Page<*, AlbumTrack>.trackTitles: List<String>
   get() = contents.map { it.track_title }
@@ -87,7 +79,8 @@ fun MusicTable.givenAlbums(vararg albums: Album) {
         album.album_title,
         album.artist_name,
         album.release_date,
-        album.genre_name
+        album.genre_name,
+        label_name = album.label
       )
     )
     for ((i, track) in album.tracks.withIndex()) {

@@ -35,6 +35,7 @@ interface MusicTable : LogicalTable<MusicItem> {
   // Global Secondary Indexes.
   val albumInfoByGenre: SecondaryIndex<AlbumInfo.GenreIndexOffset, AlbumInfo>
   val albumInfoByArtist: SecondaryIndex<AlbumInfo.ArtistIndexOffset, AlbumInfo>
+  val albumInfoByLabel: SecondaryIndex<AlbumInfo.LabelIndexOffset, AlbumInfo>
 
   // Local Secondary Indexes.
   val albumTracksByTitle: SecondaryIndex<AlbumTrack.TitleIndexOffset, AlbumTrack>
@@ -46,7 +47,9 @@ data class AlbumInfo(
   val album_title: String,
   val artist_name: String,
   val release_date: LocalDate,
-  val genre_name: String
+  val genre_name: String,
+  @Attribute(prefix = "L_", allowEmpty = true)
+  val label_name: String? = null
 ) {
   @Attribute(prefix = "INFO_")
   val sort_key: String = ""
@@ -71,6 +74,14 @@ data class AlbumInfo(
   @ForIndex("artist_album_index")
   data class ArtistIndexOffset(
     val artist_name: String,
+    val album_token: String? = null,
+    // To uniquely identify an item in pagination.
+    val sort_key: String? = null
+  )
+
+  @ForIndex("label_album_index")
+  data class LabelIndexOffset(
+    val label_name: String,
     val album_token: String? = null,
     // To uniquely identify an item in pagination.
     val sort_key: String? = null

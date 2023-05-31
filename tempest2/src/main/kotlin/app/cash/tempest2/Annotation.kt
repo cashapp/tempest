@@ -37,7 +37,9 @@ annotation class TableName(
 annotation class Attribute(
   val name: String = "",
   val names: Array<String> = [],
-  val prefix: String = ""
+  val prefix: String = "",
+  /** Allows a nullable field with a [prefix] to be null when serializing. If this is [false] the [prefix] will be added to the field even when it is [null]. */
+  val allowEmpty: Boolean = false
 )
 
 /**

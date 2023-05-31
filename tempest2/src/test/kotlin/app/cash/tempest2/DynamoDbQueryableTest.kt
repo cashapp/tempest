@@ -21,6 +21,7 @@ import app.cash.tempest.musiclibrary.LOCKDOWN_SINGLE
 import app.cash.tempest.musiclibrary.THE_DARK_SIDE_OF_THE_MOON
 import app.cash.tempest.musiclibrary.THE_WALL
 import app.cash.tempest.musiclibrary.WHAT_YOU_DO_TO_ME_SINGLE
+import app.cash.tempest.musiclibrary.SPIRIT_WORLD_FIELD_GUIDE
 import app.cash.tempest2.musiclibrary.AlbumInfo
 import app.cash.tempest2.musiclibrary.AlbumTrack
 import app.cash.tempest2.musiclibrary.MusicDb
@@ -255,7 +256,8 @@ class DynamoDbQueryableTest {
     musicTable.givenAlbums(
       WHAT_YOU_DO_TO_ME_SINGLE,
       AFTER_HOURS_EP,
-      LOCKDOWN_SINGLE
+      LOCKDOWN_SINGLE,
+      SPIRIT_WORLD_FIELD_GUIDE
     )
     val page1 = musicTable.albumInfoByArtist.query(
       BeginsWith(AlbumInfo.ArtistIndexOffset("53 Theives", "")),
@@ -266,6 +268,7 @@ class DynamoDbQueryableTest {
       AFTER_HOURS_EP.album_title,
       WHAT_YOU_DO_TO_ME_SINGLE.album_title
     )
+    assertThat(page1.contents.map { it.label_name }.filterNotNull().size).isEqualTo(0)
 
     val page2 = musicTable.albumInfoByArtist.query(
       BeginsWith(AlbumInfo.ArtistIndexOffset("53 Theives", "")),
@@ -276,6 +279,18 @@ class DynamoDbQueryableTest {
     assertThat(page2.albumTitles).containsExactly(
       LOCKDOWN_SINGLE.album_title
     )
+    assertThat(page2.contents.map { it.label_name }.filterNotNull().size).isEqualTo(0)
+
+    val sparseGsiPage = musicTable.albumInfoByLabel.query(
+      BeginsWith(AlbumInfo.LabelIndexOffset("Rhymesayers", "")),
+      pageSize = 1
+    )
+
+    assertThat(sparseGsiPage.hasMorePages).isTrue()
+    assertThat(sparseGsiPage.albumTitles).containsExactly(
+      SPIRIT_WORLD_FIELD_GUIDE.album_title
+    )
+    assertThat(sparseGsiPage.contents.single().label_name).isEqualTo(SPIRIT_WORLD_FIELD_GUIDE.label)
   }
 
   private fun runLengthLongerThan(duration: Duration): Expression {

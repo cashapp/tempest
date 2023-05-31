@@ -34,6 +34,7 @@ interface AttributeAnnotation<T : Annotation> {
   fun name(annotation: T): String
   fun names(annotation: T): Array<String>
   fun prefix(annotation: T): String
+  fun allowEmpty(annotation: T): Boolean
 }
 
 internal fun AttributeAnnotation<*>.hasAttributeAnnotation(
@@ -50,13 +51,15 @@ internal fun <T : Annotation> AttributeAnnotation<T>.attributeMetadata(
   val annotation = findAnnotation(property, constructorParameters)
   return AttributeMetadata(
     annotation?.let(this::annotatedNames) ?: setOf(property.name),
-    annotation?.let(this::prefix) ?: ""
+    annotation?.let(this::prefix) ?: "",
+    annotation?.let(this::allowEmpty) ?: false
   )
 }
 
 internal data class AttributeMetadata(
   val names: Set<String>,
-  val prefix: String
+  val prefix: String,
+  val allowEmpty: Boolean
 )
 
 private fun <T : Annotation> AttributeAnnotation<T>.findAnnotation(
