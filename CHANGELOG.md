@@ -1,6 +1,9 @@
 # Change Log
 
-## [1.7.0] - 2023-05.03
+## [1.8.0] - 2023-05-31
+* New(tempest2): Adds `Attribute.allowEmpty` to support nullable, prefixed fields
+
+## [1.7.0] - 2023-05-03
 
 * New(gradle): Add Hermit
 * New: Add `pageWritten` hook to `WritingPager.Handler`
@@ -12,11 +15,11 @@
 * Chore(deps): Upgrade to Kotlin 1.7
 * Chore(gradle): Swap out kotlin-dsl for kotlin-jvm
 
-## [1.6.2] - 2022-04.01
+## [1.6.2] - 2022-04-01
 
 * Fixed: Fixing release, making sure we run the publication logic (#100)
 
-## [1.6.1] - 2022-04.01
+## [1.6.1] - 2022-04-01
 
 * Fixed: Fixing release logic (#99)
 

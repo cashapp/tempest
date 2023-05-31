@@ -217,7 +217,8 @@ data class ItemType(
     val propertyName: String,
     val names: Set<String>,
     val prefix: String,
-    val returnType: KType
+    val returnType: KType,
+    val allowEmpty: Boolean
   )
 
   interface Index {
@@ -286,7 +287,7 @@ data class ItemType(
       if (property.shouldIgnore) {
         return null
       }
-      val (expectedRawItemAttributes, prefix) = attributeAnnotation.attributeMetadata(
+      val (expectedRawItemAttributes, prefix, allowEmpty) = attributeAnnotation.attributeMetadata(
         property,
         constructorParameters
       )
@@ -298,7 +299,7 @@ data class ItemType(
             "See: https://github.com/cashapp/tempest/issues/53."
         }
       }
-      return Attribute(property.name, expectedRawItemAttributes, prefix, property.returnType)
+      return Attribute(property.name, expectedRawItemAttributes, prefix, property.returnType, allowEmpty)
     }
   }
 }

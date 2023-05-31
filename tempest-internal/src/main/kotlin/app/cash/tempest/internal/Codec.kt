@@ -117,8 +117,9 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
 
     fun addPrefix(dbItem: DB): DB {
       val attributeValues = mapAttributeValue.toAttributeValues(dbItem).toMutableMap()
-      for ((attributeName, prefix) in attributePrefixes) {
+      for ((attributeName, prefix, allowEmpty) in attributePrefixes) {
         val attributeValue = attributeValues[attributeName]
+        if (attributeValue == null && allowEmpty) continue
         if (attributeValue == null) {
           attributeValues[attributeName] = attributeValue(prefix)
           continue
@@ -133,7 +134,11 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
 
     fun removePrefix(dbItem: DB): DB {
       val attributeValues = mapAttributeValue.toAttributeValues(dbItem).toMutableMap()
-      for ((attributeName, prefix) in attributePrefixes) {
+      for ((attributeName, prefix, nullable) in attributePrefixes) {
+        if (nullable && attributeValues[attributeName]?.s == null) {
+          // attributeValues[attributeName] = attributeValue("")
+          continue
+        }
         val attributeValue = requireNotNull(attributeValues[attributeName])
         requireNotNull(attributeValue.s) {
           "Expect ${rawItemType.type}.$attributeName to be mapped to a string"
@@ -148,7 +153,7 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
 
     private fun attributeValue(s: String): AV = stringAttributeValue.toAttributeValue(s)
 
-    data class AttributePrefix(val attributeName: String, val prefix: String)
+    data class AttributePrefix(val attributeName: String, val prefix: String, val allowEmpty: Boolean = false)
   }
 
   internal class Factory(
@@ -197,7 +202,7 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
       }
       val attributePrefixes = itemAttributes.values
         .filter { attribute -> attribute.prefix.isNotEmpty() }
-        .flatMap { attribute -> attribute.names.map { Prefixer.AttributePrefix(it, attribute.prefix) } }
+        .flatMap { attribute -> attribute.names.map { Prefixer.AttributePrefix(it, attribute.prefix, attribute.allowEmpty) } }
       return ReflectionCodec(
         itemType.defaultConstructor,
         ClassFactory.create(itemType.java),

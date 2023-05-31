@@ -192,13 +192,46 @@ val LOCKDOWN_SINGLE = Album(
   )
 )
 
+val SPIRIT_WORLD_FIELD_GUIDE = Album(
+  album_token = "ALBUM_a9d2b95a",
+  album_title = "Spirit World Field Guide",
+  artist_name = "Aesop Rock",
+  release_date = LocalDate.of(2020, 11, 13),
+  genre_name = "Hip-Hop",
+  tracks = listOf(
+    Track("Hello from the Spirit World", Duration.parse("PT2M06S")),
+    Track("The Gates", Duration.parse("PT3M51S")),
+    Track("Button Masher", Duration.parse("PT3M45S")),
+    Track("Dog at the Door", Duration.parse("PT1M28S")),
+    Track("Gauze", Duration.parse("PT3M12S")),
+    Track("Pizza Alley", Duration.parse("PT4M36S")),
+    Track("Crystal Sword", Duration.parse("PT2M20S")),
+    Track("Boot Soup", Duration.parse("PT4M08S")),
+    Track("Coveralls", Duration.parse("PT3M39S")),
+    Track("Jumping Coffin", Duration.parse("PT3M29S")),
+    Track("Holy Waterfall", Duration.parse("PT3M48S")),
+    Track("Flies", Duration.parse("PT0M46S")),
+    Track("Salt", Duration.parse("PT3M37S")),
+    Track("Sleeper Car", Duration.parse("PT3M42S")),
+    Track("1 to 10", Duration.parse("PT0M53S")),
+    Track("Attaboy", Duration.parse("PT3M00S")),
+    Track("Kodokushi", Duration.parse("PT3M53S")),
+    Track("Fixed and Dilated", Duration.parse("PT2M38S")),
+    Track("Side Quest", Duration.parse("PT1M21S")),
+    Track("Marble Cake", Duration.parse("PT4M16S")),
+    Track("The Four Winds", Duration.parse("PT2M50S")),
+    ),
+  label = "Rhymesayers"
+)
+
 data class Album(
   val album_token: String,
   val album_title: String,
   val artist_name: String,
   val release_date: LocalDate,
   val genre_name: String,
-  val tracks: List<Track>
+  val tracks: List<Track>,
+  val label: String? = null
 ) {
   val trackTitles = tracks.map { it.track_title }
 }

@@ -33,7 +33,7 @@ import java.time.LocalDate
 class MusicItem {
   // All Items.
   @get:DynamoDbPartitionKey
-  @get:DynamoDbSecondarySortKey(indexNames = ["genre_album_index", "artist_album_index"])
+  @get:DynamoDbSecondarySortKey(indexNames = ["genre_album_index", "artist_album_index", "label_album_index"])
   var partition_key: String? = null
   @get:DynamoDbSortKey
   var sort_key: String? = null
@@ -46,6 +46,8 @@ class MusicItem {
   var release_date: LocalDate? = null
   @get:DynamoDbSecondaryPartitionKey(indexNames = ["genre_album_index"])
   var genre_name: String? = null
+  @get:DynamoDbSecondaryPartitionKey(indexNames = ["label_album_index"])
+  var label_name: String? = null
 
   // AlbumTrack.
   @get:DynamoDbSecondarySortKey(indexNames = ["album_track_title_index"])

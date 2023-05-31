@@ -34,6 +34,7 @@ internal object V1AttributeAnnotation : AttributeAnnotation<Attribute> {
   override fun name(annotation: Attribute) = annotation.name
   override fun names(annotation: Attribute) = annotation.names
   override fun prefix(annotation: Attribute) = annotation.prefix
+  override fun allowEmpty(annotation: Attribute) = false
 }
 
 internal object V1StringAttributeValue : StringAttributeValue<AttributeValue> {

@@ -486,13 +486,13 @@ public List<String> getAlbumTrackTitles(String albumToken) {
 For AWS SDK 1.x:
 
 ```groovy
-implementation "app.cash.tempest:tempest:1.7.0"
+implementation "app.cash.tempest:tempest:1.8.0"
 ```
 
 For AWS SDK 2.x:
 
 ```groovy
-implementation "app.cash.tempest:tempest2:1.7.0"
+implementation "app.cash.tempest:tempest2:1.8.0"
 ```
 
 ## Migrating From Tempest 1 to Tempest 2
