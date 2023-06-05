@@ -28,6 +28,8 @@ allprojects {
 }
 
 subprojects {
+    if (project.name == "tempest-bom") return@subprojects
+
     apply(plugin = "org.jetbrains.dokka")
 
     repositories {

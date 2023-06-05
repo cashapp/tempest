@@ -3,7 +3,7 @@ name: Publish a release
 on:
   push:
     branches:
-      - allowEnforced
+      - main
     tags:
       - '*'
 
