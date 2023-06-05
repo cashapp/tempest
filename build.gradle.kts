@@ -52,7 +52,7 @@ subprojects {
         }
 
         dependencies {
-            add("api", project(":tempest-bom"))
+            // add("api", project(":tempest-bom"))
             add("api", platform(Dependencies.nettyBom))
         }
     }
