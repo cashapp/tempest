@@ -131,6 +131,5 @@ Write familiar code that is asynchronous under the hood.
 
 Check out the code samples on Github:
 
-* Music Library - SDK 2.x ([.kt](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary2/src/main/kotlin/app/cash/tempest2/musiclibrary), [.java](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary2/src/main/java/app/cash/tempest2/musiclibrary/java))
-* Asynchronous Programing - SDK 2.x ([.kt](https://github.com/cashapp/tempest/blob/master/samples/guides2/src/main/kotlin/app/cash/tempest2/guides/AsynchronousProgramming.kt), [.java](https://github.com/cashapp/tempest/blob/master/samples/guides2/src/main/java/app/cash/tempest2/guides/java/AsynchronousProgramming.java))
- 
+* Music Library - SDK 2.x ([.kt](https://github.com/cashapp/tempest/tree/main/samples/musiclibrary2/src/main/kotlin/app/cash/tempest2/musiclibrary), [.java](https://github.com/cashapp/tempest/tree/main/samples/musiclibrary2/src/main/java/app/cash/tempest2/musiclibrary/java))
+* Asynchronous Programing - SDK 2.x ([.kt](https://github.com/cashapp/tempest/blob/main/samples/guides2/src/main/kotlin/app/cash/tempest2/guides/AsynchronousProgramming.kt), [.java](https://github.com/cashapp/tempest/blob/main/samples/guides2/src/main/java/app/cash/tempest2/guides/java/AsynchronousProgramming.java))

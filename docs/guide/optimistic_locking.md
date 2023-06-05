@@ -216,8 +216,7 @@ To serialize writes to the same playlist, we can have writers implement optimist
 
 Check out the code samples on Github:
 
- * Music Library - SDK 1.x ([.kt](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary/src/main/kotlin/app/cash/tempest/musiclibrary), [.java](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary/src/main/java/app/cash/tempest/musiclibrary/java))
- * Music Library - SDK 2.x ([.kt](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary2/src/main/kotlin/app/cash/tempest2/musiclibrary), [.java](https://github.com/cashapp/tempest/tree/master/samples/musiclibrary2/src/main/java/app/cash/tempest2/musiclibrary/java))
- * Optimistic Locking - SDK 1.x ([.kt](https://github.com/cashapp/tempest/blob/master/samples/guides/src/main/kotlin/app/cash/tempest/guides/OptimisticLocking.kt), [.java](https://github.com/cashapp/tempest/blob/master/samples/guides/src/main/java/app/cash/tempest/guides/java/OptimisticLocking.java))
- * Optimistic Locking - SDK 2.x ([.kt](https://github.com/cashapp/tempest/blob/master/samples/guides2/src/main/kotlin/app/cash/tempest2/guides/OptimisticLocking.kt), [.java](https://github.com/cashapp/tempest/blob/master/samples/guides2/src/main/java/app/cash/tempest2/guides/java/OptimisticLocking.java))
- 
+ * Music Library - SDK 1.x ([.kt](https://github.com/cashapp/tempest/tree/main/samples/musiclibrary/src/main/kotlin/app/cash/tempest/musiclibrary), [.java](https://github.com/cashapp/tempest/tree/main/samples/musiclibrary/src/main/java/app/cash/tempest/musiclibrary/java))
+ * Music Library - SDK 2.x ([.kt](https://github.com/cashapp/tempest/tree/main/samples/musiclibrary2/src/main/kotlin/app/cash/tempest2/musiclibrary), [.java](https://github.com/cashapp/tempest/tree/main/samples/musiclibrary2/src/main/java/app/cash/tempest2/musiclibrary/java))
+ * Optimistic Locking - SDK 1.x ([.kt](https://github.com/cashapp/tempest/blob/main/samples/guides/src/main/kotlin/app/cash/tempest/guides/OptimisticLocking.kt), [.java](https://github.com/cashapp/tempest/blob/main/samples/guides/src/main/java/app/cash/tempest/guides/java/OptimisticLocking.java))
+ * Optimistic Locking - SDK 2.x ([.kt](https://github.com/cashapp/tempest/blob/main/samples/guides2/src/main/kotlin/app/cash/tempest2/guides/OptimisticLocking.kt), [.java](https://github.com/cashapp/tempest/blob/main/samples/guides2/src/main/java/app/cash/tempest2/guides/java/OptimisticLocking.java))
