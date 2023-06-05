@@ -52,6 +52,7 @@ subprojects {
         }
 
         dependencies {
+            add("api", enforcedPlatform(project(":tempest-bom")))
             add("api", platform(Dependencies.nettyBom))
         }
     }
