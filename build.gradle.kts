@@ -28,6 +28,8 @@ allprojects {
 }
 
 subprojects {
+    if (project.name == "tempest-bom") return@subprojects
+
     apply(plugin = "org.jetbrains.dokka")
 
     repositories {
@@ -52,7 +54,7 @@ subprojects {
         }
 
         dependencies {
-            add("api", enforcedPlatform(project(":tempest-bom")))
+            // add("api", project(":tempest-bom"))
             add("api", platform(Dependencies.nettyBom))
         }
     }
