@@ -490,6 +490,5 @@ Let's put everything together.
 
 Check out the code samples on Github:
 
- * URL Shortener - SDK 1.x ([.kt](https://github.com/cashapp/tempest/tree/master/samples/urlshortener/src/main/kotlin/app/cash/tempest/urlshortener), [.java](https://github.com/cashapp/tempest/tree/master/samples/urlshortener/src/main/java/app/cash/tempest/urlshortener/java))
- * URL Shortener - SDK 2.x ([.kt](https://github.com/cashapp/tempest/tree/master/samples/urlshortener2/src/main/kotlin/app/cash/tempest2/urlshortener), [.java](https://github.com/cashapp/tempest/tree/master/samples/urlshortener2/src/main/java/app/cash/tempest2/urlshortener/java))
- 
+ * URL Shortener - SDK 1.x ([.kt](https://github.com/cashapp/tempest/tree/main/samples/urlshortener/src/main/kotlin/app/cash/tempest/urlshortener), [.java](https://github.com/cashapp/tempest/tree/main/samples/urlshortener/src/main/java/app/cash/tempest/urlshortener/java))
+ * URL Shortener - SDK 2.x ([.kt](https://github.com/cashapp/tempest/tree/main/samples/urlshortener2/src/main/kotlin/app/cash/tempest2/urlshortener), [.java](https://github.com/cashapp/tempest/tree/main/samples/urlshortener2/src/main/java/app/cash/tempest2/urlshortener/java))

@@ -94,7 +94,7 @@ appropriate, up to and including a permanent ban from all of Square spaces witho
 
 
 [codeofconduct_at]: mailto:codeofconduct@squareup.com
-[twitter_coc]: https://github.com/twitter/code-of-conduct/blob/master/code-of-conduct.md
+[twitter_coc]: https://github.com/twitter/code-of-conduct/blob/main/code-of-conduct.md
 [ubuntu_coc]: https://ubuntu.com/community/code-of-conduct
 [gdc_coc]: https://www.gdconf.com/code-of-conduct
 [django_coc]: https://www.djangoproject.com/conduct/reporting/
