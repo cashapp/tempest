@@ -1,5 +1,6 @@
 include("tempest-internal")
 include("tempest")
+include("tempest-bom")
 include("tempest-testing")
 include("tempest-testing-internal")
 include("tempest-testing-docker")
@@ -26,3 +27,4 @@ include(":samples:musiclibrary2")
 include(":samples:musiclibrary-testing")
 include(":samples:urlshortener")
 include(":samples:urlshortener2")
+
