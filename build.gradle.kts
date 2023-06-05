@@ -52,12 +52,8 @@ subprojects {
         }
 
         dependencies {
-            add("api", enforcedPlatform(project(":tempest-bom")))
+            add("api", project(":tempest-bom"))
             add("api", platform(Dependencies.nettyBom))
-        }
-
-        tasks.withType<GenerateModuleMetadata> {
-            suppressedValidationErrors.add("enforced-platform")
         }
     }
 
