@@ -1,5 +1,8 @@
 # Change Log
 
+## [1.9.0] - 2023-06-06
+* New: add BOM
+
 ## [1.8.0] - 2023-05-31
 * New(tempest2): Adds `Attribute.allowEmpty` to support nullable, prefixed fields
 
