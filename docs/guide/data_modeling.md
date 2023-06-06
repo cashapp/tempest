@@ -15,12 +15,7 @@ To design a DynamoDB table that scales efficiently, you must first identify the 
 
 Suppose we are building a music library with this entity model.
 
-```mermaid
-erDiagram
-    ALBUM ||--|{ TRACK : contains
-    ALBUM }|..|| ARTIST : contains
-    PLAYLIST ||--|{ TRACK : contains
-```
+![Data Model](../img/data-model-mermaid.jpg)
 
 This music library needs to support the following access patterns.
 
