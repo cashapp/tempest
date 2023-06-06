@@ -4,6 +4,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapper
+import java.net.URL
 
 buildscript {
     repositories {
@@ -76,22 +77,23 @@ subprojects {
     }
 
     tasks.withType<DokkaTask>().configureEach {
-        val dokkaTask = this
         dokkaSourceSets.configureEach {
             reportUndocumented.set(false)
             skipDeprecated.set(true)
             jdkVersion.set(8)
-            if (dokkaTask.name == "dokkaGfm") {
+            if (name == "dokkaGfm") {
                 outputDirectory.set(project.file("$rootDir/docs/1.x"))
             }
 
-// TODO: add external doc links...
-//      externalDocumentationLink {
-//        url = java.net.URL("https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/")
-//      }
-//      externalDocumentationLink {
-//        url = java.net.URL("https://sdk.amazonaws.com/java/api/latest/")
-//      }
+        externalDocumentationLink {
+            url.set(URL("https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/"))
+            packageListUrl.set(URL("https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/package-list"))
+
+        }
+
+            // externalDocumentationLink {
+            //     url.set(URL("https://sdk.amazonaws.com/java/api/latest/"))
+            // }
         }
     }
     // SLF4J uses the classpath to decide which logger to use! Banish the Log4J to prevent this:

@@ -18,9 +18,6 @@ theme:
 extra_css:
   - 'css/app.css'
 
-extra_javascript:
-  - 'script/mermaid.min.js'
-
 markdown_extensions:
   - admonition
   - smarty
@@ -37,11 +34,7 @@ markdown_extensions:
   - pymdownx.magiclink
   - pymdownx.smartsymbols
   - pymdownx.tabbed
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_div_format
+  - pymdownx.superfences
   - tables
 
 plugins:
