@@ -116,6 +116,8 @@ To access this table in code, model it using
 [`DynamoDBMapper`](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.html) or 
 [`DynamoDbEnhancedClient`](https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/enhanced/dynamodb/DynamoDbEnhancedClient.html).
 
+> Note: The base item type `AliasItem` is still used for the `LogicalTable`. This type is intended to model an empty row, so all its fields should be nullable with a `null` default value. Using non-nullable types or fields with default values will cause issues during serialization and querying.
+
 === "Kotlin - SDK 2.x"
 
     ```kotlin
