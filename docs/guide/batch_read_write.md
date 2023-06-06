@@ -2,7 +2,7 @@
 
 `LogicalDb` lets you `batchLoad` multiple items from one or more tables using their primary keys.
 
-=== "Kotlin - SDK 2.x"
+=== ":material-language-kotlin: Kotlin - SDK 2.x: 
 
     ```kotlin
     private val db: MusicDb
@@ -16,7 +16,7 @@
     }
     ```
 
-=== "Java - SDK 2.x"
+=== ":material-language-java: Java - SDK 2.x: 
 
     ```java
     private final MusicDb db;
@@ -32,7 +32,7 @@
     }
     ```
 
-=== "Kotlin - SDK 1.x"
+=== ":material-language-kotlin: Kotlin - SDK 1.x: 
 
     ```kotlin
     private val db: MusicDb
@@ -47,7 +47,7 @@
     }
     ```
 
-=== "Java - SDK 1.x"
+=== ":material-language-java: Java - SDK 1.x: 
 
     ```java
     private final MusicDb db;
@@ -91,7 +91,7 @@
     provisioned throughput is exceeded or an internal processing failure occurs, the failed operations 
     are returned in the UnprocessedItems response parameter.
 
-=== "Kotlin - SDK 2.x"
+=== ":material-language-kotlin: Kotlin - SDK 2.x: 
 
     ```kotlin
     private val db: MusicDb
@@ -109,7 +109,7 @@
     }
     ```
 
-=== "Java - SDK 2.x"
+=== ":material-language-java: Java - SDK 2.x: 
 
     ```java
     private final MusicDb db;
@@ -127,7 +127,7 @@
     }
     ```
 
-=== "Kotlin - SDK 1.x"
+=== ":material-language-kotlin: Kotlin - SDK 1.x: 
     
     ```kotlin
     private val db: MusicDb
@@ -148,7 +148,7 @@
     }
     ```
  
-=== "Java - SDK 1.x"
+=== ":material-language-java: Java - SDK 1.x: 
 
     ```java
     private final MusicDb db;

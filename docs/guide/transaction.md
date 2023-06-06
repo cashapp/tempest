@@ -7,7 +7,7 @@ Amazon DynamoDB [transactions](https://docs.aws.amazon.com/amazondynamodb/latest
 
 `LogicalDb` lets you load a consistent snapshot of up to 25 items in a transaction.
 
-=== "Kotlin"
+=== ":material-language-kotlin: Kotlin: 
     
     ```kotlin
     private val db: MusicDb
@@ -20,7 +20,7 @@ Amazon DynamoDB [transactions](https://docs.aws.amazon.com/amazondynamodb/latest
     }
     ```
 
-=== "Java"
+=== ":material-language-java: Java: 
 
     ```java
     private final MusicDb db;
@@ -39,7 +39,7 @@ Amazon DynamoDB [transactions](https://docs.aws.amazon.com/amazondynamodb/latest
 
 The following example uses transactions to make sure it only adds valid album tracks to the playlist. 
 
-=== "Kotlin - SDK 2.x"
+=== ":material-language-kotlin: Kotlin - SDK 2.x: 
 
     ```kotlin
     private val db: MusicDb
@@ -83,7 +83,7 @@ The following example uses transactions to make sure it only adds valid album tr
     }
     ```
 
-=== "Java - SDK 2.x"
+=== ":material-language-java: Java - SDK 2.x: 
 
     ```java
     private final MusicDb db;
@@ -133,7 +133,7 @@ The following example uses transactions to make sure it only adds valid album tr
     }
     ```
 
-=== "Kotlin - SDK 1.x"
+=== ":material-language-kotlin: Kotlin - SDK 1.x: 
 
     ```kotlin
     private val db: MusicDb
@@ -177,7 +177,7 @@ The following example uses transactions to make sure it only adds valid album tr
     }
     ```
 
-=== "Java - SDK 1.x"
+=== ":material-language-java: Java - SDK 1.x: 
 
     ```java
     private final MusicDb db;
@@ -231,7 +231,7 @@ To make the 25 item limit easier to work with, we created `WritingPager`: a cont
 
 The following example decomposes the operation into multiple transactions containing less than 25 items.
 
-=== "Kotlin"
+=== ":material-language-kotlin: Kotlin: 
     
     ```kotlin
     private val db: MusicDb
@@ -284,7 +284,7 @@ The following example decomposes the operation into multiple transactions contai
     }
     ```
 
-=== "Java"
+=== ":material-language-java: Java: 
 
     ```java
     private final MusicDb db;

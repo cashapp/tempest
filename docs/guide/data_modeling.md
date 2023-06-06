@@ -266,7 +266,7 @@ This [global secondary index](https://docs.aws.amazon.com/amazondynamodb/latest/
 
 Tempest lets you define strongly typed data models on top of your [`DynamoDBMapper`](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.html) classes.
 
-=== "Kotlin - SDK 2.x"
+=== ":material-language-kotlin: Kotlin - SDK 2.x: 
 
     ```kotlin
     interface MusicDb : LogicalDb {
@@ -300,7 +300,7 @@ Tempest lets you define strongly typed data models on top of your [`DynamoDBMapp
     }
     ```
 
-=== "Java - SDK 2.x"
+=== ":material-language-java: Java - SDK 2.x: 
 
     ```java
     public interface MusicDb extends LogicalDb {
@@ -353,7 +353,7 @@ Tempest lets you define strongly typed data models on top of your [`DynamoDBMapp
     }
     ```
 
-=== "Kotlin - SDK 1.x"
+=== ":material-language-kotlin: Kotlin - SDK 1.x: 
 
     ```kotlin
     interface MusicDb : LogicalDb {
@@ -386,7 +386,7 @@ Tempest lets you define strongly typed data models on top of your [`DynamoDBMapp
     }
     ```
 
-=== "Java - SDK 1.x"
+=== ":material-language-java: Java - SDK 1.x: 
 
     ```java
     public interface MusicDb extends LogicalDb {
@@ -454,7 +454,7 @@ and transactions on those item types.
 
 For example, you can batch load up to 100 items in a single request. 
 
-=== "Kotlin"
+=== ":material-language-kotlin: Kotlin: 
 
     ```kotlin
     val items = musicDb.batchLoad(
@@ -463,7 +463,7 @@ For example, you can batch load up to 100 items in a single request.
       PlaylistInfo.Key("PLAYLIST_1"))
     ```
 
-=== "Java"
+=== ":material-language-java: Java: 
 
     ```java
     ItemSet items = db.batchLoad(
@@ -475,21 +475,21 @@ For example, you can batch load up to 100 items in a single request.
 
 To create a `LogicalDb`, you need to pass in an instance of `DynamoDBMapper`.
 
-=== "Kotlin - SDK 2.x"
+=== ":material-language-kotlin: Kotlin - SDK 2.x: 
     
     ```kotlin
     val enhancedClient = DynamoDbEnhancedClient.create()
     val db: MusicDb = LogicalDb(enhancedClient)
     ```
 
-=== "Java - SDK 2.x"
+=== ":material-language-java: Java - SDK 2.x: 
 
     ```java
     DynamoDbEnhancedClient enhancedClient = DynamoDbEnhancedClient.create();
     MusicDb db = LogicalDb.create(MusicDb.class, enhancedClient);
     ```
 
-=== "Kotlin - SDK 1.x"
+=== ":material-language-kotlin: Kotlin - SDK 1.x: 
     
     ```kotlin
     val client: AmazonDynamoDB = AmazonDynamoDBClientBuilder.standard().build()
@@ -497,7 +497,7 @@ To create a `LogicalDb`, you need to pass in an instance of `DynamoDBMapper`.
     val db: MusicDb = LogicalDb(mapper)
     ```
 
-=== "Java - SDK 1.x"
+=== ":material-language-java: Java - SDK 1.x: 
 
     ```java
     AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
@@ -511,7 +511,7 @@ When you create an instance of DynamoDBMapper, it has certain default behaviors;
 
 The following code snippet creates a DynamoDBMapper with custom settings:
 
-=== "Kotlin - SDK 2.x"
+=== ":material-language-kotlin: Kotlin - SDK 2.x: 
 
     ```kotlin
     val client = DynamoDbClient.create()
@@ -522,7 +522,7 @@ The following code snippet creates a DynamoDBMapper with custom settings:
     val db: MusicDb = LogicalDb(enhancedClient)
     ```
 
-=== "Java - SDK 2.x"
+=== ":material-language-java: Java - SDK 2.x: 
     
     ```java
     DynamoDbClient client = DynamoDbClient.create();
@@ -533,7 +533,7 @@ The following code snippet creates a DynamoDBMapper with custom settings:
     MusicDb db = LogicalDb.create(MusicDb.class, enhancedClient);
     ```
     
-=== "Kotlin - SDK 1.x"
+=== ":material-language-kotlin: Kotlin - SDK 1.x: 
 
     ```kotlin
     val client = AmazonDynamoDBClientBuilder.standard().build()
@@ -547,7 +547,7 @@ The following code snippet creates a DynamoDBMapper with custom settings:
     val db: MusicDb = LogicalDb(mapper)
     ```
 
-=== "Java - SDK 1.x"
+=== ":material-language-java: Java - SDK 1.x: 
     
     ```java
     AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
@@ -571,7 +571,7 @@ A `LogicalTable` is a collection of views on a DynamoDB table that makes it easy
 
 An `InlineView` lets you perform CRUD operations, queries, and scans on an entity type.
 
-=== "Kotlin"
+=== ":material-language-kotlin: Kotlin: 
 
     ```kotlin
     interface MusicTable : LogicalTable<MusicItem> {
@@ -597,7 +597,7 @@ An `InlineView` lets you perform CRUD operations, queries, and scans on an entit
     }
     ```
 
-=== "Java"
+=== ":material-language-java: Java: 
 
     ```kotlin
     public interface MusicTable extends LogicalTable<MusicItem> {
@@ -697,7 +697,7 @@ The `albumInfo` view is a type-safe way to access `AlbumInfo` entities:
     | INFO_     | AlbumInfo  |
     | TRACK_    | AlbumTrack |
     
-=== "Kotlin"
+=== ":material-language-kotlin: Kotlin: 
 
     ```kotlin
     interface MusicTable : LogicalTable<MusicItem> {
@@ -723,7 +723,7 @@ The `albumInfo` view is a type-safe way to access `AlbumInfo` entities:
     )
     ```
 
-=== "Java"
+=== ":material-language-java: Java: 
 
     ```java
     public interface MusicTable extends LogicalTable<MusicItem> {
@@ -753,7 +753,7 @@ The `albumInfo` view is a type-safe way to access `AlbumInfo` entities:
 
 An `SecondaryIndex` lets you perform queries, and scans on an entity type.
 
-=== "Kotlin"
+=== ":material-language-kotlin: Kotlin: 
 
     ```kotlin
     interface MusicTable : LogicalTable<MusicItem> {
@@ -781,7 +781,7 @@ An `SecondaryIndex` lets you perform queries, and scans on an entity type.
     }
     ```
     
-=== "Java"
+=== ":material-language-java: Java: 
 
     ```java
     public interface MusicTable extends LogicalTable<MusicItem> {
@@ -859,7 +859,7 @@ Tempest uses `DynamoDBMapper` to encode and decode entities.
 
 You may use `DynamoDBTypeConverter` to support [custom attribute types](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.ArbitraryDataMapping.html).
 
-=== "Kotlin - SDK 2.x"
+=== ":material-language-kotlin: Kotlin - SDK 2.x: 
 
     ```kotlin
     @DynamoDbBean
@@ -890,7 +890,7 @@ You may use `DynamoDBTypeConverter` to support [custom attribute types](https://
     }
     ```
 
-=== "Java - SDK 2.x"
+=== ":material-language-java: Java - SDK 2.x: 
 
     ```java
     @DynamoDbBean
@@ -923,7 +923,7 @@ You may use `DynamoDBTypeConverter` to support [custom attribute types](https://
     }
     ```
 
-=== "Kotlin - SDK 1.x"
+=== ":material-language-kotlin: Kotlin - SDK 1.x: 
 
     ```kotlin
     @DynamoDBTable(tableName = "music_items")
@@ -946,7 +946,7 @@ You may use `DynamoDBTypeConverter` to support [custom attribute types](https://
     }
     ```
 
-=== "Java - SDK 1.x"
+=== ":material-language-java: Java - SDK 1.x: 
 
     ```java
     @DynamoDBTable(tableName = "music_items")
