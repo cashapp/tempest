@@ -36,6 +36,3 @@ cat README.md | grep -v 'project website' > docs/index.md
 cp CHANGELOG.md docs/changelog.md
 cp CONTRIBUTING.md docs/contributing.md
 cp RELEASING.md docs/releasing.md
-
-
-mv ./build/dokka/html docs/1.x
