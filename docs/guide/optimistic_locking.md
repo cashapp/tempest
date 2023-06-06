@@ -10,7 +10,7 @@ To avoid conflicts in your application, check out these tools:
 
 Let's add a playlist feature to our music library:
 
-=== ":material-language-kotlin: Kotlin: 
+=== "Kotlin: 
 
     ```kotlin
     interface MusicTable : LogicalTable<MusicItem> {
@@ -35,7 +35,7 @@ Let's add a playlist feature to our music library:
     }
     ```
 
-=== ":material-language-java: Java: 
+=== "Java: 
 
     ```java
     public interface MusicTable extends LogicalTable<MusicItem> {
@@ -77,7 +77,7 @@ Let's add a playlist feature to our music library:
     
 To serialize writes to the same playlist, we can have writers implement optimistic locking on the `playlist_version` attribute. 
 
-=== ":material-language-kotlin: Kotlin - SDK 2.x: 
+=== "Kotlin - SDK 2.x: 
 
     ```kotlin
     private val table: MusicTable
@@ -108,7 +108,7 @@ To serialize writes to the same playlist, we can have writers implement optimist
     
     ```
 
-=== ":material-language-java: Java - SDK 2.x: 
+=== "Java - SDK 2.x: 
 
     ```java
     private final MusicTable table;
@@ -142,7 +142,7 @@ To serialize writes to the same playlist, we can have writers implement optimist
     }
     ```
 
-=== ":material-language-kotlin: Kotlin - SDK 1.x: 
+=== "Kotlin - SDK 1.x: 
 
     ```kotlin
     private val table: MusicTable
@@ -175,7 +175,7 @@ To serialize writes to the same playlist, we can have writers implement optimist
     }
     ```
 
-=== ":material-language-java: Java - SDK 1.x: 
+=== "Java - SDK 1.x: 
     
     ```java
     private MusicTable table;

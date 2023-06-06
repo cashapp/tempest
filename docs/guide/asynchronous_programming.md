@@ -10,7 +10,7 @@ Tempest for SDK 2.x comes with async APIs that utilize Kotlin [coroutine](https:
 
 Declare you DB and tables as `AsyncLogicalDb` and `AsyncLogicalTable`.
 
-=== ":material-language-kotlin: Kotlin - SDK 2.x: 
+=== "Kotlin - SDK 2.x: 
 
     ```kotlin
     interface AsyncMusicDb : AsyncLogicalDb {
@@ -33,7 +33,7 @@ Declare you DB and tables as `AsyncLogicalDb` and `AsyncLogicalTable`.
     }
     ```
 
-=== ":material-language-java: Java - SDK 2.x: 
+=== "Java - SDK 2.x: 
 
     ```java
     public interface AsyncMusicDb extends AsyncLogicalDb {
@@ -58,7 +58,7 @@ Declare you DB and tables as `AsyncLogicalDb` and `AsyncLogicalTable`.
 
 Write familiar code that is asynchronous under the hood. 
 
-=== ":material-language-kotlin: Kotlin - SDK 2.x: 
+=== "Kotlin - SDK 2.x: 
 
     ```kotlin
     private val table: AsyncMusicTable
@@ -88,7 +88,7 @@ Write familiar code that is asynchronous under the hood.
     }
     ```
 
-=== ":material-language-java: Java - SDK 2.x: 
+=== "Java - SDK 2.x: 
 
     ```java
     private final AsyncMusicTable table;
