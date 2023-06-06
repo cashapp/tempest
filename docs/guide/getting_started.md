@@ -34,7 +34,7 @@ Let's build a URL shortener with the following features:
 
 We express it like this in code.
 
-=== "Kotlin: 
+=== "Kotlin"
 
     ```kotlin
     interface UrlShortener {
@@ -52,7 +52,7 @@ We express it like this in code.
     }
     ```
 
-=== "Java: 
+=== "Java"
 
     ```java
     public interface UrlShortener {
@@ -118,7 +118,7 @@ To access this table in code, model it using
 
 > Note: The base item type `AliasItem` is still used for the `LogicalTable`. This type is intended to model an empty row, so all its fields should be nullable with a `null` default value. Using non-nullable types or fields with default values will cause issues during serialization and querying.
 
-=== "Kotlin - SDK 2.x: 
+=== "Kotlin - SDK 2.x"
 
     ```kotlin
     // Note: this POJO is not type-safe because its attributes are nullable and mutable.
@@ -130,7 +130,7 @@ To access this table in code, model it using
     }
     ```
 
-=== "Java - SDK 2.x: 
+=== "Java - SDK 2.x"
 
     ```java
     // Note: this POJO is not type-safe because its attributes are nullable and mutable.
@@ -161,7 +161,7 @@ To access this table in code, model it using
     }
     ```
 
-=== "Kotlin - SDK 1.x: 
+=== "Kotlin - SDK 1.x"
 
     ```kotlin
     // Note: this POJO is not type-safe because its attributes are nullable and mutable.
@@ -174,7 +174,7 @@ To access this table in code, model it using
     }
     ```
 
-=== "Java - SDK 1.x: 
+=== "Java - SDK 1.x"
 
     ```java
     // Note: this POJO is not type-safe because its attributes are nullable and mutable.
@@ -205,7 +205,7 @@ To access this table in code, model it using
 
 Tempest lets you interact with `AliasItem` using strongly typed data classes.
   
-=== "Kotlin - SDK 2.x: 
+=== "Kotlin - SDK 2.x"
 
     ```kotlin
     interface AliasDb : LogicalDb {
@@ -227,7 +227,7 @@ Tempest lets you interact with `AliasItem` using strongly typed data classes.
     }
     ```
 
-=== "Java - SDK 2.x: 
+=== "Java - SDK 2.x"
 
     ```java
     public interface AliasDb extends LogicalDb {
@@ -264,7 +264,7 @@ Tempest lets you interact with `AliasItem` using strongly typed data classes.
     }
     ```
 
-=== "Kotlin - SDK 1.x: 
+=== "Kotlin - SDK 1.x"
 
     ```kotlin
     interface AliasDb: LogicalDb {
@@ -285,7 +285,7 @@ Tempest lets you interact with `AliasItem` using strongly typed data classes.
     }
     ```
 
-=== "Java - SDK 1.x: 
+=== "Java - SDK 1.x"
 
     ```java
     public interface AliasDb extends LogicalDb {
@@ -323,7 +323,7 @@ Tempest lets you interact with `AliasItem` using strongly typed data classes.
 
 Let's put everything together.
 
-=== "Kotlin - SDK 2.x: 
+=== "Kotlin - SDK 2.x"
 
     ```kotlin
     class RealUrlShortener(
@@ -358,7 +358,7 @@ Let's put everything together.
     }
     ```
 
-=== "Java - SDK 2.x: 
+=== "Java - SDK 2.x"
 
     ```java
     public class RealUrlShortener implements UrlShortener {
@@ -404,7 +404,7 @@ Let's put everything together.
     }
     ```
 
-=== "Kotlin - SDK 1.x: 
+=== "Kotlin - SDK 1.x"
    
     ```kotlin
     class RealUrlShortener(
@@ -440,7 +440,7 @@ Let's put everything together.
     }
     ```
 
-=== "Java - SDK 1.x: 
+=== "Java - SDK 1.x"
 
     ```java
     public class RealUrlShortener implements UrlShortener {

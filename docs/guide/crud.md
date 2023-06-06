@@ -1,6 +1,6 @@
 We’ve written some examples that demonstrate how to solve common problems with Tempest. Read through them to learn about how everything works together.
 
-=== "Kotlin: 
+=== "Kotlin"
 
     ```kotlin
     interface MusicTable : LogicalTable<MusicItem> {
@@ -41,7 +41,7 @@ We’ve written some examples that demonstrate how to solve common problems with
     }
     ```
     
-=== "Java: 
+=== "Java"
 
     ```java
     interface MusicTable : LogicalTable<MusicItem> {
@@ -118,7 +118,7 @@ We’ve written some examples that demonstrate how to solve common problems with
 
 Use `load()` to read a value.
 
-=== "Kotlin: 
+=== "Kotlin"
 
     ```kotlin
     private val table: MusicTable
@@ -129,7 +129,7 @@ Use `load()` to read a value.
     }
     ```
 
-=== "Java: 
+=== "Java"
 
     ```java
     private final MusicTable table;
@@ -152,7 +152,7 @@ Use `load()` to read a value.
     If your read immediately follows a write of the same item, you should use a strongly consistent read
     to ensure your read reflects the write.
 
-=== "Kotlin: 
+=== "Kotlin"
 
     ```kotlin
     fun readAfterWrite() {
@@ -171,7 +171,7 @@ Use `load()` to read a value.
     }
     ```
 
-=== "Java: 
+=== "Java"
 
     ```java
     public void readAfterWrite() {
@@ -197,7 +197,7 @@ Use `load()` to read a value.
 
 If you need to read your writes, you may perform a strongly consistent read at a higher latency.
 
-=== "Kotlin - SDK 2.x: 
+=== "Kotlin - SDK 2.x"
 
     ```kotlin
     private val table: MusicTable
@@ -211,7 +211,7 @@ If you need to read your writes, you may perform a strongly consistent read at a
     }
     ```
 
-=== "Java - SDK 2.x: 
+=== "Java - SDK 2.x"
 
     ```java
     private final MusicTable table;
@@ -229,7 +229,7 @@ If you need to read your writes, you may perform a strongly consistent read at a
     }
     ```
 
-=== "Kotlin - SDK 1.x: 
+=== "Kotlin - SDK 1.x"
 
     ```kotlin
     private val table: MusicTable
@@ -243,7 +243,7 @@ If you need to read your writes, you may perform a strongly consistent read at a
     }
     ```
 
-=== "Java - SDK 1.x: 
+=== "Java - SDK 1.x"
 
     ```java
     private final MusicTable table;
@@ -266,7 +266,7 @@ If you need to read your writes, you may perform a strongly consistent read at a
 
 By default, writes are unconditional. When there is a conflict, the last writer wins. 
 
-=== "Kotlin: 
+=== "Kotlin"
     
     ```kotlin
     private val table: MusicTable
@@ -276,7 +276,7 @@ By default, writes are unconditional. When there is a conflict, the last writer 
     }
     ```
 
-=== "Java: 
+=== "Java"
 
     ```java
     private final MusicTable table;
@@ -288,7 +288,7 @@ By default, writes are unconditional. When there is a conflict, the last writer 
 
 To prevent lost updates across concurrent writes, you may specify a condition expression. If the condition expression evaluates to true, the operation is applied; otherwise, the operation is rolled back.
 
-=== "Kotlin - SDK 2.x: 
+=== "Kotlin - SDK 2.x"
     
     ```kotlin
     private val table: MusicTable
@@ -304,7 +304,7 @@ To prevent lost updates across concurrent writes, you may specify a condition ex
     }
     ```
 
-=== "Java - SDK 2.x: 
+=== "Java - SDK 2.x"
 
     ```java
     private final MusicTable table;
@@ -320,7 +320,7 @@ To prevent lost updates across concurrent writes, you may specify a condition ex
     }
     ```
 
-=== "Kotlin - SDK 1.x: 
+=== "Kotlin - SDK 1.x"
     
     ```kotlin
     private val table: MusicTable
@@ -335,7 +335,7 @@ To prevent lost updates across concurrent writes, you may specify a condition ex
     }
     ```
 
-=== "Java - SDK 1.x: 
+=== "Java - SDK 1.x"
 
     ```java
     private final MusicTable table;
@@ -354,7 +354,7 @@ To prevent lost updates across concurrent writes, you may specify a condition ex
 
 Use `delete()` to delete a value by key.
 
-=== "Kotlin: 
+=== "Kotlin"
     
     ```kotlin
     private val table: MusicTable
@@ -364,7 +364,7 @@ Use `delete()` to delete a value by key.
     }
     ```
 
-=== "Java: 
+=== "Java"
 
     ```java
     private final MusicTable table;
@@ -376,7 +376,7 @@ Use `delete()` to delete a value by key.
 
 Similarly, you can add a condition expression to the delete operation. 
 
-=== "Kotlin - SDK 2.x: 
+=== "Kotlin - SDK 2.x"
     
     ```kotlin
     private val table: MusicTable
@@ -392,7 +392,7 @@ Similarly, you can add a condition expression to the delete operation.
     }
     ```
 
-=== "Java - SDK 2.x: 
+=== "Java - SDK 2.x"
 
     ```java
     private final MusicTable table;
@@ -408,7 +408,7 @@ Similarly, you can add a condition expression to the delete operation.
     }
     ```
 
-=== "Kotlin - SDK 1.x: 
+=== "Kotlin - SDK 1.x"
     
     ```kotlin
     private val table: MusicTable
@@ -423,7 +423,7 @@ Similarly, you can add a condition expression to the delete operation.
     }
     ```
 
-=== "Java - SDK 1.x: 
+=== "Java - SDK 1.x"
 
     ```java
     private final MusicTable table;

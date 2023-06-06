@@ -54,7 +54,7 @@ Then in tests annotated with `@org.junit.jupiter.api.Test`, you may add `TestDyn
 DynamoDB server. It shares the server across tests and keeps it running until the process exits. It
 also manages test tables for you, recreating them before each test.
 
-=== "Kotlin - SDK 2.x: 
+=== "Kotlin - SDK 2.x"
 
     ```kotlin
     class MyTest {
@@ -91,7 +91,7 @@ also manages test tables for you, recreating them before each test.
     }
     ```
 
-=== "Java - SDK 2.x: 
+=== "Java - SDK 2.x"
 
     ```java
     class MyTest {
@@ -132,7 +132,7 @@ also manages test tables for you, recreating them before each test.
     }
     ```
 
-=== "Kotlin - SDK 1.x: 
+=== "Kotlin - SDK 1.x"
 
     ```kotlin
     class MyTest {
@@ -167,7 +167,7 @@ also manages test tables for you, recreating them before each test.
     }
     ```
 
-=== "Java - SDK 1.x: 
+=== "Java - SDK 1.x"
 
     ```java
     class MyTest {
@@ -266,7 +266,7 @@ test [rule](https://junit.org/junit4/javadoc/4.12/org/junit/Rule.html). This rul
 DynamoDB server. It shares the server across tests and keeps it running until the process exits. It
 also manages test tables for you, recreating them before each test.
 
-=== "Kotlin - SDK 2.x: 
+=== "Kotlin - SDK 2.x"
 
     ```kotlin
     class MyTest {
@@ -302,7 +302,7 @@ also manages test tables for you, recreating them before each test.
     }
     ```
 
-=== "Java - SDK 2.x: 
+=== "Java - SDK 2.x"
 
     ```java
     class MyTest {
@@ -343,7 +343,7 @@ also manages test tables for you, recreating them before each test.
     }
     ```
 
-=== "Kotlin - SDK 1.x: 
+=== "Kotlin - SDK 1.x"
 
     ```kotlin
     class MyTest {
@@ -377,7 +377,7 @@ also manages test tables for you, recreating them before each test.
     }
     ```
 
-=== "Java - SDK 1.x: 
+=== "Java - SDK 1.x"
 
     ```java
     class MyTest {

@@ -10,7 +10,7 @@ To query an index, you must provide the name of the partition key attribute and 
 
 Let's continue with the music library example.
 
-=== "Kotlin: 
+=== "Kotlin"
 
     ```kotlin
     interface MusicTable : LogicalTable<MusicItem> {
@@ -42,7 +42,7 @@ Let's continue with the music library example.
     }
     ```
 
-=== "Java: 
+=== "Java"
 
     ```java
     public interface MusicTable extends LogicalTable<MusicItem> {
@@ -111,7 +111,7 @@ Let's continue with the music library example.
 
 This uses the primary index to find all tracks in the given album, sorted by track number.
 
-=== "Kotlin: 
+=== "Kotlin"
 
     ```kotlin
     private val table: MusicTable
@@ -126,7 +126,7 @@ This uses the primary index to find all tracks in the given album, sorted by tra
     }
     ```
 
-=== "Java: 
+=== "Java"
 
     ```java
     private final MusicTable table;
@@ -147,7 +147,7 @@ This uses the primary index to find all tracks in the given album, sorted by tra
 
 This uses the secondary index to find all tracks in the given album whose title starts with "I want ", sorted by title.
  
-=== "Kotlin: 
+=== "Kotlin"
     
     ```kotlin
     private val table: MusicTable
@@ -162,7 +162,7 @@ This uses the secondary index to find all tracks in the given album whose title 
     }
     ```
     
-=== "Java: 
+=== "Java"
 
     ```java
     private final MusicTable table;
@@ -183,7 +183,7 @@ This uses the secondary index to find all tracks in the given album whose title 
 
 This uses the primary index to find track 5 through 9 in the given album, sorted by track number.
 
-=== "Kotlin: 
+=== "Kotlin"
     
     ```kotlin
     private val table: MusicTable
@@ -198,7 +198,7 @@ This uses the primary index to find track 5 through 9 in the given album, sorted
     }
     ```
 
-=== "Java: 
+=== "Java"
 
     ```java
     private final MusicTable table;
@@ -220,7 +220,7 @@ This uses the primary index to find track 5 through 9 in the given album, sorted
 
 By default, the sort order is ascending. To reverse the order, set the `asc` parameter to `false`.
 
-=== "Kotlin: 
+=== "Kotlin"
     
     ```kotlin
     private val table: MusicTable
@@ -236,7 +236,7 @@ By default, the sort order is ascending. To reverse the order, set the `asc` par
     }
     ```
 
-=== "Java: 
+=== "Java"
 
     ```java
     private final MusicTable table;
@@ -270,7 +270,7 @@ If you need to further refine the Query results, you can optionally provide a fi
 
 This find all tracks in the given album that last longer than 3 minutes, sorted by track number.
 
-=== "Kotlin - SDK 2.x: 
+=== "Kotlin - SDK 2.x"
     
     ```kotlin
     private val table: MusicTable
@@ -293,7 +293,7 @@ This find all tracks in the given album that last longer than 3 minutes, sorted 
     }
     ```
 
-=== "Java - SDK 2.x: 
+=== "Java - SDK 2.x"
 
     ```java
     private final MusicTable table;
@@ -322,7 +322,7 @@ This find all tracks in the given album that last longer than 3 minutes, sorted 
     }
     ```
 
-=== "Kotlin - SDK 1.x: 
+=== "Kotlin - SDK 1.x"
     
     ```kotlin
     private val table: MusicTable
@@ -345,7 +345,7 @@ This find all tracks in the given album that last longer than 3 minutes, sorted 
     }
     ```
 
-=== "Java  - SDK 1.x: 
+=== "Java  - SDK 1.x"
 
     ```java
     private final MusicTable table;
@@ -375,7 +375,7 @@ This find all tracks in the given album that last longer than 3 minutes, sorted 
 
 ### Pagination
 
-=== "Kotlin: 
+=== "Kotlin"
     
     ```kotlin
     private val table: MusicTable
@@ -395,7 +395,7 @@ This find all tracks in the given album that last longer than 3 minutes, sorted 
     }
     ```
 
-=== "Java: 
+=== "Java"
 
     ```java
     private final MusicTable table;
@@ -422,7 +422,7 @@ This find all tracks in the given album that last longer than 3 minutes, sorted 
 
 #### Specifying the Offset
 
-=== "Kotlin: 
+=== "Kotlin"
     
     ```kotlin
     private val table: MusicTable
@@ -443,7 +443,7 @@ This find all tracks in the given album that last longer than 3 minutes, sorted 
     }
     ```
 
-=== "Java: 
+=== "Java"
 
     ```java
     private final MusicTable table;
@@ -478,7 +478,7 @@ By default, the Scan operation processes data sequentially. Amazon DynamoDB retu
 application in 1 MB increments, and an application performs additional Scan operations to
 retrieve the next 1 MB of data.
 
-=== "Kotlin: 
+=== "Kotlin"
     
     ```kotlin
     private val table: MusicTable
@@ -489,7 +489,7 @@ retrieve the next 1 MB of data.
     }
     ```
 
-=== "Java: 
+=== "Java"
 
     ```java
     private final MusicTable table;
@@ -514,19 +514,19 @@ worker can be a thread (in programming languages that support multithreading) or
 system process. To perform a parallel scan, each worker issues its own Scan request with an
 unique `WorkerId`.
 
-=== "Kotlin - SDK 2.x: 
+=== "Kotlin - SDK 2.x"
     
     ```kotlin
     Not supported
     ```
 
-=== "Java - SDK 2.x: 
+=== "Java - SDK 2.x"
 
     ```java
     Not supported
     ```
 
-=== "Kotlin - SDK 1.x: 
+=== "Kotlin - SDK 1.x"
     
     ```kotlin
     private val table: MusicTable
@@ -545,7 +545,7 @@ unique `WorkerId`.
     }
     ```
 
-=== "Java - SDK 1.x: 
+=== "Java - SDK 1.x"
 
     ```java
     private final MusicTable table;
