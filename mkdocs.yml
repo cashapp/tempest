@@ -33,8 +33,9 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.magiclink
   - pymdownx.smartsymbols
-  - pymdownx.tabbed
   - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
   - tables
 
 plugins:

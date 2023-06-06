@@ -81,7 +81,7 @@ subprojects {
             reportUndocumented.set(false)
             skipDeprecated.set(true)
             jdkVersion.set(8)
-            if (name == "dokkaGfm") {
+            if (name == "dokkaGfm" || name == "dokkaHtml") {
                 outputDirectory.set(project.file("$rootDir/docs/1.x"))
             }
 

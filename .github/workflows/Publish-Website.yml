@@ -25,8 +25,7 @@ jobs:
 
       - name: Build mkdocs
         run: |
-          pip3 install mkdocs-material
-          pip3 install mkdocs-macros-plugin
+          pip3 install mkdocs-material mkdocs-macros-plugin
           mkdocs build
 
       - name: Deploy 🚀
