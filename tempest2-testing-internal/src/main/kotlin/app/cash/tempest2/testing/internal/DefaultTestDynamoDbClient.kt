@@ -19,6 +19,7 @@ package app.cash.tempest2.testing.internal
 import app.cash.tempest2.testing.TestDynamoDbClient
 import app.cash.tempest2.testing.TestTable
 import com.google.common.util.concurrent.AbstractIdleService
+import com.google.common.util.concurrent.Service
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.DeleteTableRequest
@@ -31,18 +32,36 @@ class DefaultTestDynamoDbClient(
 ) : AbstractIdleService(), TestDynamoDbClient {
 
   override val dynamoDb: DynamoDbClient
-    get() = requireNotNull(_dynamoDb) { "`dynamoDb` is only usable while the service is running" }
+    get() {
+      checkServiceHealth()
+      return requireNotNull(_dynamoDb) { "`dynamoDb` is only usable while the service is running" }
+    }
   override val asyncDynamoDb: DynamoDbAsyncClient
-    get() = requireNotNull(_dynamoDbAsync) { "`dynamoDb` is only usable while the service is running" }
+    get()  {
+      checkServiceHealth()
+      return requireNotNull(_dynamoDbAsync) { "`dynamoDb` is only usable while the service is running" }
+    }
   override val dynamoDbStreams: DynamoDbStreamsClient
-    get() = requireNotNull(_dynamoDbStreams) { "`dynamoDbStreams` is only usable while the service is running" }
+    get()  {
+      checkServiceHealth()
+      return requireNotNull(_dynamoDbStreams) { "`dynamoDbStreams` is only usable while the service is running" }
+    }
   override val asyncDynamoDbStreams: DynamoDbStreamsAsyncClient
-    get() = requireNotNull(_dynamoDbStreamsAsync) { "`dynamoDbStreams` is only usable while the service is running" }
+    get() {
+      checkServiceHealth()
+      return requireNotNull(_dynamoDbStreamsAsync) { "`dynamoDbStreams` is only usable while the service is running" }
+    }
 
   private var _dynamoDb: DynamoDbClient? = null
   private var _dynamoDbAsync: DynamoDbAsyncClient? = null
   private var _dynamoDbStreams: DynamoDbStreamsClient? = null
   private var _dynamoDbStreamsAsync: DynamoDbStreamsAsyncClient? = null
+
+  private fun checkServiceHealth() {
+    if (state() == Service.State.FAILED) {
+      throw IllegalStateException("dynamoDb failed to start", failureCause())
+    }
+  }
 
   override fun startUp() {
     val hostName = hostName(port)
