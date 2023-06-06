@@ -9,7 +9,7 @@
 set -ex
 
 # Generate the API docs
-bin/gradle dokkaHtmlMultiModule
+bin/gradle dokkaHtml
 
 # Dokka filenames like `-http-url/index.md` don't work well with MkDocs <title> tags.
 # Assign metadata to the file's first Markdown heading.
@@ -38,4 +38,4 @@ cp CONTRIBUTING.md docs/contributing.md
 cp RELEASING.md docs/releasing.md
 
 
-mv ./build/dokka/htmlMultiModule docs/1.x
+mv ./build/dokka/html docs/1.x
