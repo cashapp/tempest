@@ -400,6 +400,8 @@ public class AlbumTrack {
 
 You build business logic with logical types. Tempest handles mapping them to the underlying persistence type.
 
+> Note: The base item type `MusicLibraryItem` is still used for the `LogicalTable`. This type is intended to model an empty row, so all its fields should be nullable with a `null` default value. Using non-nullable types or fields with default values will cause issues during serialization and querying.
+
 #### Kotlin
 
 ```kotlin
