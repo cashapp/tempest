@@ -17,16 +17,15 @@
 package app.cash.tempest2
 
 import app.cash.tempest2.internal.AsyncLogicalDbFactory
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.reduce
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.reactive.awaitFirst
-import org.reactivestreams.Publisher
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient
 import software.amazon.awssdk.enhanced.dynamodb.extensions.annotations.DynamoDbVersionAttribute
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import java.util.concurrent.CompletableFuture
 import javax.annotation.CheckReturnValue
 import kotlin.reflect.KClass
-
 
 /**
  * A collection of tables that implement the DynamoDB best practice of putting multiple
@@ -50,7 +49,10 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
     keys: KeySet,
     consistentReads: Boolean = false,
     maxPageSize: Int = MAX_BATCH_READ
-  ): ItemSet = batchLoadAsync(keys, consistentReads, maxPageSize).awaitFirst()
+  ): ItemSet =
+    batchLoadAsync(keys, consistentReads, maxPageSize).reduce { acc, item ->
+      ItemSet(acc.getAllItems() + item.getAllItems())
+    }
 
   suspend fun batchLoad(
     keys: Iterable<Any>,
@@ -157,7 +159,7 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
     keys: KeySet,
     consistentReads: Boolean,
     maxPageSize: Int
-  ): Publisher<ItemSet>
+  ): Flow<ItemSet>
 
   fun batchLoadAsync(
     keys: KeySet,

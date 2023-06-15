@@ -16,8 +16,8 @@
 
 package app.cash.tempest2
 
-import kotlinx.coroutines.reactive.awaitFirst
-import org.reactivestreams.Publisher
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 
 interface AsyncQueryable<K : Any, I : Any> {
@@ -33,7 +33,7 @@ interface AsyncQueryable<K : Any, I : Any> {
     consistentRead: Boolean = false,
     filterExpression: Expression? = null,
     initialOffset: Offset<K>? = null
-  ): Page<K, I> = queryAsync(keyCondition, asc, pageSize, consistentRead, filterExpression, initialOffset).awaitFirst()
+  ): Page<K, I> = queryAsync(keyCondition, asc, pageSize, consistentRead, filterExpression, initialOffset).first()
 
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
@@ -44,7 +44,7 @@ interface AsyncQueryable<K : Any, I : Any> {
     consistentRead: Boolean,
     filterExpression: Expression?,
     initialOffset: Offset<K>?
-  ): Publisher<Page<K, I>>
+  ): Flow<Page<K, I>>
 
   fun queryAsync(keyCondition: KeyCondition<K>) = queryAsync(
     keyCondition,

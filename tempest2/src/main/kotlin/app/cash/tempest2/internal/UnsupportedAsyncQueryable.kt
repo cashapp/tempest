@@ -20,9 +20,8 @@ import app.cash.tempest2.AsyncQueryable
 import app.cash.tempest2.KeyCondition
 import app.cash.tempest2.Offset
 import app.cash.tempest2.Page
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.reactive.asPublisher
-import org.reactivestreams.Publisher
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import kotlin.reflect.KClass
 
@@ -36,9 +35,9 @@ internal class UnsupportedAsyncQueryable<K : Any, I : Any>(
     consistentRead: Boolean,
     filterExpression: Expression?,
     initialOffset: Offset<K>?
-  ): Publisher<Page<K, I>> {
-    return flow<Page<K, I>> {
+  ): Flow<Page<K, I>> {
+    return flow {
       throw UnsupportedOperationException("Require $rawType to have a range key. You can query a table or an index only if it has a composite primary key (partition key and sort key)")
-    }.asPublisher()
+    }
   }
 }
