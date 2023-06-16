@@ -44,7 +44,7 @@ plugins:
 
 extra:
   versions:
-    tempest: '1.8.0'
+    tempest: '1.10.0'
 
 nav:
   - 'Overview': index.md

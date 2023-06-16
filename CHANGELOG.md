@@ -1,5 +1,8 @@
 # Change Log
 
+## [1.10.0] - 2023-06-06
+* Fix: Async Batch support for multiple pages
+
 ## [1.9.0] - 2023-06-06
 * New: add BOM
 
