@@ -26,14 +26,14 @@ import app.cash.tempest2.ItemSet
 import app.cash.tempest2.KeySet
 import app.cash.tempest2.LogicalDb
 import app.cash.tempest2.LogicalTable
-import app.cash.tempest2.MAX_BATCH_READ
 import app.cash.tempest2.TransactionWriteSet
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.CLOBBER
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.DELETE
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.reactive.asPublisher
+import org.reactivestreams.Publisher
 import software.amazon.awssdk.enhanced.dynamodb.Document
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
@@ -137,7 +137,7 @@ internal class DynamoDbLogicalDb(
       keys: KeySet,
       consistentReads: Boolean,
       maxPageSize: Int
-    ): Flow<ItemSet> {
+    ): Publisher<ItemSet> {
       val (requests, requestsByTable, batchRequests) = toBatchLoadRequests(keys, consistentReads, maxPageSize)
 
       return batchRequests
@@ -146,6 +146,7 @@ internal class DynamoDbLogicalDb(
         }
         .reduce { acc, item -> merge(acc, item) }
         .map { page -> toBatchLoadResponse(requestsByTable, requests, listOf(page)) }
+        .asPublisher()
     }
 
     override fun batchWriteAsync(

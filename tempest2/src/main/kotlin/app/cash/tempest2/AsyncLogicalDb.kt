@@ -17,9 +17,10 @@
 package app.cash.tempest2
 
 import app.cash.tempest2.internal.AsyncLogicalDbFactory
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.reduce
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.reactive.asFlow
+import org.reactivestreams.Publisher
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient
 import software.amazon.awssdk.enhanced.dynamodb.extensions.annotations.DynamoDbVersionAttribute
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
@@ -50,7 +51,7 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
     consistentReads: Boolean = false,
     maxPageSize: Int = MAX_BATCH_READ
   ): ItemSet =
-    batchLoadAsync(keys, consistentReads, maxPageSize).reduce { acc, item ->
+    batchLoadAsync(keys, consistentReads, maxPageSize).asFlow().reduce { acc, item ->
       ItemSet(acc.getAllItems() + item.getAllItems())
     }
 
@@ -159,7 +160,7 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
     keys: KeySet,
     consistentReads: Boolean,
     maxPageSize: Int
-  ): Flow<ItemSet>
+  ): Publisher<ItemSet>
 
   fun batchLoadAsync(
     keys: KeySet,

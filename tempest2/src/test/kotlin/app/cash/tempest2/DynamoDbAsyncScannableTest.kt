@@ -30,7 +30,6 @@ import app.cash.tempest2.musiclibrary.testDb
 import app.cash.tempest2.musiclibrary.trackTitles
 import app.cash.tempest2.testing.asyncLogicalDb
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
