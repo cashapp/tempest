@@ -21,7 +21,9 @@ import app.cash.tempest.musiclibrary.LOCKDOWN_SINGLE
 import app.cash.tempest.musiclibrary.THE_DARK_SIDE_OF_THE_MOON
 import app.cash.tempest.musiclibrary.THE_WALL
 import app.cash.tempest.musiclibrary.WHAT_YOU_DO_TO_ME_SINGLE
+import app.cash.tempest2.musiclibrary.AlbumInfo
 import app.cash.tempest2.musiclibrary.MusicDb
+import app.cash.tempest2.musiclibrary.MusicItem
 import app.cash.tempest2.musiclibrary.albumTitles
 import app.cash.tempest2.musiclibrary.givenAlbums
 import app.cash.tempest2.musiclibrary.testDb
@@ -29,10 +31,14 @@ import app.cash.tempest2.musiclibrary.trackTitles
 import app.cash.tempest2.testing.logicalDb
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.Expression
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import java.time.Duration
+import java.time.LocalDate
 
 class DynamoDbScannableTest {
 
@@ -41,6 +47,42 @@ class DynamoDbScannableTest {
   val db = testDb()
 
   private val musicTable by lazy { db.logicalDb<MusicDb>().music }
+
+  @Test
+  internal fun `synchronously, rows with missing attributes throw`() {
+    val enhancedClient = DynamoDbEnhancedClient.builder()
+      .dynamoDbClient(db.dynamoDb)
+      .build()
+    val mapper =
+      enhancedClient.table(MusicItem.TABLE_NAME, TableSchema.fromBean(MusicItem::class.java))
+
+    val albumInfoCodec = musicTable.codec(AlbumInfo::class)
+    val albumInfo = AlbumInfo(
+      "ALBUM_1",
+      "after hours - EP",
+      "53 Thieves",
+      LocalDate.of(2020, 2, 21),
+      "Contemporary R&B"
+    )
+    val musicItem = albumInfoCodec.toDb(albumInfo)
+
+    // Attribute "genre_name" is nullable in MusicItem but is non-nullable in AlbumInfo.
+    mapper.putItem(
+      MusicItem().apply {
+        partition_key = musicItem.partition_key
+        sort_key = musicItem.sort_key
+        album_title = musicItem.album_title
+        artist_name = musicItem.artist_name
+        release_date = musicItem.release_date
+        genre_name = null
+      }
+    )
+
+    // Conversion from MusicItem to AlbumInfo should throw an exception.
+    assertThrows<ReflectiveOperationException> {
+      musicTable.albumInfo.scan()
+    }
+  }
 
   @Test
   fun primaryIndex() {
