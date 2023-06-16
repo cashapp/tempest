@@ -63,11 +63,9 @@ class AsyncLogicalDbBatchTest {
     assertThat(loadedItems.getItems<PlaylistInfo>()).containsExactly(playlistInfo)
   }
 
-  // Disabled pending https://github.com/cashapp/tempest/issues/124
-  @Disabled
   @Test
   fun `batchLoad greater than max batch size`() = runBlockingTest {
-    val albumTracks = (1..(MAX_BATCH_READ + 5)).map {
+    val albumTracks = (1..(MAX_BATCH_READ * 5)).map {
       AlbumTrack("ALBUM_1", it.toLong(), "track $it", Duration.parse("PT3M28S"))
     }
     for (albumTrack in albumTracks) {
@@ -82,7 +80,7 @@ class AsyncLogicalDbBatchTest {
 
     val loadedItems = musicDb.batchLoad(
       PlaylistInfo.Key("PLAYLIST_1"),
-      *(albumTracks.map { AlbumTrack.Key("ALBUM_1", track_number = it.track_number) }.toTypedArray())
+      *(albumTracks.map { AlbumTrack.Key("ALBUM_1", track_number = it.track_number) }.toTypedArray()),
     )
     assertThat(loadedItems.getItems<AlbumTrack>()).containsAll(albumTracks)
     assertThat(loadedItems.getItems<PlaylistInfo>()).containsExactly(playlistInfo)
@@ -133,11 +131,9 @@ class AsyncLogicalDbBatchTest {
     assertThat(items).containsAll(albumTracks)
   }
 
-  // Disabled pending https://github.com/cashapp/tempest/issues/124
-  @Disabled
   @Test
   fun `batchWrite greater than max batch size`() = runBlockingTest {
-    val albumTracks = (1..(MAX_BATCH_WRITE + 5)).map {
+    val albumTracks = (1..(MAX_BATCH_WRITE * 5)).map {
       AlbumTrack("ALBUM_1", it.toLong(), "track $it", Duration.parse("PT3M28S"))
     }
     val result = musicDb.batchWrite(BatchWriteSet.Builder().clobber(albumTracks).build())

@@ -26,10 +26,13 @@ import app.cash.tempest2.ItemSet
 import app.cash.tempest2.KeySet
 import app.cash.tempest2.LogicalDb
 import app.cash.tempest2.LogicalTable
-import app.cash.tempest2.MAX_BATCH_READ
 import app.cash.tempest2.TransactionWriteSet
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.CLOBBER
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.DELETE
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.reactive.asPublisher
 import org.reactivestreams.Publisher
 import software.amazon.awssdk.enhanced.dynamodb.Document
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient
@@ -135,20 +138,15 @@ internal class DynamoDbLogicalDb(
       consistentReads: Boolean,
       maxPageSize: Int
     ): Publisher<ItemSet> {
-      // TODO: Replace this with publisher stream concatenation, see https://github.com/cashapp/tempest/issues/124
-      // This is a hack, I don't have a good way to combine publishers currently without blocking
-      // which violates the async contract
-      // Prior to the paging support 100 was the max page size, aws-sdk would throw
-      // So this isn't a loss of functionality
-      if (maxPageSize > MAX_BATCH_READ || keys.size > MAX_BATCH_READ) {
-        throw IllegalArgumentException("batchLoadAsync currently only supports page sizes <= 100")
-      }
       val (requests, requestsByTable, batchRequests) = toBatchLoadRequests(keys, consistentReads, maxPageSize)
 
-      return dynamoDbEnhancedClient.batchGetItem(batchRequests.first())
-        .limit(1)
-        .map { page -> toBatchLoadResponse(requestsByTable, requests, listOf(page))}
-
+      return batchRequests
+        .map { request ->
+          dynamoDbEnhancedClient.batchGetItem(request).limit(1).asFlow()
+        }
+        .reduce { acc, item -> merge(acc, item) }
+        .map { page -> toBatchLoadResponse(requestsByTable, requests, listOf(page)) }
+        .asPublisher()
     }
 
     override fun batchWriteAsync(

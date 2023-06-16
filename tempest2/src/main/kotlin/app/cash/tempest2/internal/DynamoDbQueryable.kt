@@ -24,6 +24,9 @@ import app.cash.tempest2.KeyCondition
 import app.cash.tempest2.Offset
 import app.cash.tempest2.Page
 import app.cash.tempest2.Queryable
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.reactive.asPublisher
 import org.reactivestreams.Publisher
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable
@@ -82,7 +85,9 @@ internal class DynamoDbQueryable<K : Any, I : Any, R : Any>(
         dynamoDbTable.query(request)
       }
         .limit(1)
-        .map { page -> toQueryResponse(page) }
+        .asFlow()
+        .map(::toQueryResponse)
+        .asPublisher()
     }
   }
 

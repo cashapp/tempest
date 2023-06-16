@@ -24,17 +24,26 @@ import app.cash.tempest.musiclibrary.WHAT_YOU_DO_TO_ME_SINGLE
 import app.cash.tempest2.musiclibrary.AlbumInfo
 import app.cash.tempest2.musiclibrary.AlbumTrack
 import app.cash.tempest2.musiclibrary.AsyncMusicDb
+import app.cash.tempest2.musiclibrary.MusicItem
 import app.cash.tempest2.musiclibrary.albumTitles
 import app.cash.tempest2.musiclibrary.givenAlbums
 import app.cash.tempest2.musiclibrary.testDb
 import app.cash.tempest2.musiclibrary.trackTitles
 import app.cash.tempest2.testing.asyncLogicalDb
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient
 import software.amazon.awssdk.enhanced.dynamodb.Expression
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import java.time.Duration
+import java.time.LocalDate
+import java.util.concurrent.TimeUnit
 
 class DynamoDbAsyncQueryableTest {
 
@@ -43,6 +52,47 @@ class DynamoDbAsyncQueryableTest {
   val db = testDb()
 
   private val musicTable by lazy { db.asyncLogicalDb<AsyncMusicDb>().music }
+
+  @Test
+  @Timeout(value = 5, unit = TimeUnit.SECONDS)
+  internal fun `asynchronously, rows with missing attributes throw and do not hang forever`() {
+    val enhancedClient = DynamoDbEnhancedAsyncClient.builder()
+      .dynamoDbClient(db.asyncDynamoDb)
+      .build()
+    val mapper =
+      enhancedClient.table(MusicItem.TABLE_NAME, TableSchema.fromBean(MusicItem::class.java))
+
+    val albumInfoCodec = musicTable.codec(AlbumInfo::class)
+    val albumInfo = AlbumInfo(
+      "ALBUM_1",
+      "after hours - EP",
+      "53 Thieves",
+      LocalDate.of(2020, 2, 21),
+      "Contemporary R&B"
+    )
+    val musicItem = albumInfoCodec.toDb(albumInfo)
+
+    // Attribute "genre_name" is nullable in MusicItem but is non-nullable in AlbumInfo.
+    runBlocking {
+      mapper.putItem(
+        MusicItem().apply {
+          partition_key = musicItem.partition_key
+          sort_key = musicItem.sort_key
+          album_title = musicItem.album_title
+          artist_name = musicItem.artist_name
+          release_date = musicItem.release_date
+          genre_name = null
+        }
+      ).await()
+    }
+
+    // Conversion from MusicItem to AlbumInfo should throw an exception.
+    assertThrows<ReflectiveOperationException> {
+      runBlocking {
+        musicTable.albumInfo.query(BeginsWith(albumInfo.key))
+      }
+    }
+  }
 
   @Test
   fun primaryIndexBetween() = runBlockingTest {

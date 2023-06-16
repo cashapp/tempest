@@ -231,5 +231,7 @@ class ItemSet private constructor(
     return getItems(I::class)
   }
 
+  fun getAllItems(): Set<Any> = contents
+
   override fun toString(): String = contents.toString()
 }
