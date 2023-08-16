@@ -18,40 +18,19 @@ package app.cash.tempest.testing.internal
 
 import app.cash.tempest.testing.TestDynamoDbClient
 import app.cash.tempest.testing.TestTable
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBStreams
 import com.google.common.util.concurrent.AbstractIdleService
-import com.google.common.util.concurrent.Service
 
 class DefaultTestDynamoDbClient(
   override val tables: List<TestTable>,
-  private val port: Int,
+  port: Int,
 ) : AbstractIdleService(), TestDynamoDbClient {
+  // TODO: Is there a better way of doing this than making a network connection?
+  private val hostName by lazy { hostName(port) }
 
-  override val dynamoDb: AmazonDynamoDB
-    get() {
-      checkServiceHealth()
-      return requireNotNull(_dynamoDb) { "`dynamoDb` is only usable while the service is running" }
-    }
-  override val dynamoDbStreams: AmazonDynamoDBStreams
-    get() {
-      checkServiceHealth()
-      return requireNotNull(_dynamoDbStreams) { "`dynamoDbStreams` is only usable while the service is running" }
-    }
-
-  private fun checkServiceHealth() {
-    if (state() == Service.State.FAILED) {
-      throw failureCause()
-    }
-  }
-
-  private var _dynamoDb: AmazonDynamoDB? = null
-  private var _dynamoDbStreams: AmazonDynamoDBStreams? = null
+  override val dynamoDb = buildDynamoDb(hostName, port)
+  override val dynamoDbStreams = buildDynamoDbStreams(hostName, port)
 
   override fun startUp() {
-    _dynamoDb = connect(port)
-    _dynamoDbStreams = connectToStreams(port)
-
     // Cleans up the tables before each run.
     for (tableName in dynamoDb.listTables().tableNames) {
       dynamoDb.deleteTable(tableName)
@@ -63,8 +42,6 @@ class DefaultTestDynamoDbClient(
 
   override fun shutDown() {
     dynamoDb.shutdown()
-    _dynamoDb = null
     dynamoDbStreams.shutdown()
-    _dynamoDbStreams = null
   }
 }

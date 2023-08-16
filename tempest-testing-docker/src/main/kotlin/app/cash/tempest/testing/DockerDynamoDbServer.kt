@@ -16,7 +16,8 @@
 
 package app.cash.tempest.testing
 
-import app.cash.tempest.testing.internal.connect
+import app.cash.tempest.testing.internal.buildDynamoDb
+import app.cash.tempest.testing.internal.hostName
 import com.amazonaws.services.dynamodbv2.model.AmazonDynamoDBException
 import com.github.dockerjava.api.model.ExposedPort
 import com.github.dockerjava.api.model.Ports
@@ -32,7 +33,8 @@ class DockerDynamoDbServer private constructor(
     composer.start()
 
     // Temporary client to block until the container is running
-    val client = connect(port)
+    val hostName = hostName(port)
+    val client = buildDynamoDb(hostName, port)
     while (true) {
       try {
         client.deleteTable("not a table")

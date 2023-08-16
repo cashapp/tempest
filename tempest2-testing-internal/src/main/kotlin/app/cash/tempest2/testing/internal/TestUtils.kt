@@ -31,7 +31,6 @@ import software.amazon.awssdk.services.dynamodb.streams.DynamoDbStreamsClient
 import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
-import java.net.SocketAddress
 import java.net.URI
 
 fun pickRandomPort(): Int {
@@ -63,9 +62,9 @@ fun hostName(port: Int): String {
   }
 }
 
-fun connect(port: Int): DynamoDbClient = connect(hostName(port), port)
+fun buildDynamoDb(port: Int): DynamoDbClient = buildDynamoDb(hostName(port), port)
 
-fun connect(host: String, port: Int): DynamoDbClient {
+fun buildDynamoDb(host: String, port: Int): DynamoDbClient {
   return DynamoDbClient.builder()
     // The values that you supply for the AWS access key and the Region are only used to name
     // the database file.
@@ -75,9 +74,9 @@ fun connect(host: String, port: Int): DynamoDbClient {
     .build()
 }
 
-fun connectAsync(port: Int): DynamoDbAsyncClient = connectAsync(hostName(port), port)
+fun buildAsyncDynamoDb(port: Int): DynamoDbAsyncClient = buildAsyncDynamoDb(hostName(port), port)
 
-fun connectAsync(host: String, port: Int): DynamoDbAsyncClient {
+fun buildAsyncDynamoDb(host: String, port: Int): DynamoDbAsyncClient {
   return DynamoDbAsyncClient.builder()
     // The values that you supply for the AWS access key and the Region are only used to name
     // the database file.
@@ -87,9 +86,9 @@ fun connectAsync(host: String, port: Int): DynamoDbAsyncClient {
     .build()
 }
 
-fun connectToStreams(port: Int): DynamoDbStreamsClient = connectToStreams(hostName(port), port)
+fun buildDynamoDbStreams(port: Int): DynamoDbStreamsClient = buildDynamoDbStreams(hostName(port), port)
 
-fun connectToStreams(host: String, port: Int): DynamoDbStreamsClient {
+fun buildDynamoDbStreams(host: String, port: Int): DynamoDbStreamsClient {
   return DynamoDbStreamsClient.builder()
     // The values that you supply for the AWS access key and the Region are only used to name
     // the database file.
@@ -99,11 +98,11 @@ fun connectToStreams(host: String, port: Int): DynamoDbStreamsClient {
     .build()
 }
 
-fun connectToStreamsAsync(port: Int): DynamoDbStreamsAsyncClient =
-  connectToStreamsAsync(hostName(port), port)
+fun buildAsyncDynamoDbStreams(port: Int): DynamoDbStreamsAsyncClient =
+  buildAsyncDynamoDbStreams(hostName(port), port)
 
 
-fun connectToStreamsAsync(host: String, port: Int): DynamoDbStreamsAsyncClient {
+fun buildAsyncDynamoDbStreams(host: String, port: Int): DynamoDbStreamsAsyncClient {
   return DynamoDbStreamsAsyncClient.builder()
     // The values that you supply for the AWS access key and the Region are only used to name
     // the database file.
