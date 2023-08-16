@@ -1,5 +1,11 @@
 # Change Log
 
+## [1.10.2] - 2023-08-16
+* Fix: Creating new tag for publication 
+
+## [1.10.1] - 2023-08-16
+* Fix: Initialize the dynamodb clients immediately to avoid DI issues in consumers
+
 ## [1.10.0] - 2023-06-06
 * Fix: Async Batch support for multiple pages
 
