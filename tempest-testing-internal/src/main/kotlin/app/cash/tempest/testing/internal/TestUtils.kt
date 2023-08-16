@@ -28,6 +28,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBStreamsClientBuilder
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
 
@@ -35,30 +36,28 @@ fun pickRandomPort(): Int {
   ServerSocket(0).use { socket -> return socket.localPort }
 }
 
+private const val CONNECT_TIMEOUT_MILLIS = 1_000
+
 fun isServerListening(host: String, port: Int): Boolean {
-  var s: Socket? = null
-  return try {
-    s = Socket(host, port)
-    true
-  } catch (e: Exception) {
-    false
-  } finally {
-    if (s != null) try {
-      s.close()
+  return Socket().use {
+    try {
+      it.connect(InetSocketAddress(host, port), CONNECT_TIMEOUT_MILLIS)
+      true
     } catch (e: Exception) {
-      println("failed to close socket file")
+      false
     }
   }
 }
 
-fun connect(port: Int): AmazonDynamoDB {
-  if (isServerListening("host.docker.internal", port))
-    return connect("host.docker.internal", port)
-  else
-    return connect("localhost", port)
+fun hostName(port: Int): String {
+  return if (isServerListening("host.docker.internal", port)) {
+    "host.docker.internal"
+  } else {
+    "localhost"
+  }
 }
 
-fun connect(host: String, port: Int): AmazonDynamoDB {
+fun buildDynamoDb(host: String, port: Int): AmazonDynamoDB {
   return AmazonDynamoDBClientBuilder.standard()
     // The values that you supply for the AWS access key and the Region are only used to name
     // the database file.
@@ -67,14 +66,7 @@ fun connect(host: String, port: Int): AmazonDynamoDB {
     .build()
 }
 
-fun connectToStreams(port: Int): AmazonDynamoDBStreams {
-  if (isServerListening("host.docker.internal", port))
-    return connectToStreams("host.docker.internal", port)
-  else
-    return connectToStreams("localhost", port)
-}
-
-fun connectToStreams(host: String, port: Int): AmazonDynamoDBStreams {
+fun buildDynamoDbStreams(host: String, port: Int): AmazonDynamoDBStreams {
   return AmazonDynamoDBStreamsClientBuilder.standard()
     .withCredentials(AWS_CREDENTIALS_PROVIDER)
     .withEndpointConfiguration(endpointConfiguration(host, port))
@@ -92,9 +84,7 @@ private fun endpointConfiguration(host: String, port: Int): AwsClientBuilder.End
   )
 }
 
-fun AmazonDynamoDB.createTable(
-  table: TestTable
-) {
+fun AmazonDynamoDB.createTable(table: TestTable) {
   var tableRequest = DynamoDBMapper(this)
     .generateCreateTableRequest(table.tableClass.java)
     // Provisioned throughput needs to be specified when creating the table. However,

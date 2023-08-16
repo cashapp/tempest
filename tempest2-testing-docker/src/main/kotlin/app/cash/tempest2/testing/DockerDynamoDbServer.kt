@@ -16,7 +16,7 @@
 
 package app.cash.tempest2.testing
 
-import app.cash.tempest2.testing.internal.connect
+import app.cash.tempest2.testing.internal.buildDynamoDb
 import com.github.dockerjava.api.model.ExposedPort
 import com.github.dockerjava.api.model.Ports
 import com.google.common.util.concurrent.AbstractIdleService
@@ -33,7 +33,7 @@ class DockerDynamoDbServer private constructor(
     composer.start()
 
     // Temporary client to block until the container is running
-    val client = connect(port)
+    val client = buildDynamoDb(port)
     while (true) {
       try {
         client.deleteTable(DeleteTableRequest.builder().tableName("not a table").build())
