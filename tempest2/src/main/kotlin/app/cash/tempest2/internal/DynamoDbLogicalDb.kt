@@ -345,9 +345,8 @@ internal class DynamoDbLogicalDb(
     // We don't want to wrap these exceptions but only add a more useful message so upstream callers can themselves
     // parse the potentially concurrency related TransactionCancelledExceptions
     // https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/dynamodbv2/model/TransactionCanceledException.html
-    throw TransactionCanceledException.builder()
+    throw e.toBuilder()
       .message("Write transaction failed: ${writeSet.describeOperations()}")
-      .cancellationReasons(e.cancellationReasons())
       .build()
   }
 
