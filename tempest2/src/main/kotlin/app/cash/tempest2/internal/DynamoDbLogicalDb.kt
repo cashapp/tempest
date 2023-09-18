@@ -347,7 +347,8 @@ internal class DynamoDbLogicalDb(
     // https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/dynamodbv2/model/TransactionCanceledException.html
     throw TransactionCanceledException.builder()
       .message(
-        "Write transaction failed: ${writeSet.describeOperations()}. Aws error message: ${e.message}"
+        "Write transaction failed: ${writeSet.describeOperations()}.\n" +
+          " Aws error message: ${e.message}"
       )
       .cancellationReasons(e.cancellationReasons())
       .build()
