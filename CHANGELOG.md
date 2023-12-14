@@ -1,7 +1,13 @@
 # Change Log
 
-## [1.10.0-SNAPSHOT] - 2023-12-14
+## [1.10.2-SNAPSHOT] - 2023-12-14
 * Fix: Pin DynamoDB Docker image to 2.1.0 to avoid breaking issue with latest
+* 
+## [1.10.2] - 2023-08-16
+* Fix: Creating new tag for publication 
+
+## [1.10.1] - 2023-08-16
+* Fix: Initialize the dynamodb clients immediately to avoid DI issues in consumers
 
 ## [1.10.0] - 2023-06-06
 * Fix: Async Batch support for multiple pages
