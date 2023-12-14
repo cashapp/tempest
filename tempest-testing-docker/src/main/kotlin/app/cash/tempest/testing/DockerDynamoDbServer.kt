@@ -59,7 +59,7 @@ class DockerDynamoDbServer private constructor(
       val exposedClientPort = ExposedPort.tcp(8000)
       val portBindings = Ports()
       portBindings.bind(exposedClientPort, Ports.Binding.bindPort(port))
-      withImage("amazon/dynamodb-local")
+      withImage("amazon/dynamodb-local:2.1.0")
         .withName(id)
         .withExposedPorts(exposedClientPort)
         .withCmd("-jar", "DynamoDBLocal.jar", "-sharedDb")
