@@ -82,6 +82,7 @@ class DynamoDbQueryableTest {
 
     // Conversion from MusicItem to AlbumInfo should throw an exception.
     assertThrows<ReflectiveOperationException> {
+      musicTable.load()
       musicTable.albumInfo.query(BeginsWith(albumInfo.key))
     }
   }

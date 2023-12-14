@@ -99,7 +99,7 @@ class Composer(private val name: String, private vararg val containers: Containe
 
             val imageParts = create.image!!.split(":")
             docker.pullImageCmd(imageParts[0])
-                .withTag(imageParts.getOrElse(1) { "latest" })
+                .withTag(imageParts.getOrElse(1) { "2.1.0" })
                 .exec(PullImageResultCallback()).awaitCompletion()
 
             log.info { "starting $name container" }
