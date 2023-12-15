@@ -1,8 +1,8 @@
 # Change Log
 
-## [1.10.2-SNAPSHOT] - 2023-12-14
+## [1.10.3] - 2023-12-15
 * Fix: Pin DynamoDB Docker image to 2.1.0 to avoid breaking issue with latest
-* 
+
 ## [1.10.2] - 2023-08-16
 * Fix: Creating new tag for publication 
 
