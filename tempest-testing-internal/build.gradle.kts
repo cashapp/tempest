@@ -10,13 +10,13 @@ plugins {
 
 dependencies {
   api(project(":tempest-testing"))
-  api(Dependencies.loggingApi)
-  implementation(Dependencies.log4jCore)
-  implementation(Dependencies.kotlinStdLib)
+  api(libs.loggingApi)
+  implementation(libs.log4jCore)
+  implementation(libs.kotlinStdLib)
 
-  testImplementation(Dependencies.assertj)
-  testImplementation(Dependencies.junitApi)
-  testImplementation(Dependencies.junitEngine)
+  testImplementation(libs.assertj)
+  testImplementation(libs.junitApi)
+  testImplementation(libs.junitEngine)
 }
 
 

@@ -10,13 +10,13 @@ plugins {
 
 dependencies {
   api(project(":tempest"))
-  api(Dependencies.findbugsJsr305)
-  api(Dependencies.guava)
-  implementation(Dependencies.kotlinStdLib)
+  api(libs.findbugsJsr305)
+  api(libs.guava)
+  implementation(libs.kotlinStdLib)
 
-  testImplementation(Dependencies.assertj)
-  testImplementation(Dependencies.junitApi)
-  testImplementation(Dependencies.junitEngine)
+  testImplementation(libs.assertj)
+  testImplementation(libs.junitApi)
+  testImplementation(libs.junitEngine)
 }
 
 

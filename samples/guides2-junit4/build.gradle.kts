@@ -9,10 +9,10 @@ dependencies {
   implementation(project(":tempest2"))
   implementation(project(":samples:musiclibrary2"))
   implementation(project(":samples:urlshortener2"))
-  implementation(Dependencies.kotlinStdLib)
+  implementation(libs.kotlinStdLib)
 
-  testImplementation(Dependencies.assertj)
-  testImplementation(Dependencies.junit4Api)
+  testImplementation(libs.assertj)
+  testImplementation(libs.junit4Api)
   implementation(project(":tempest2-testing-docker"))
   implementation(project(":tempest2-testing-jvm"))
   implementation(project(":tempest2-testing-junit4"))

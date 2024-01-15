@@ -9,23 +9,23 @@ plugins {
 }
 
 dependencies {
-  api(Dependencies.aws2Dynamodb)
-  api(Dependencies.aws2DynamodbEnhanced)
-  api(Dependencies.findbugsJsr305)
-  api(Dependencies.kotlinxCoroutines)
-  implementation(Dependencies.kotlinxCoroutinesJdk8)
-  implementation(Dependencies.kotlinxCoroutinesReactive)
+  api(libs.aws2Dynamodb)
+  api(libs.aws2DynamodbEnhanced)
+  api(libs.findbugsJsr305)
+  api(libs.kotlinxCoroutines)
+  implementation(libs.kotlinxCoroutinesJdk8)
+  implementation(libs.kotlinxCoroutinesReactive)
   implementation(project(":tempest-internal"))
-  implementation(Dependencies.kotlinReflection)
-  implementation(Dependencies.kotlinStdLib)
+  implementation(libs.kotlinReflection)
+  implementation(libs.kotlinStdLib)
 
   testImplementation(project(":samples:musiclibrary2"))
   testImplementation(project(":samples:musiclibrary-testing"))
   testImplementation(project(":samples:urlshortener2"))
   testImplementation(project(":tempest2-testing-jvm"))
   testImplementation(project(":tempest2-testing-junit5"))
-  testImplementation(Dependencies.assertj)
-  testImplementation(Dependencies.junitEngine)
+  testImplementation(libs.assertj)
+  testImplementation(libs.junitEngine)
 }
 
 
