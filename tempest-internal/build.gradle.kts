@@ -9,13 +9,13 @@ plugins {
 }
 
 dependencies {
-  api(Dependencies.findbugsJsr305)
-  implementation(Dependencies.kotlinReflection)
-  implementation(Dependencies.kotlinStdLib)
+  api(libs.findbugsJsr305)
+  implementation(libs.kotlinReflection)
+  implementation(libs.kotlinStdLib)
 
-  testImplementation(Dependencies.assertj)
-  testImplementation(Dependencies.junitApi)
-  testImplementation(Dependencies.junitEngine)
+  testImplementation(libs.assertj)
+  testImplementation(libs.junitApi)
+  testImplementation(libs.junitEngine)
 }
 
 

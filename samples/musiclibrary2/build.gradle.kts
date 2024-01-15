@@ -5,9 +5,9 @@ plugins {
 
 dependencies {
   implementation(project(":tempest2"))
-  implementation(Dependencies.kotlinStdLib)
+  implementation(libs.kotlinStdLib)
 
-  testImplementation(Dependencies.assertj)
-  testImplementation(Dependencies.junitApi)
-  testImplementation(Dependencies.junitEngine)
+  testImplementation(libs.assertj)
+  testImplementation(libs.junitApi)
+  testImplementation(libs.junitEngine)
 }

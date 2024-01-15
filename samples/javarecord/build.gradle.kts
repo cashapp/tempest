@@ -7,8 +7,8 @@ dependencies {
 
   testImplementation(project(":tempest-testing-jvm"))
   testImplementation(project(":tempest-testing-junit5"))
-  testImplementation(Dependencies.assertj)
-  testImplementation(Dependencies.junitEngine)
+  testImplementation(libs.assertj)
+  testImplementation(libs.junitEngine)
 }
 
 val compileKotlin by tasks.getting(KotlinCompile::class) {

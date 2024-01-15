@@ -10,15 +10,15 @@ plugins {
 
 dependencies {
   api(project(":tempest-testing"))
-  api(Dependencies.junit4Api)
+  api(libs.junit4Api)
   implementation(project(":tempest-testing-internal"))
-  implementation(Dependencies.kotlinStdLib)
-  implementation(Dependencies.guava)
-  implementation(Dependencies.kotlinReflection)
+  implementation(libs.kotlinStdLib)
+  implementation(libs.guava)
+  implementation(libs.kotlinReflection)
 
   testImplementation(project(":samples:urlshortener"))
   testImplementation(project(":tempest-testing-jvm"))
-  testImplementation(Dependencies.assertj)
+  testImplementation(libs.assertj)
 }
 
 tasks.withType<Test> {

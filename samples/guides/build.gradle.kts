@@ -9,8 +9,8 @@ dependencies {
   implementation(project(":tempest"))
   implementation(project(":samples:musiclibrary"))
   implementation(project(":samples:urlshortener"))
-  implementation(Dependencies.kotlinStdLib)
-  implementation(Dependencies.kotlinxCoroutines)
+  implementation(libs.kotlinStdLib)
+  implementation(libs.kotlinxCoroutines)
 }
 
 val compileKotlin by tasks.getting(KotlinCompile::class) {

@@ -11,12 +11,12 @@ plugins {
 dependencies {
   api(project(":tempest2-testing"))
   implementation(project(":tempest2-testing-internal"))
-  implementation(Dependencies.kotlinStdLib)
-  implementation(Dependencies.dockerCore)
-  implementation(Dependencies.dockerTransport)
+  implementation(libs.kotlinStdLib)
+  implementation(libs.dockerCore)
+  implementation(libs.dockerTransport)
 
-  testImplementation(Dependencies.assertj)
-  testImplementation(Dependencies.junitEngine)
+  testImplementation(libs.assertj)
+  testImplementation(libs.junitEngine)
   testImplementation(project(":samples:urlshortener2"))
   testImplementation(project(":tempest2-testing-junit5"))
 }

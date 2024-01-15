@@ -13,11 +13,11 @@ buildscript {
     }
 
     dependencies {
-        classpath(Dependencies.dokkaGradlePlugin)
-        classpath(Dependencies.junitGradlePlugin)
-        classpath(Dependencies.kotlinGradlePlugin)
-        classpath(Dependencies.mavenPublishGradlePlugin)
-        classpath(Dependencies.wireGradlePlugin)
+        classpath(libs.dokkaGradlePlugin)
+        classpath(libs.junitGradlePlugin)
+        classpath(libs.kotlinGradlePlugin)
+        classpath(libs.mavenPublishGradlePlugin)
+        classpath(libs.wireGradlePlugin)
     }
 }
 
@@ -56,7 +56,7 @@ subprojects {
 
         dependencies {
             // add("api", project(":tempest-bom"))
-            add("api", platform(Dependencies.nettyBom))
+            add("api", platform(libs.nettyBom))
         }
     }
 
