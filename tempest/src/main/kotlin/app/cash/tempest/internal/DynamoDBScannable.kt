@@ -77,13 +77,13 @@ internal class DynamoDBScannable<K : Any, I : Any>(
   }
 
   private fun Offset<K>.encodeOffset(): Map<String, AttributeValue> {
-    val offsetKey = keyCodec.toDb(key)
+    val offsetKey = keyCodec.toDb(key, true)
     return tableModel.convert(offsetKey)
   }
 
   private fun Map<String, AttributeValue>.decodeOffset(): Offset<K> {
     val offsetKeyAttributes = tableModel.unconvert(this)
-    val offsetKey = keyCodec.toApp(offsetKeyAttributes)
+    val offsetKey = keyCodec.toApp(offsetKeyAttributes, true)
     return Offset(offsetKey)
   }
 }
