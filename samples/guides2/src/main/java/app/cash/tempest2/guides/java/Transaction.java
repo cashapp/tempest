@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
+import org.jetbrains.annotations.NotNull;
 import software.amazon.awssdk.enhanced.dynamodb.Expression;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
@@ -154,5 +155,9 @@ class AlbumTrackWritingPagerHandler implements WritingPager.Handler<AlbumTrack.K
         existing.playlist_version + 1
     );
     builder.save(newPlaylist, ifPlaylistVersionIs(existing.playlist_version));
+  }
+
+  @Override public void pageWritten(@NotNull TransactionWriteSet writeSet) {
+    // no-op
   }
 }
