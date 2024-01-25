@@ -1,5 +1,6 @@
 [versions]
 ktlint = "0.40.0"
+kotlin = "1.7.10"
 
 [libraries]
 assertj = { module = "org.assertj:assertj-core", version = "3.23.1" }
@@ -17,15 +18,15 @@ junit4Api = { module = "junit:junit", version = "4.13.2" }
 junitApi = { module = "org.junit.jupiter:junit-jupiter-api", version = "5.8.2" }
 junitEngine = { module = "org.junit.jupiter:junit-jupiter-engine", version = "5.8.2" }
 junitGradlePlugin = { module = "org.junit.platform:junit-platform-gradle-plugin", version = "1.2.0" }
-kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version = "1.7.10" }
-kotlinReflection = { module = "org.jetbrains.kotlin:kotlin-reflect", version = "1.7.10" }
-kotlinStdLib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version = "1.7.10" }
+kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlinReflection = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlinStdLib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.6.4" }
 kotlinxCoroutinesJdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8", version = "1.6.4" }
 kotlinxCoroutinesReactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version = "1.6.4" }
 log4jCore = { module = "org.apache.logging.log4j:log4j-core", version = "2.17.1" }
 loggingApi = { module = "io.github.microutils:kotlin-logging", version = "2.0.10" }
-mavenPublishGradlePlugin = { module = "com.vanniktech:gradle-maven-publish-plugin", version = "0.25.1" }
+mavenPublishGradlePlugin = { module = "com.vanniktech:gradle-maven-publish-plugin", version = "0.25.2" }
 nettyBom = { module = "io.netty:netty-bom", version = "4.1.79.Final" }
-okio = { module = "com.squareup.okio:okio", version = "3.2.0" }
-wireGradlePlugin = { module = "com.squareup.wire:wire-gradle-plugin", version = "4.4.0" }
+okio = { module = "com.squareup.okio:okio", version = "3.4.0" }
+wireGradlePlugin = { module = "com.squareup.wire:wire-gradle-plugin", version = "4.8.1" }
