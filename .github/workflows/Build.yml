@@ -7,7 +7,7 @@ on:
       - "*.md"
   push:
     branches:
-      - master
+      - main
 
 env:
   ENVIRONMENT: TESTING
@@ -45,7 +45,7 @@ jobs:
 
   publish:
     name: Publish
-    if: ${{ github.ref == 'refs/heads/master' && github.repository == 'cashapp/tempest' }}
+    if: ${{ github.ref == 'refs/heads/main' && github.repository == 'cashapp/tempest' }}
     needs: [js, jvm]
     runs-on: [ubuntu-latest]
     env:
