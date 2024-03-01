@@ -30,8 +30,10 @@ class JvmDynamoDbServer private constructor(
   private lateinit var server: DynamoDBProxyServer
 
   override fun startUp() {
-    val libraryFile = libsqlite4javaNativeLibrary()
-    System.setProperty("sqlite4java.library.path", libraryFile.parent)
+    if (System.getProperty("sqlite4java.library.path") == null) {
+      val libraryFile = libsqlite4javaNativeLibrary()
+      System.setProperty("sqlite4java.library.path", libraryFile.parent)
+    }
 
     server = ServerRunner.createServerFromCommandLineArgs(
       arrayOf("-inMemory", "-port", port.toString())
