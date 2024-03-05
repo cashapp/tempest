@@ -80,7 +80,7 @@ internal class V2RawItemTypeFactory : RawItemType.Factory {
           ItemType.SecondaryIndex(
             it.name(),
             it.partitionKey().orElse(null)?.name() ?: tableSchema.tableMetadata().primaryPartitionKey(),
-            it.sortKey().get().name()
+            it.sortKey().orElse(null)?.name()
           )
         }.associateBy { it.name }
     )
