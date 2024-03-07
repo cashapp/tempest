@@ -82,7 +82,7 @@ internal class V1RawItemTypeFactory(
       val indexName = globalSecondaryIndex.indexName
       val keys = globalSecondaryIndex.keySchema.associateBy { it.keyType }
       val hashKeyName = requireNotNull(keys[KeyType.HASH.toString()]).attributeName
-      val rangeKeyName = requireNotNull(keys[KeyType.RANGE.toString()]).attributeName
+      val rangeKeyName = keys.get(KeyType.RANGE.toString())?.attributeName
       secondaryIndexes[indexName] = ItemType.SecondaryIndex(indexName, hashKeyName, rangeKeyName)
     }
     val localSecondaryIndexes = tableModel.localSecondaryIndexes() ?: emptyList()
@@ -90,7 +90,7 @@ internal class V1RawItemTypeFactory(
       val indexName = localSecondaryIndex.indexName
       val keys = localSecondaryIndex.keySchema.associateBy { it.keyType }
       val hashKeyName = requireNotNull(keys[KeyType.HASH.toString()]).attributeName
-      val rangeKeyName = requireNotNull(keys[KeyType.RANGE.toString()]).attributeName
+      val rangeKeyName = keys[KeyType.RANGE.toString()]?.attributeName
       secondaryIndexes[indexName] = ItemType.SecondaryIndex(indexName, hashKeyName, rangeKeyName)
     }
     return secondaryIndexes.toMap()
