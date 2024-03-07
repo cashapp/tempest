@@ -228,7 +228,7 @@ data class ItemType(
 
   data class PrimaryIndex(override val hashKeyName: String, override val rangeKeyName: String?) : Index
 
-  data class SecondaryIndex(val name: String, override val hashKeyName: String, override val rangeKeyName: String) : Index
+  data class SecondaryIndex(val name: String, override val hashKeyName: String, override val rangeKeyName: String?) : Index
 
   class Factory internal constructor(
     private val codecFactory: ReflectionCodec.Factory,
