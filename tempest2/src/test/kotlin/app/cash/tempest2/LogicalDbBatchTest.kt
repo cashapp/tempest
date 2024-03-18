@@ -24,6 +24,7 @@ import app.cash.tempest2.testing.logicalDb
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 import java.time.Duration
 
 class LogicalDbBatchTest {
@@ -161,5 +162,30 @@ class LogicalDbBatchTest {
       AlbumTrack.Key("ALBUM_1", track_number = 3)
     )
     assertThat(items).containsExactly(t3, t1)
+  }
+
+  @Test
+  fun `batchLoad with return capacity requested`() = runBlockingTest {
+    val albumTracks = (1..(MAX_BATCH_READ + 5)).map {
+      AlbumTrack("ALBUM_1", it.toLong(), "track $it", Duration.parse("PT3M28S"))
+    }
+    for (albumTrack in albumTracks) {
+      musicTable.albumTracks.save(albumTrack)
+    }
+    val playlistInfo = PlaylistInfo(
+      playlist_token = "PLAYLIST_1",
+      playlist_name = "WFH Music",
+      playlist_tracks = listOf(AlbumTrack.Key("ALBUM_1", 1))
+    )
+    musicTable.playlistInfo.save(playlistInfo)
+
+    val loadedItems = musicDb.batchLoadWithCapacity(
+      PlaylistInfo.Key("PLAYLIST_1"),
+      *(albumTracks.map { AlbumTrack.Key("ALBUM_1", track_number = it.track_number) }.toTypedArray()),
+      returnConsumedCapacity = ReturnConsumedCapacity.TOTAL
+    )
+    assertThat(loadedItems.getItems<AlbumTrack>()).containsAll(albumTracks)
+    assertThat(loadedItems.getItems<PlaylistInfo>()).containsExactly(playlistInfo)
+    assertThat(loadedItems.consumedCapacity).isNotEmpty
   }
 }

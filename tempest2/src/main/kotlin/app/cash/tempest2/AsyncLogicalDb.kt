@@ -24,6 +24,7 @@ import org.reactivestreams.Publisher
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient
 import software.amazon.awssdk.enhanced.dynamodb.extensions.annotations.DynamoDbVersionAttribute
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 import java.util.concurrent.CompletableFuture
 import javax.annotation.CheckReturnValue
 import kotlin.reflect.KClass
@@ -53,6 +54,20 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
   ): ItemSet =
     batchLoadAsync(keys, consistentReads, maxPageSize).asFlow().reduce { acc, item ->
       ItemSet(acc.getAllItems() + item.getAllItems())
+    }
+
+  suspend fun batchLoadWithCapacity(
+    keys: KeySet,
+    consistentReads: Boolean = false,
+    maxPageSize: Int = MAX_BATCH_READ,
+    returnConsumedCapacity: ReturnConsumedCapacity
+  ): ResultWithCapacityConsumed<ItemSet> =
+    batchLoadAsyncWithCapacity(keys, consistentReads, maxPageSize, returnConsumedCapacity).asFlow().reduce { acc, item ->
+      ResultWithCapacityConsumed(
+      ItemSet(
+        acc.results.getAllItems() + item.results.getAllItems()),
+        acc.consumedCapacity + item.consumedCapacity
+      )
     }
 
   suspend fun batchLoad(
@@ -161,6 +176,13 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
     consistentReads: Boolean,
     maxPageSize: Int
   ): Publisher<ItemSet>
+
+  fun batchLoadAsyncWithCapacity(
+    keys: KeySet,
+    consistentReads: Boolean,
+    maxPageSize: Int,
+    returnConsumedCapacity: ReturnConsumedCapacity
+  ): Publisher<ResultWithCapacityConsumed<ItemSet>>
 
   fun batchLoadAsync(
     keys: KeySet,

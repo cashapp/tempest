@@ -20,6 +20,7 @@ import app.cash.tempest2.internal.LogicalDbFactory
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.extensions.annotations.DynamoDbVersionAttribute
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 import javax.annotation.CheckReturnValue
 import kotlin.reflect.KClass
 
@@ -76,7 +77,30 @@ interface LogicalDb : LogicalTable.Factory {
     return batchLoad(keys.toList(), consistentReads, maxPageSize)
   }
 
+  fun batchLoadWithCapacity(
+    keys: KeySet,
+    consistentReads: Boolean = false,
+    maxPageSize: Int = MAX_BATCH_READ,
+    returnConsumedCapacity: ReturnConsumedCapacity
+  ): ResultWithCapacityConsumed<ItemSet>
 
+  fun batchLoadWithCapacity(
+    keys: Iterable<Any>,
+    consistentReads: Boolean = false,
+    maxPageSize: Int = MAX_BATCH_READ,
+    returnConsumedCapacity: ReturnConsumedCapacity
+  ): ResultWithCapacityConsumed<ItemSet> {
+    return batchLoadWithCapacity(KeySet(keys), consistentReads, maxPageSize, returnConsumedCapacity)
+  }
+
+  fun batchLoadWithCapacity(
+    vararg keys: Any,
+    consistentReads: Boolean = false,
+    maxPageSize: Int = MAX_BATCH_READ,
+    returnConsumedCapacity: ReturnConsumedCapacity
+  ): ResultWithCapacityConsumed<ItemSet> {
+    return batchLoadWithCapacity(keys.toList(), consistentReads, maxPageSize, returnConsumedCapacity)
+  }
 
   /**
    * Saves and deletes the objects given using one or more calls to the

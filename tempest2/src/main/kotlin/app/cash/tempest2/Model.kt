@@ -18,6 +18,7 @@ package app.cash.tempest2
 
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.enhanced.dynamodb.Key
+import software.amazon.awssdk.services.dynamodb.model.ConsumedCapacity
 import kotlin.reflect.KClass
 
 /**
@@ -234,4 +235,13 @@ class ItemSet private constructor(
   fun getAllItems(): Set<Any> = contents
 
   override fun toString(): String = contents.toString()
+}
+
+data class ResultWithCapacityConsumed<T>(
+  val results: T,
+  val consumedCapacity: List<ConsumedCapacity>
+)
+
+inline fun <reified I : Any> ResultWithCapacityConsumed<ItemSet>.getItems(): List<I> {
+  return this.results.getItems()
 }

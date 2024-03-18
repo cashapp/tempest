@@ -26,9 +26,11 @@ import app.cash.tempest2.ItemSet
 import app.cash.tempest2.KeySet
 import app.cash.tempest2.LogicalDb
 import app.cash.tempest2.LogicalTable
+import app.cash.tempest2.ResultWithCapacityConsumed
 import app.cash.tempest2.TransactionWriteSet
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.CLOBBER
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.DELETE
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.reactive.asFlow
@@ -56,6 +58,8 @@ import software.amazon.awssdk.enhanced.dynamodb.model.TransactWriteItemsEnhanced
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+import software.amazon.awssdk.services.dynamodb.model.ConsumedCapacity
+import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException
 import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KClass
@@ -89,15 +93,37 @@ internal class DynamoDbLogicalDb(
     override fun batchLoad(
       keys: KeySet,
       consistentReads: Boolean,
-      maxPageSize: Int
-    ): ItemSet {
+      maxPageSize: Int,
+    ): ItemSet = executeBatchRequest(keys, consistentReads, maxPageSize).results
 
-      val (requestKeys, keysByTable, batchRequests) = toBatchLoadRequests(keys, consistentReads, maxPageSize)
+    override fun batchLoadWithCapacity(
+      keys: KeySet,
+      consistentReads: Boolean,
+      maxPageSize: Int,
+      returnConsumedCapacity: ReturnConsumedCapacity
+    ): ResultWithCapacityConsumed<ItemSet> =
+      executeBatchRequest(keys, consistentReads, maxPageSize, returnConsumedCapacity)
+
+    private fun executeBatchRequest(
+      keys: KeySet,
+      consistentReads: Boolean,
+      maxPageSize: Int,
+      returnConsumedCapacity: ReturnConsumedCapacity? = null
+    ): ResultWithCapacityConsumed<ItemSet> {
+      val (requestKeys, keysByTable, batchRequests) = toBatchLoadRequests(
+        keys,
+        consistentReads,
+        maxPageSize,
+        returnConsumedCapacity
+      )
+
       val pages = batchRequests.map {
         dynamoDbEnhancedClient.batchGetItem(it).iterator().next()
       }
+
       return toBatchLoadResponse(keysByTable, requestKeys, pages)
     }
+
 
     override fun batchWrite(
       writeSet: BatchWriteSet,
@@ -136,9 +162,43 @@ internal class DynamoDbLogicalDb(
     override fun batchLoadAsync(
       keys: KeySet,
       consistentReads: Boolean,
-      maxPageSize: Int
+      maxPageSize: Int,
     ): Publisher<ItemSet> {
-      val (requests, requestsByTable, batchRequests) = toBatchLoadRequests(keys, consistentReads, maxPageSize)
+      return executeBatchRequest(
+        keys,
+        consistentReads,
+        maxPageSize,
+      )
+        .map { it.results }
+        .asPublisher()
+    }
+
+    override fun batchLoadAsyncWithCapacity(
+      keys: KeySet,
+      consistentReads: Boolean,
+      maxPageSize: Int,
+      returnConsumedCapacity: ReturnConsumedCapacity
+    ): Publisher<ResultWithCapacityConsumed<ItemSet>> {
+      return executeBatchRequest(
+        keys,
+        consistentReads,
+        maxPageSize,
+      )
+        .asPublisher()
+    }
+
+    private fun executeBatchRequest(
+      keys: KeySet,
+      consistentReads: Boolean,
+      maxPageSize: Int,
+      returnConsumedCapacity: ReturnConsumedCapacity? = null
+    ): Flow<ResultWithCapacityConsumed<ItemSet>> {
+      val (requests, requestsByTable, batchRequests) = toBatchLoadRequests(
+        keys,
+        consistentReads,
+        maxPageSize,
+        returnConsumedCapacity
+      )
 
       return batchRequests
         .map { request ->
@@ -146,7 +206,6 @@ internal class DynamoDbLogicalDb(
         }
         .reduce { acc, item -> merge(acc, item) }
         .map { page -> toBatchLoadResponse(requestsByTable, requests, listOf(page)) }
-        .asPublisher()
     }
 
     override fun batchWriteAsync(
@@ -191,7 +250,8 @@ internal class DynamoDbLogicalDb(
   private fun toBatchLoadRequests(
     keys: KeySet,
     consistentReads: Boolean,
-    maxPageSize: Int
+    maxPageSize: Int,
+    returnConsumedCapacity: ReturnConsumedCapacity?
   ): Triple<List<LoadRequest>, Map<KClass<*>, List<LoadRequest>>, List<BatchGetItemEnhancedRequest>> {
     val requestKeys = keys.map { LoadRequest(it.encodeAsKey().rawItemKey(), it.expectedItemType()) }
     val keysByTable = mutableMapOf<KClass<*>, List<LoadRequest>>()
@@ -200,6 +260,7 @@ internal class DynamoDbLogicalDb(
       val batchByTable = chunk.groupBy { it.tableType }
       keysByTable.putAll(batchByTable)
       BatchGetItemEnhancedRequest.builder()
+        .returnConsumedCapacity(returnConsumedCapacity)
         .readBatches(
           batchByTable.map { (tableType, requestsForTable) ->
             ReadBatch.builder(tableType.java)
@@ -221,11 +282,13 @@ internal class DynamoDbLogicalDb(
     keysByTable: Map<KClass<*>, List<LoadRequest>>,
     requestKeys: List<LoadRequest>,
     pages: List<BatchGetResultPage>
-  ): ItemSet {
+  ): ResultWithCapacityConsumed<ItemSet> {
     val results = mutableSetOf<Any>()
+    val consumedCapacity = mutableListOf<ConsumedCapacity>()
     val tableTypes = keysByTable.keys
     val resultTypes = requestKeys.associate { it.key to it.resultType }
     for (page in pages) {
+      consumedCapacity.addAll(page.consumedCapacity())
       for (tableType in tableTypes) {
         for (result in page.resultsForTable(mappedTableResource<Any>(tableType))) {
           val resultType = resultTypes[result.rawItemKey()]!!
@@ -234,7 +297,7 @@ internal class DynamoDbLogicalDb(
         }
       }
     }
-    return ItemSet(results)
+    return ResultWithCapacityConsumed(ItemSet(results), consumedCapacity)
   }
 
   private fun toBatchWriteRequests(
