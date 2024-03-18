@@ -19,6 +19,7 @@ package app.cash.tempest2
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.enhanced.dynamodb.extensions.VersionedRecordExtension
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 
 interface View<K : Any, I : Any> {
   /**
@@ -26,6 +27,7 @@ interface View<K : Any, I : Any> {
    * such item exists.
    */
   fun load(key: K, consistentReads: Boolean = false): I?
+  fun loadWithCapacity(key: K, consistentReads: Boolean = false, returnConsumedCapacity: ReturnConsumedCapacity): ResultWithCapacityConsumed<I?>
 
   /**
    * Saves an item in DynamoDB. This method uses [DynamoDbClient.putItem] to clear
