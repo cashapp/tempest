@@ -39,6 +39,7 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 import java.time.Duration
 import java.time.LocalDate
 
@@ -332,6 +333,40 @@ class DynamoDbQueryableTest {
       SPIRIT_WORLD_FIELD_GUIDE.album_title
     )
     assertThat(sparseGsiPage.contents.single().label_name).isEqualTo(SPIRIT_WORLD_FIELD_GUIDE.label)
+  }
+
+  @Test
+  fun consumedCapacity() {
+    musicTable.givenAlbums(AFTER_HOURS_EP)
+
+    val page1 = musicTable.albumTracks.query(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
+      pageSize = 2,
+      returnConsumedCapacity = ReturnConsumedCapacity.TOTAL
+    )
+    assertThat(page1.hasMorePages).isTrue()
+    assertThat(page1.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(0..1))
+    assertThat(page1.consumedCapacity).isNotNull
+
+    val page2 = musicTable.albumTracks.query(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
+      pageSize = 2,
+      initialOffset = page1.offset,
+      returnConsumedCapacity = ReturnConsumedCapacity.TOTAL
+    )
+    assertThat(page2.hasMorePages).isTrue()
+    assertThat(page2.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(2..3))
+    assertThat(page2.consumedCapacity).isNotNull
+
+    val page3 = musicTable.albumTracks.query(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
+      pageSize = 2,
+      initialOffset = page2.offset,
+      returnConsumedCapacity = ReturnConsumedCapacity.INDEXES
+    )
+    assertThat(page3.hasMorePages).isFalse()
+    assertThat(page3.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(4..4))
+    assertThat(page3.consumedCapacity).isNotNull
   }
 
   private fun runLengthLongerThan(duration: Duration): Expression {
