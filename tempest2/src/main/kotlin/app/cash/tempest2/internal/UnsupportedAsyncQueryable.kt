@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.reactive.asPublisher
 import org.reactivestreams.Publisher
 import software.amazon.awssdk.enhanced.dynamodb.Expression
+import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 import kotlin.reflect.KClass
 
 internal class UnsupportedAsyncQueryable<K : Any, I : Any>(
@@ -35,7 +36,8 @@ internal class UnsupportedAsyncQueryable<K : Any, I : Any>(
     pageSize: Int,
     consistentRead: Boolean,
     filterExpression: Expression?,
-    initialOffset: Offset<K>?
+    initialOffset: Offset<K>?,
+    returnConsumedCapacity: ReturnConsumedCapacity?
   ): Publisher<Page<K, I>> {
     return flow<Page<K, I>> {
       throw UnsupportedOperationException("Require $rawType to have a range key. You can query a table or an index only if it has a composite primary key (partition key and sort key)")

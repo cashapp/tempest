@@ -110,7 +110,7 @@ internal class DynamoDbScannable<K : Any, I : Any, R : Any>(
   private fun toScanResponse(page: software.amazon.awssdk.enhanced.dynamodb.model.Page<R>): Page<K, I> {
     val contents = page.items().map { itemCodec.toApp(it) }
     val offset = page.lastEvaluatedKey()?.decodeOffset()
-    return Page(contents, offset)
+    return Page(contents, offset, page.consumedCapacity())
   }
 
   private fun Offset<K>.encodeOffset(): Map<String, AttributeValue> {

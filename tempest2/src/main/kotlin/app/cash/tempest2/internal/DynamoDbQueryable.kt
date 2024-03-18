@@ -38,6 +38,7 @@ import software.amazon.awssdk.enhanced.dynamodb.internal.EnhancedClientUtils
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 
 internal class DynamoDbQueryable<K : Any, I : Any, R : Any>(
   private val secondaryIndexName: String?,
@@ -59,9 +60,10 @@ internal class DynamoDbQueryable<K : Any, I : Any, R : Any>(
       pageSize: Int,
       consistentRead: Boolean,
       filterExpression: Expression?,
-      initialOffset: Offset<K>?
+      initialOffset: Offset<K>?,
+      returnConsumedCapacity: ReturnConsumedCapacity?
     ): Page<K, I> {
-      val request = toQueryRequest(keyCondition, asc, consistentRead, pageSize, filterExpression, initialOffset)
+      val request = toQueryRequest(keyCondition, asc, consistentRead, pageSize, filterExpression, initialOffset, returnConsumedCapacity)
       val page = if (secondaryIndexName != null) {
         dynamoDbTable.index(secondaryIndexName).query(request)
       } else {
@@ -77,8 +79,8 @@ internal class DynamoDbQueryable<K : Any, I : Any, R : Any>(
   inner class Async(
     private val dynamoDbTable: DynamoDbAsyncTable<R>
   ) : AsyncQueryable<K, I> {
-    override fun queryAsync(keyCondition: KeyCondition<K>, asc: Boolean, pageSize: Int, consistentRead: Boolean, filterExpression: Expression?, initialOffset: Offset<K>?): Publisher<Page<K, I>> {
-      val request = toQueryRequest(keyCondition, asc, consistentRead, pageSize, filterExpression, initialOffset)
+    override fun queryAsync(keyCondition: KeyCondition<K>, asc: Boolean, pageSize: Int, consistentRead: Boolean, filterExpression: Expression?, initialOffset: Offset<K>?, returnConsumedCapacity: ReturnConsumedCapacity?): Publisher<Page<K, I>> {
+      val request = toQueryRequest(keyCondition, asc, consistentRead, pageSize, filterExpression, initialOffset, returnConsumedCapacity)
       return if (secondaryIndexName != null) {
         dynamoDbTable.index(secondaryIndexName).query(request)
       } else {
@@ -97,13 +99,15 @@ internal class DynamoDbQueryable<K : Any, I : Any, R : Any>(
     consistentRead: Boolean,
     pageSize: Int,
     filterExpression: Expression?,
-    initialOffset: Offset<K>?
+    initialOffset: Offset<K>?,
+    returnConsumedCapacity: ReturnConsumedCapacity?
   ): QueryEnhancedRequest {
     val query = QueryEnhancedRequest.builder()
       .queryConditional(toQueryConditional(keyCondition))
       .scanIndexForward(asc)
       .consistentRead(consistentRead)
       .limit(pageSize)
+      .returnConsumedCapacity(returnConsumedCapacity)
       .attributesToProject(specificAttributeNames)
     if (filterExpression != null) {
       query.filterExpression(filterExpression)
@@ -117,7 +121,7 @@ internal class DynamoDbQueryable<K : Any, I : Any, R : Any>(
   private fun toQueryResponse(page: software.amazon.awssdk.enhanced.dynamodb.model.Page<R>): Page<K, I> {
     val contents = page.items().map { itemCodec.toApp(it) }
     val offset = page.lastEvaluatedKey()?.decodeOffset()
-    return Page(contents, offset)
+    return Page(contents, offset, page.consumedCapacity())
   }
 
   private fun toQueryConditional(keyCondition: KeyCondition<K>): QueryConditional {
