@@ -50,24 +50,11 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
   suspend fun batchLoad(
     keys: KeySet,
     consistentReads: Boolean = false,
-    maxPageSize: Int = MAX_BATCH_READ
-  ): ItemSet =
-    batchLoadAsync(keys, consistentReads, maxPageSize).asFlow().reduce { acc, item ->
-      ItemSet(acc.getAllItems() + item.getAllItems())
-    }
-
-  suspend fun batchLoadWithCapacity(
-    keys: KeySet,
-    consistentReads: Boolean = false,
     maxPageSize: Int = MAX_BATCH_READ,
-    returnConsumedCapacity: ReturnConsumedCapacity
-  ): ResultWithCapacityConsumed<ItemSet> =
-    batchLoadAsyncWithCapacity(keys, consistentReads, maxPageSize, returnConsumedCapacity).asFlow().reduce { acc, item ->
-      ResultWithCapacityConsumed(
-      ItemSet(
-        acc.results.getAllItems() + item.results.getAllItems()),
-        acc.consumedCapacity + item.consumedCapacity
-      )
+    returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.NONE
+  ): ItemSet =
+    batchLoadAsync(keys, consistentReads, maxPageSize, returnConsumedCapacity).asFlow().reduce { acc, item ->
+      ItemSet(acc.getAllItems() + item.getAllItems())
     }
 
   suspend fun batchLoad(
@@ -174,30 +161,27 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
   fun batchLoadAsync(
     keys: KeySet,
     consistentReads: Boolean,
-    maxPageSize: Int
-  ): Publisher<ItemSet>
-
-  fun batchLoadAsyncWithCapacity(
-    keys: KeySet,
-    consistentReads: Boolean,
     maxPageSize: Int,
     returnConsumedCapacity: ReturnConsumedCapacity
-  ): Publisher<ResultWithCapacityConsumed<ItemSet>>
+  ): Publisher<ItemSet>
 
   fun batchLoadAsync(
     keys: KeySet,
-    consistentReads: Boolean
-  ) = batchLoadAsync(keys, consistentReads, MAX_BATCH_READ)
+    consistentReads: Boolean,
+    returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.NONE
+  ) = batchLoadAsync(keys, consistentReads, MAX_BATCH_READ, returnConsumedCapacity)
 
   fun batchLoadAsync(
     keys: Iterable<Any>,
-    consistentReads: Boolean
-  ) = batchLoadAsync(KeySet(keys), consistentReads, MAX_BATCH_READ)
+    consistentReads: Boolean,
+    returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.NONE
+  ) = batchLoadAsync(KeySet(keys), consistentReads, returnConsumedCapacity)
 
   fun batchLoadAsync(
     vararg keys: Any,
-    consistentReads: Boolean
-  ) = batchLoadAsync(keys.toList(), consistentReads)
+    consistentReads: Boolean,
+    returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.NONE
+  ) = batchLoadAsync(keys.toList(), consistentReads, returnConsumedCapacity)
 
   fun batchLoadAsync(
     keys: Iterable<Any>

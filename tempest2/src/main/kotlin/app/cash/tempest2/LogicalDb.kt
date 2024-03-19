@@ -58,48 +58,26 @@ interface LogicalDb : LogicalTable.Factory {
   fun batchLoad(
     keys: KeySet,
     consistentReads: Boolean = false,
-    maxPageSize: Int = MAX_BATCH_READ
+    maxPageSize: Int = MAX_BATCH_READ,
+    returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.NONE
   ): ItemSet
 
   fun batchLoad(
     keys: Iterable<Any>,
     consistentReads: Boolean = false,
-    maxPageSize: Int = MAX_BATCH_READ
+    maxPageSize: Int = MAX_BATCH_READ,
+    returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.NONE
   ): ItemSet {
-    return batchLoad(KeySet(keys), consistentReads, maxPageSize)
+    return batchLoad(KeySet(keys), consistentReads, maxPageSize, returnConsumedCapacity)
   }
 
   fun batchLoad(
     vararg keys: Any,
     consistentReads: Boolean = false,
-    maxPageSize: Int = MAX_BATCH_READ
+    maxPageSize: Int = MAX_BATCH_READ,
+    returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.NONE
   ): ItemSet {
-    return batchLoad(keys.toList(), consistentReads, maxPageSize)
-  }
-
-  fun batchLoadWithCapacity(
-    keys: KeySet,
-    consistentReads: Boolean = false,
-    maxPageSize: Int = MAX_BATCH_READ,
-    returnConsumedCapacity: ReturnConsumedCapacity
-  ): ResultWithCapacityConsumed<ItemSet>
-
-  fun batchLoadWithCapacity(
-    keys: Iterable<Any>,
-    consistentReads: Boolean = false,
-    maxPageSize: Int = MAX_BATCH_READ,
-    returnConsumedCapacity: ReturnConsumedCapacity
-  ): ResultWithCapacityConsumed<ItemSet> {
-    return batchLoadWithCapacity(KeySet(keys), consistentReads, maxPageSize, returnConsumedCapacity)
-  }
-
-  fun batchLoadWithCapacity(
-    vararg keys: Any,
-    consistentReads: Boolean = false,
-    maxPageSize: Int = MAX_BATCH_READ,
-    returnConsumedCapacity: ReturnConsumedCapacity
-  ): ResultWithCapacityConsumed<ItemSet> {
-    return batchLoadWithCapacity(keys.toList(), consistentReads, maxPageSize, returnConsumedCapacity)
+    return batchLoad(keys.toList(), consistentReads, maxPageSize, returnConsumedCapacity)
   }
 
   /**

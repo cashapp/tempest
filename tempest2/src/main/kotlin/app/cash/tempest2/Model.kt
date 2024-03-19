@@ -213,10 +213,11 @@ class KeySet private constructor(
  * A collection of items across tables.
  */
 class ItemSet private constructor(
-  private val contents: Set<Any>
+  private val contents: Set<Any>,
+  val consumedCapacity: List<ConsumedCapacity>
 ) : Set<Any> by contents {
 
-  constructor(contents: Iterable<Any>) : this(contents.toSet())
+  constructor(contents: Iterable<Any>, consumedCapacity: List<ConsumedCapacity> = emptyList()) : this(contents.toSet(), consumedCapacity)
 
   fun <I : Any> getItems(
     itemType: KClass<I>
@@ -241,7 +242,3 @@ data class ResultWithCapacityConsumed<T>(
   val results: T,
   val consumedCapacity: List<ConsumedCapacity>
 )
-
-inline fun <reified I : Any> ResultWithCapacityConsumed<ItemSet>.getItems(): List<I> {
-  return this.results.getItems()
-}

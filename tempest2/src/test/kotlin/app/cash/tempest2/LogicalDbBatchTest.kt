@@ -179,7 +179,7 @@ class LogicalDbBatchTest {
     )
     musicTable.playlistInfo.save(playlistInfo)
 
-    val loadedItems = musicDb.batchLoadWithCapacity(
+    val loadedItems = musicDb.batchLoad(
       PlaylistInfo.Key("PLAYLIST_1"),
       *(albumTracks.map { AlbumTrack.Key("ALBUM_1", track_number = it.track_number) }.toTypedArray()),
       returnConsumedCapacity = ReturnConsumedCapacity.TOTAL
