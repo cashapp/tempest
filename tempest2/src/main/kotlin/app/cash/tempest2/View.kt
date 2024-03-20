@@ -27,7 +27,12 @@ interface View<K : Any, I : Any> {
    * such item exists.
    */
   fun load(key: K, consistentReads: Boolean = false): I?
-  fun loadWithCapacity(key: K, consistentReads: Boolean = false, returnConsumedCapacity: ReturnConsumedCapacity): ResultWithCapacityConsumed<I?>
+
+  fun loadWithCapacity(
+    key: K,
+    consistentReads: Boolean = false,
+    returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.TOTAL
+  ): ResultWithCapacityConsumed<I?>
 
   /**
    * Saves an item in DynamoDB. This method uses [DynamoDbClient.putItem] to clear

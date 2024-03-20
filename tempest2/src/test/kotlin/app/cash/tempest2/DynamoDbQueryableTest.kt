@@ -336,7 +336,7 @@ class DynamoDbQueryableTest {
   }
 
   @Test
-  fun consumedCapacity() {
+  fun `returns consumed capacity with the response`() {
     musicTable.givenAlbums(AFTER_HOURS_EP)
 
     val page1 = musicTable.albumTracks.query(
@@ -346,17 +346,17 @@ class DynamoDbQueryableTest {
     )
     assertThat(page1.hasMorePages).isTrue()
     assertThat(page1.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(0..1))
-    assertThat(page1.consumedCapacity).isNotNull
+    assertThat(page1.consumedCapacity?.capacityUnits()).isGreaterThan(0.0)
 
     val page2 = musicTable.albumTracks.query(
       keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
       pageSize = 2,
       initialOffset = page1.offset,
-      returnConsumedCapacity = ReturnConsumedCapacity.TOTAL
+      returnConsumedCapacity = ReturnConsumedCapacity.NONE
     )
     assertThat(page2.hasMorePages).isTrue()
     assertThat(page2.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(2..3))
-    assertThat(page2.consumedCapacity).isNotNull
+    assertThat(page2.consumedCapacity).isNull()
 
     val page3 = musicTable.albumTracks.query(
       keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
@@ -366,7 +366,7 @@ class DynamoDbQueryableTest {
     )
     assertThat(page3.hasMorePages).isFalse()
     assertThat(page3.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(4..4))
-    assertThat(page3.consumedCapacity).isNotNull
+    assertThat(page1.consumedCapacity?.capacityUnits()).isGreaterThan(0.0)
   }
 
   private fun runLengthLongerThan(duration: Duration): Expression {

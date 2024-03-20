@@ -186,6 +186,16 @@ class LogicalDbBatchTest {
     )
     assertThat(loadedItems.getItems<AlbumTrack>()).containsAll(albumTracks)
     assertThat(loadedItems.getItems<PlaylistInfo>()).containsExactly(playlistInfo)
-    assertThat(loadedItems.consumedCapacity).isNotEmpty
+
+    assertThat(loadedItems.consumedCapacity)
+      .extracting<Double> { it.capacityUnits() }
+      .contains(50.0, 3.0)
+
+    val loadedWithoutCapacity = musicDb.batchLoad(
+      PlaylistInfo.Key("PLAYLIST_1"),
+      *(albumTracks.map { AlbumTrack.Key("ALBUM_1", track_number = it.track_number) }.toTypedArray()),
+      returnConsumedCapacity = ReturnConsumedCapacity.NONE
+    )
+    assertThat(loadedWithoutCapacity.consumedCapacity).isEmpty()
   }
 }
