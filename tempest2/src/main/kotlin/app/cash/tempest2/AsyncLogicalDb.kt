@@ -162,7 +162,7 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
     keys: KeySet,
     consistentReads: Boolean,
     maxPageSize: Int,
-    returnConsumedCapacity: ReturnConsumedCapacity
+    returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.NONE
   ): Publisher<ItemSet>
 
   fun batchLoadAsync(
