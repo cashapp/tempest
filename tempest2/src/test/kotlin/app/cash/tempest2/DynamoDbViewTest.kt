@@ -29,6 +29,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException
+import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 import java.time.LocalDate
 
 class DynamoDbViewTest {
@@ -57,6 +58,29 @@ class DynamoDbViewTest {
     assertThat(loadedAlbumInfo.artist_name).isEqualTo(albumInfo.artist_name)
     assertThat(loadedAlbumInfo.release_date).isEqualTo(albumInfo.release_date)
     assertThat(loadedAlbumInfo.genre_name).isEqualTo(albumInfo.genre_name)
+  }
+
+  @Test
+  fun loadWithCapacityAfterSave() {
+    val albumInfo = AlbumInfo(
+      "ALBUM_1",
+      "after hours - EP",
+      "53 Thieves",
+      LocalDate.of(2020, 2, 21),
+      "Contemporary R&B"
+    )
+    musicTable.albumInfo.save(albumInfo)
+
+    // Query the movies created.
+    val response = musicTable.albumInfo.loadWithCapacity(albumInfo.key, returnConsumedCapacity = ReturnConsumedCapacity.TOTAL)
+
+    val loadedAlbumInfo = response.results!!
+    assertThat(loadedAlbumInfo.album_token).isEqualTo(albumInfo.album_token)
+    assertThat(loadedAlbumInfo.artist_name).isEqualTo(albumInfo.artist_name)
+    assertThat(loadedAlbumInfo.release_date).isEqualTo(albumInfo.release_date)
+    assertThat(loadedAlbumInfo.genre_name).isEqualTo(albumInfo.genre_name)
+
+    assertThat(response.consumedCapacity).isNotEmpty
   }
 
   @Test
