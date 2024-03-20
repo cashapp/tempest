@@ -237,8 +237,3 @@ class ItemSet private constructor(
 
   override fun toString(): String = contents.toString()
 }
-
-data class ResultWithCapacityConsumed<T>(
-  val results: T,
-  val consumedCapacity: List<ConsumedCapacity>
-)

@@ -18,7 +18,6 @@ package app.cash.tempest2.internal
 
 import app.cash.tempest.internal.Codec
 import app.cash.tempest2.AsyncView
-import app.cash.tempest2.ResultWithCapacityConsumed
 import app.cash.tempest2.View
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable
@@ -30,6 +29,7 @@ import software.amazon.awssdk.enhanced.dynamodb.internal.EnhancedClientUtils
 import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest
+import software.amazon.awssdk.services.dynamodb.model.ConsumedCapacity
 import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 import java.util.concurrent.CompletableFuture
 
@@ -54,11 +54,11 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
       key: K,
       consistentReads: Boolean,
       returnConsumedCapacity: ReturnConsumedCapacity
-    ): ResultWithCapacityConsumed<I?> {
+    ): Pair<I?, ConsumedCapacity> {
       val request = toLoadRequest(key, consistentReads, returnConsumedCapacity)
       val response = dynamoDbTable.getItemWithResponse(request)
       val item = toLoadResponse(response.attributes())
-      return ResultWithCapacityConsumed(item, listOf(response.consumedCapacity()))
+      return Pair(item, response.consumedCapacity())
     }
 
     override fun save(
@@ -102,12 +102,12 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
       key: K,
       consistentReads: Boolean,
       returnConsumedCapacity: ReturnConsumedCapacity
-    ): CompletableFuture<ResultWithCapacityConsumed<I?>> {
+    ): CompletableFuture<Pair<I?, ConsumedCapacity>> {
       val request = toLoadRequest(key, consistentReads, returnConsumedCapacity)
       return dynamoDbTable.getItemWithResponse(request)
         .thenApply { response ->
           val item = toItem(response.attributes())
-          ResultWithCapacityConsumed(item, listOf(response.consumedCapacity()))
+          Pair(item, response.consumedCapacity())
         }
     }
 

@@ -20,6 +20,7 @@ import kotlinx.coroutines.future.await
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.enhanced.dynamodb.extensions.VersionedRecordExtension
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.model.ConsumedCapacity
 import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 import java.util.concurrent.CompletableFuture
 
@@ -34,7 +35,7 @@ interface AsyncView<K : Any, I : Any> {
     key: K,
     consistentReads: Boolean = false,
     returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.TOTAL
-  ): ResultWithCapacityConsumed<I?> = loadAsyncWithConsumedCapacity(key, consistentReads, returnConsumedCapacity).await()
+  ): Pair<I?, ConsumedCapacity> = loadAsyncWithConsumedCapacity(key, consistentReads, returnConsumedCapacity).await()
 
   /**
    * Saves an item in DynamoDB. This method uses [DynamoDbClient.putItem] to clear
@@ -79,7 +80,7 @@ interface AsyncView<K : Any, I : Any> {
     key: K,
     consistentReads: Boolean,
     returnConsumedCapacity: ReturnConsumedCapacity
-  ): CompletableFuture<ResultWithCapacityConsumed<I?>>
+  ): CompletableFuture<Pair<I?, ConsumedCapacity>>
 
   fun loadAsync(key: K) = loadAsync(key, false)
 

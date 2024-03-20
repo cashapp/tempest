@@ -26,11 +26,9 @@ import app.cash.tempest2.ItemSet
 import app.cash.tempest2.KeySet
 import app.cash.tempest2.LogicalDb
 import app.cash.tempest2.LogicalTable
-import app.cash.tempest2.ResultWithCapacityConsumed
 import app.cash.tempest2.TransactionWriteSet
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.CLOBBER
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.DELETE
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.reactive.asFlow
