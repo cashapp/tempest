@@ -60,6 +60,29 @@ class DynamoDbAsyncViewTest {
   }
 
   @Test
+  fun loadAfterSaveWithConsumedCapacity() = runBlockingTest {
+    val albumInfo = AlbumInfo(
+      "ALBUM_1",
+      "after hours - EP",
+      "53 Thieves",
+      LocalDate.of(2020, 2, 21),
+      "Contemporary R&B"
+    )
+    musicTable.albumInfo.save(albumInfo)
+
+    // Query the movies created.
+    val response = musicTable.albumInfo.loadWithConsumedCapacity(albumInfo.key)
+
+    val loadedAlbumInfo = response.results!!
+    assertThat(loadedAlbumInfo.album_token).isEqualTo(albumInfo.album_token)
+    assertThat(loadedAlbumInfo.artist_name).isEqualTo(albumInfo.artist_name)
+    assertThat(loadedAlbumInfo.release_date).isEqualTo(albumInfo.release_date)
+    assertThat(loadedAlbumInfo.genre_name).isEqualTo(albumInfo.genre_name)
+
+    assertThat(response.consumedCapacity.first().capacityUnits()).isGreaterThan(0.0)
+  }
+
+  @Test
   fun saveIfNotExist() = runBlockingTest {
     val albumInfo = AlbumInfo(
       "ALBUM_1",

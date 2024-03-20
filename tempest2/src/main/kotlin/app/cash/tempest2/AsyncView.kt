@@ -30,7 +30,11 @@ interface AsyncView<K : Any, I : Any> {
    */
   suspend fun load(key: K, consistentReads: Boolean = false): I? = loadAsync(key, consistentReads).await()
 
-  suspend fun loadWithCapacity(key: K, consistentReads: Boolean = false, returnConsumedCapacity: ReturnConsumedCapacity): ResultWithCapacityConsumed<I?> = loadAsyncWithCapacity(key, consistentReads, returnConsumedCapacity).await()
+  suspend fun loadWithConsumedCapacity(
+    key: K,
+    consistentReads: Boolean = false,
+    returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.TOTAL
+  ): ResultWithCapacityConsumed<I?> = loadAsyncWithConsumedCapacity(key, consistentReads, returnConsumedCapacity).await()
 
   /**
    * Saves an item in DynamoDB. This method uses [DynamoDbClient.putItem] to clear
@@ -70,7 +74,12 @@ interface AsyncView<K : Any, I : Any> {
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
   fun loadAsync(key: K, consistentReads: Boolean): CompletableFuture<I?>
-  fun loadAsyncWithCapacity(key: K, consistentReads: Boolean, returnConsumedCapacity: ReturnConsumedCapacity): CompletableFuture<ResultWithCapacityConsumed<I?>>
+
+  fun loadAsyncWithConsumedCapacity(
+    key: K,
+    consistentReads: Boolean,
+    returnConsumedCapacity: ReturnConsumedCapacity
+  ): CompletableFuture<ResultWithCapacityConsumed<I?>>
 
   fun loadAsync(key: K) = loadAsync(key, false)
 

@@ -72,7 +72,7 @@ class DynamoDbViewTest {
     musicTable.albumInfo.save(albumInfo)
 
     // Query the movies created.
-    val response = musicTable.albumInfo.loadWithCapacity(albumInfo.key, returnConsumedCapacity = ReturnConsumedCapacity.TOTAL)
+    val response = musicTable.albumInfo.loadWithConsumedCapacity(albumInfo.key)
 
     val loadedAlbumInfo = response.results!!
     assertThat(loadedAlbumInfo.album_token).isEqualTo(albumInfo.album_token)
@@ -80,7 +80,7 @@ class DynamoDbViewTest {
     assertThat(loadedAlbumInfo.release_date).isEqualTo(albumInfo.release_date)
     assertThat(loadedAlbumInfo.genre_name).isEqualTo(albumInfo.genre_name)
 
-    assertThat(response.consumedCapacity).isNotEmpty
+    assertThat(response.consumedCapacity.first().capacityUnits()).isGreaterThan(0.0)
   }
 
   @Test
