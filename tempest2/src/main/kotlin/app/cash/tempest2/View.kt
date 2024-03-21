@@ -33,7 +33,7 @@ interface View<K : Any, I : Any> {
     key: K,
     consistentReads: Boolean = false,
     returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.TOTAL
-  ): Pair<I?, ConsumedCapacity>
+  ): Pair<I?, ConsumedCapacity?>
 
   /**
    * Saves an item in DynamoDB. This method uses [DynamoDbClient.putItem] to clear

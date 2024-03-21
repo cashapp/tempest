@@ -54,7 +54,7 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
       key: K,
       consistentReads: Boolean,
       returnConsumedCapacity: ReturnConsumedCapacity
-    ): Pair<I?, ConsumedCapacity> {
+    ): Pair<I?, ConsumedCapacity?> {
       val request = toLoadRequest(key, consistentReads, returnConsumedCapacity)
       val response = dynamoDbTable.getItemWithResponse(request)
       val item = toLoadResponse(response.attributes())
@@ -102,7 +102,7 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
       key: K,
       consistentReads: Boolean,
       returnConsumedCapacity: ReturnConsumedCapacity
-    ): CompletableFuture<Pair<I?, ConsumedCapacity>> {
+    ): CompletableFuture<Pair<I?, ConsumedCapacity?>> {
       val request = toLoadRequest(key, consistentReads, returnConsumedCapacity)
       return dynamoDbTable.getItemWithResponse(request)
         .thenApply { response ->

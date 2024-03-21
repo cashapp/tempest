@@ -35,7 +35,7 @@ interface AsyncView<K : Any, I : Any> {
     key: K,
     consistentReads: Boolean = false,
     returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.TOTAL
-  ): Pair<I?, ConsumedCapacity> = loadAsyncWithConsumedCapacity(key, consistentReads, returnConsumedCapacity).await()
+  ): Pair<I?, ConsumedCapacity?> = loadAsyncWithConsumedCapacity(key, consistentReads, returnConsumedCapacity).await()
 
   /**
    * Saves an item in DynamoDB. This method uses [DynamoDbClient.putItem] to clear
@@ -80,7 +80,7 @@ interface AsyncView<K : Any, I : Any> {
     key: K,
     consistentReads: Boolean,
     returnConsumedCapacity: ReturnConsumedCapacity
-  ): CompletableFuture<Pair<I?, ConsumedCapacity>>
+  ): CompletableFuture<Pair<I?, ConsumedCapacity?>>
 
   fun loadAsync(key: K) = loadAsync(key, false)
 

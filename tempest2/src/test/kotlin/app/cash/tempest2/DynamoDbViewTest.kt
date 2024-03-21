@@ -78,13 +78,13 @@ class DynamoDbViewTest {
     assertThat(loadedAlbumInfo.artist_name).isEqualTo(albumInfo.artist_name)
     assertThat(loadedAlbumInfo.release_date).isEqualTo(albumInfo.release_date)
     assertThat(loadedAlbumInfo.genre_name).isEqualTo(albumInfo.genre_name)
-    assertThat(consumedCapacity.capacityUnits()).isGreaterThan(0.0)
+    assertThat(consumedCapacity?.capacityUnits()).isGreaterThan(0.0)
 
     val (_, consumedCapacity2) = musicTable.albumInfo.loadWithConsumedCapacity(
       albumInfo.key,
       returnConsumedCapacity = ReturnConsumedCapacity.NONE
     )
-    assertThat(consumedCapacity2.capacityUnits()).isEqualTo(0.0)
+    assertThat(consumedCapacity2).isNull()
   }
 
   @Test
