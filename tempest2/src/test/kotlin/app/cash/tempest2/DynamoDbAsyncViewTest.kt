@@ -72,7 +72,7 @@ class DynamoDbAsyncViewTest {
     musicTable.albumInfo.save(albumInfo)
 
     // Query the movies created.
-    val (loadedAlbumInfo, consumedCapacity) = musicTable.albumInfo.loadWithConsumedCapacity(albumInfo.key)
+    val (loadedAlbumInfo, consumedCapacity) = musicTable.albumInfo.load(albumInfo.key, returnConsumedCapacity = ReturnConsumedCapacity.TOTAL)
 
     assertThat(loadedAlbumInfo!!.album_token).isEqualTo(albumInfo.album_token)
     assertThat(loadedAlbumInfo.artist_name).isEqualTo(albumInfo.artist_name)
@@ -80,7 +80,7 @@ class DynamoDbAsyncViewTest {
     assertThat(loadedAlbumInfo.genre_name).isEqualTo(albumInfo.genre_name)
     assertThat(consumedCapacity?.capacityUnits()).isGreaterThan(0.0)
 
-    val (_, consumedCapacity2) = musicTable.albumInfo.loadWithConsumedCapacity(
+    val (_, consumedCapacity2) = musicTable.albumInfo.load(
       albumInfo.key,
       returnConsumedCapacity = ReturnConsumedCapacity.NONE
     )

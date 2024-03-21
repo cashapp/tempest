@@ -50,7 +50,7 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
       return toLoadResponse(itemObject)
     }
 
-    override fun loadWithConsumedCapacity(
+    override fun load(
       key: K,
       consistentReads: Boolean,
       returnConsumedCapacity: ReturnConsumedCapacity
@@ -98,7 +98,7 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
       return dynamoDbTable.getItem(request).thenApply(::toItem)
     }
 
-    override fun loadAsyncWithConsumedCapacity(
+    override fun loadAsync(
       key: K,
       consistentReads: Boolean,
       returnConsumedCapacity: ReturnConsumedCapacity

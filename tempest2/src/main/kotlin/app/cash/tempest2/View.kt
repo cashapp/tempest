@@ -29,7 +29,7 @@ interface View<K : Any, I : Any> {
    */
   fun load(key: K, consistentReads: Boolean = false): I?
 
-  fun loadWithConsumedCapacity(
+  fun load(
     key: K,
     consistentReads: Boolean = false,
     returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.TOTAL
