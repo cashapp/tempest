@@ -18,6 +18,7 @@ package app.cash.tempest2
 
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.enhanced.dynamodb.Key
+import software.amazon.awssdk.services.dynamodb.model.ConsumedCapacity
 import kotlin.reflect.KClass
 
 /**
@@ -212,10 +213,11 @@ class KeySet private constructor(
  * A collection of items across tables.
  */
 class ItemSet private constructor(
-  private val contents: Set<Any>
+  private val contents: Set<Any>,
+  val consumedCapacity: List<ConsumedCapacity>
 ) : Set<Any> by contents {
 
-  constructor(contents: Iterable<Any>) : this(contents.toSet())
+  constructor(contents: Iterable<Any>, consumedCapacity: List<ConsumedCapacity> = emptyList()) : this(contents.toSet(), consumedCapacity)
 
   fun <I : Any> getItems(
     itemType: KClass<I>

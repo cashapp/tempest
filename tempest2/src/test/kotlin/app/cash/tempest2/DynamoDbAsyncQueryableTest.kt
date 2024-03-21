@@ -41,6 +41,7 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 import java.time.Duration
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
@@ -106,6 +107,7 @@ class DynamoDbAsyncQueryableTest {
     )
     assertThat(page1.hasMorePages).isFalse()
     assertThat(page1.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(0..0))
+    assertThat(page1.consumedCapacity).isNull()
 
     val page2 = musicTable.albumTracks.query(
       keyCondition = Between(
@@ -124,6 +126,44 @@ class DynamoDbAsyncQueryableTest {
     )
     assertThat(page3.hasMorePages).isFalse()
     assertThat(page3.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(0..2))
+  }
+
+  @Test
+  fun `returns consumed capacity with the result`() = runBlockingTest {
+    musicTable.givenAlbums(AFTER_HOURS_EP)
+
+    val page1 = musicTable.albumTracks.query(
+      keyCondition = Between(
+        AlbumTrack.Key(AFTER_HOURS_EP.album_token, 1),
+        AlbumTrack.Key(AFTER_HOURS_EP.album_token, 1)
+      ),
+      returnConsumedCapacity = ReturnConsumedCapacity.TOTAL
+    )
+    assertThat(page1.hasMorePages).isFalse()
+    assertThat(page1.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(0..0))
+    assertThat(page1.consumedCapacity?.capacityUnits()).isGreaterThan(0.0)
+
+    val page2 = musicTable.albumTracks.query(
+      keyCondition = Between(
+        AlbumTrack.Key(AFTER_HOURS_EP.album_token, 2),
+        AlbumTrack.Key(AFTER_HOURS_EP.album_token, 3)
+      ),
+      returnConsumedCapacity = ReturnConsumedCapacity.NONE
+    )
+    assertThat(page2.hasMorePages).isFalse()
+    assertThat(page2.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(1..2))
+    assertThat(page2.consumedCapacity).isNull()
+
+    val page3 = musicTable.albumTracks.query(
+      keyCondition = Between(
+        AlbumTrack.Key(AFTER_HOURS_EP.album_token, 1),
+        AlbumTrack.Key(AFTER_HOURS_EP.album_token, 3)
+      ),
+      returnConsumedCapacity = ReturnConsumedCapacity.INDEXES
+    )
+    assertThat(page3.hasMorePages).isFalse()
+    assertThat(page3.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(0..2))
+    assertThat(page3.consumedCapacity?.capacityUnits()).isGreaterThan(0.0)
   }
 
   @Test

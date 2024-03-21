@@ -24,6 +24,7 @@ import org.reactivestreams.Publisher
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient
 import software.amazon.awssdk.enhanced.dynamodb.extensions.annotations.DynamoDbVersionAttribute
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 import java.util.concurrent.CompletableFuture
 import javax.annotation.CheckReturnValue
 import kotlin.reflect.KClass
@@ -49,9 +50,10 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
   suspend fun batchLoad(
     keys: KeySet,
     consistentReads: Boolean = false,
-    maxPageSize: Int = MAX_BATCH_READ
+    maxPageSize: Int = MAX_BATCH_READ,
+    returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.NONE
   ): ItemSet =
-    batchLoadAsync(keys, consistentReads, maxPageSize).asFlow().reduce { acc, item ->
+    batchLoadAsync(keys, consistentReads, maxPageSize, returnConsumedCapacity).asFlow().reduce { acc, item ->
       ItemSet(acc.getAllItems() + item.getAllItems())
     }
 
@@ -159,23 +161,27 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
   fun batchLoadAsync(
     keys: KeySet,
     consistentReads: Boolean,
-    maxPageSize: Int
+    maxPageSize: Int,
+    returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.NONE
   ): Publisher<ItemSet>
 
   fun batchLoadAsync(
     keys: KeySet,
-    consistentReads: Boolean
-  ) = batchLoadAsync(keys, consistentReads, MAX_BATCH_READ)
+    consistentReads: Boolean,
+    returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.NONE
+  ) = batchLoadAsync(keys, consistentReads, MAX_BATCH_READ, returnConsumedCapacity)
 
   fun batchLoadAsync(
     keys: Iterable<Any>,
-    consistentReads: Boolean
-  ) = batchLoadAsync(KeySet(keys), consistentReads, MAX_BATCH_READ)
+    consistentReads: Boolean,
+    returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.NONE
+  ) = batchLoadAsync(KeySet(keys), consistentReads, returnConsumedCapacity)
 
   fun batchLoadAsync(
     vararg keys: Any,
-    consistentReads: Boolean
-  ) = batchLoadAsync(keys.toList(), consistentReads)
+    consistentReads: Boolean,
+    returnConsumedCapacity: ReturnConsumedCapacity = ReturnConsumedCapacity.NONE
+  ) = batchLoadAsync(keys.toList(), consistentReads, returnConsumedCapacity)
 
   fun batchLoadAsync(
     keys: Iterable<Any>

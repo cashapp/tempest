@@ -16,9 +16,12 @@
 
 package app.cash.tempest2
 
+import software.amazon.awssdk.services.dynamodb.model.ConsumedCapacity
+
 data class Page<K, T> internal constructor(
   val contents: List<T>,
-  val offset: Offset<K>?
+  val offset: Offset<K>?,
+  val consumedCapacity: ConsumedCapacity?
 ) {
   val hasMorePages: Boolean
     get() = offset != null
