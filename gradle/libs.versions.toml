@@ -1,6 +1,6 @@
 [versions]
 ktlint = "0.40.0"
-kotlin = "1.9.23"
+kotlin = "1.8.22"
 
 [libraries]
 assertj = { module = "org.assertj:assertj-core", version = "3.23.1" }
