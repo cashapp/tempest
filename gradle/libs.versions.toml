@@ -4,8 +4,8 @@ kotlin = "1.9.23"
 
 [libraries]
 assertj = { module = "org.assertj:assertj-core", version = "3.23.1" }
-aws2Dynamodb = { module = "software.amazon.awssdk:dynamodb", version = "2.17.134" }
-aws2DynamodbEnhanced = { module = "software.amazon.awssdk:dynamodb-enhanced", version = "2.17.134" }
+aws2Dynamodb = { module = "software.amazon.awssdk:dynamodb", version = "2.25.11" }
+aws2DynamodbEnhanced = { module = "software.amazon.awssdk:dynamodb-enhanced", version = "2.25.11" }
 awsDynamodb = { module = "com.amazonaws:aws-java-sdk-dynamodb", version = "1.11.960" }
 awsDynamodbLocal = { module = "com.amazonaws:DynamoDBLocal", version = "1.13.5" }
 clikt = { module = "com.github.ajalt:clikt", version = "2.8.0" }

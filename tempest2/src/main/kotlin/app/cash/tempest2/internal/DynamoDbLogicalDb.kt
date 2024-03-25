@@ -56,6 +56,8 @@ import software.amazon.awssdk.enhanced.dynamodb.model.TransactWriteItemsEnhanced
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+import software.amazon.awssdk.services.dynamodb.model.ConsumedCapacity
+import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException
 import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KClass
@@ -89,15 +91,23 @@ internal class DynamoDbLogicalDb(
     override fun batchLoad(
       keys: KeySet,
       consistentReads: Boolean,
-      maxPageSize: Int
+      maxPageSize: Int,
+      returnConsumedCapacity: ReturnConsumedCapacity
     ): ItemSet {
+      val (requestKeys, keysByTable, batchRequests) = toBatchLoadRequests(
+        keys,
+        consistentReads,
+        maxPageSize,
+        returnConsumedCapacity
+      )
 
-      val (requestKeys, keysByTable, batchRequests) = toBatchLoadRequests(keys, consistentReads, maxPageSize)
       val pages = batchRequests.map {
         dynamoDbEnhancedClient.batchGetItem(it).iterator().next()
       }
+
       return toBatchLoadResponse(keysByTable, requestKeys, pages)
     }
+
 
     override fun batchWrite(
       writeSet: BatchWriteSet,
@@ -136,14 +146,18 @@ internal class DynamoDbLogicalDb(
     override fun batchLoadAsync(
       keys: KeySet,
       consistentReads: Boolean,
-      maxPageSize: Int
+      maxPageSize: Int,
+      returnConsumedCapacity: ReturnConsumedCapacity
     ): Publisher<ItemSet> {
-      val (requests, requestsByTable, batchRequests) = toBatchLoadRequests(keys, consistentReads, maxPageSize)
+      val (requests, requestsByTable, batchRequests) = toBatchLoadRequests(
+        keys,
+        consistentReads,
+        maxPageSize,
+        returnConsumedCapacity
+      )
 
       return batchRequests
-        .map { request ->
-          dynamoDbEnhancedClient.batchGetItem(request).limit(1).asFlow()
-        }
+        .map { request -> dynamoDbEnhancedClient.batchGetItem(request).limit(1).asFlow() }
         .reduce { acc, item -> merge(acc, item) }
         .map { page -> toBatchLoadResponse(requestsByTable, requests, listOf(page)) }
         .asPublisher()
@@ -191,7 +205,8 @@ internal class DynamoDbLogicalDb(
   private fun toBatchLoadRequests(
     keys: KeySet,
     consistentReads: Boolean,
-    maxPageSize: Int
+    maxPageSize: Int,
+    returnConsumedCapacity: ReturnConsumedCapacity?
   ): Triple<List<LoadRequest>, Map<KClass<*>, List<LoadRequest>>, List<BatchGetItemEnhancedRequest>> {
     val requestKeys = keys.map { LoadRequest(it.encodeAsKey().rawItemKey(), it.expectedItemType()) }
     val keysByTable = mutableMapOf<KClass<*>, List<LoadRequest>>()
@@ -200,6 +215,7 @@ internal class DynamoDbLogicalDb(
       val batchByTable = chunk.groupBy { it.tableType }
       keysByTable.putAll(batchByTable)
       BatchGetItemEnhancedRequest.builder()
+        .returnConsumedCapacity(returnConsumedCapacity)
         .readBatches(
           batchByTable.map { (tableType, requestsForTable) ->
             ReadBatch.builder(tableType.java)
@@ -223,9 +239,11 @@ internal class DynamoDbLogicalDb(
     pages: List<BatchGetResultPage>
   ): ItemSet {
     val results = mutableSetOf<Any>()
+    val consumedCapacity = mutableListOf<ConsumedCapacity>()
     val tableTypes = keysByTable.keys
     val resultTypes = requestKeys.associate { it.key to it.resultType }
     for (page in pages) {
+      consumedCapacity.addAll(page.consumedCapacity())
       for (tableType in tableTypes) {
         for (result in page.resultsForTable(mappedTableResource<Any>(tableType))) {
           val resultType = resultTypes[result.rawItemKey()]!!
@@ -234,7 +252,7 @@ internal class DynamoDbLogicalDb(
         }
       }
     }
-    return ItemSet(results)
+    return ItemSet(results, consumedCapacity)
   }
 
   private fun toBatchWriteRequests(

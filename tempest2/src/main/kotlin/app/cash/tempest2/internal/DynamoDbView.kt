@@ -29,6 +29,8 @@ import software.amazon.awssdk.enhanced.dynamodb.internal.EnhancedClientUtils
 import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest
+import software.amazon.awssdk.services.dynamodb.model.ConsumedCapacity
+import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 import java.util.concurrent.CompletableFuture
 
 internal class DynamoDbView<K : Any, I : Any, R : Any>(
@@ -48,6 +50,17 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
       return toLoadResponse(itemObject)
     }
 
+    override fun load(
+      key: K,
+      consistentReads: Boolean,
+      returnConsumedCapacity: ReturnConsumedCapacity
+    ): Pair<I?, ConsumedCapacity?> {
+      val request = toLoadRequest(key, consistentReads, returnConsumedCapacity)
+      val response = dynamoDbTable.getItemWithResponse(request)
+      val item = toLoadResponse(response.attributes())
+      return Pair(item, response.consumedCapacity())
+    }
+
     override fun save(
       item: I,
       saveExpression: Expression?
@@ -62,7 +75,7 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
     ): I? {
       val request = toDeleteKeyRequest(key, deleteExpression)
       val itemObject = dynamoDbTable.deleteItem(request)
-      return toDeleteResponse(itemObject)
+      return toItem(itemObject)
     }
 
     override fun delete(
@@ -71,7 +84,7 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
     ): I? {
       val request = toDeleteItemRequest(item, deleteExpression)
       val itemObject = dynamoDbTable.deleteItem(request)
-      return toDeleteResponse(itemObject)
+      return toItem(itemObject)
     }
   }
 
@@ -82,7 +95,20 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
   ) : AsyncView<K, I> {
     override fun loadAsync(key: K, consistentReads: Boolean): CompletableFuture<I?> {
       val request = toLoadRequest(key, consistentReads)
-      return dynamoDbTable.getItem(request).thenApply(::toDeleteResponse)
+      return dynamoDbTable.getItem(request).thenApply(::toItem)
+    }
+
+    override fun loadAsync(
+      key: K,
+      consistentReads: Boolean,
+      returnConsumedCapacity: ReturnConsumedCapacity
+    ): CompletableFuture<Pair<I?, ConsumedCapacity?>> {
+      val request = toLoadRequest(key, consistentReads, returnConsumedCapacity)
+      return dynamoDbTable.getItemWithResponse(request)
+        .thenApply { response ->
+          val item = toItem(response.attributes())
+          Pair(item, response.consumedCapacity())
+        }
     }
 
     override fun saveAsync(
@@ -98,7 +124,7 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
       deleteExpression: Expression?
     ): CompletableFuture<I?> {
       val request = toDeleteKeyRequest(key, deleteExpression)
-      return dynamoDbTable.deleteItem(request).thenApply(::toDeleteResponse)
+      return dynamoDbTable.deleteItem(request).thenApply(::toItem)
     }
 
     override fun deleteAsync(
@@ -106,7 +132,7 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
       deleteExpression: Expression?
     ): CompletableFuture<I?> {
       val request = toDeleteItemRequest(item, deleteExpression)
-      return dynamoDbTable.deleteItem(request).thenApply(::toDeleteResponse)
+      return dynamoDbTable.deleteItem(request).thenApply(::toItem)
     }
   }
 
@@ -117,11 +143,12 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
     )
   }
 
-  private fun toLoadRequest(key: K, consistentReads: Boolean): GetItemEnhancedRequest {
+  private fun toLoadRequest(key: K, consistentReads: Boolean, returnConsumedCapacity: ReturnConsumedCapacity? = null): GetItemEnhancedRequest {
     val keyObject = keyCodec.toDb(key)
     return GetItemEnhancedRequest.builder()
       .key(keyObject.key())
       .consistentRead(consistentReads)
+      .returnConsumedCapacity(returnConsumedCapacity)
       .build()
   }
 
@@ -151,5 +178,5 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
       .build()
   }
 
-  private fun toDeleteResponse(itemObject: R?) = if (itemObject != null) itemCodec.toApp(itemObject) else null
+  private fun toItem(itemObject: R?) = if (itemObject != null) itemCodec.toApp(itemObject) else null
 }

@@ -21,6 +21,7 @@ import app.cash.tempest2.Offset
 import app.cash.tempest2.Page
 import app.cash.tempest2.Queryable
 import software.amazon.awssdk.enhanced.dynamodb.Expression
+import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 import java.lang.UnsupportedOperationException
 import kotlin.reflect.KClass
 
@@ -33,7 +34,8 @@ internal class UnsupportedQueryable<K : Any, I : Any>(
     pageSize: Int,
     consistentRead: Boolean,
     filterExpression: Expression?,
-    initialOffset: Offset<K>?
+    initialOffset: Offset<K>?,
+    returnConsumedCapacity: ReturnConsumedCapacity?
   ): Page<K, I> {
     throw UnsupportedOperationException("Require $rawType to have a range key. You can query a table or an index only if it has a composite primary key (partition key and sort key)")
   }

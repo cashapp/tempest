@@ -17,6 +17,7 @@
 package app.cash.tempest2
 
 import software.amazon.awssdk.enhanced.dynamodb.Expression
+import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 
 interface Queryable<K : Any, I : Any> {
 
@@ -30,7 +31,8 @@ interface Queryable<K : Any, I : Any> {
     pageSize: Int = 100,
     consistentRead: Boolean = false,
     filterExpression: Expression? = null,
-    initialOffset: Offset<K>? = null
+    initialOffset: Offset<K>? = null,
+    returnConsumedCapacity: ReturnConsumedCapacity? = null,
   ): Page<K, I>
 
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
@@ -56,14 +58,15 @@ interface Queryable<K : Any, I : Any> {
   fun query(
     keyCondition: KeyCondition<K>,
     config: QueryConfig,
-    initialOffset: Offset<K>?
+    initialOffset: Offset<K>?,
   ) = query(
     keyCondition,
     config.asc,
     config.pageSize,
     config.consistentRead,
     config.filterExpression,
-    initialOffset
+    initialOffset,
+    config.returnConsumedCapacity
   )
 }
 
@@ -71,13 +74,15 @@ data class QueryConfig internal constructor(
   val asc: Boolean,
   val pageSize: Int,
   val consistentRead: Boolean,
-  val filterExpression: Expression?
+  val filterExpression: Expression?,
+  val returnConsumedCapacity: ReturnConsumedCapacity?,
 ) {
   class Builder {
     private var asc = true
     private var pageSize = 100
     private var consistentRead = false
     private var filterExpression: Expression? = null
+    private var returnConsumedCapacity: ReturnConsumedCapacity? = null
 
     fun asc(asc: Boolean) = apply { this.asc = asc }
 
@@ -88,11 +93,15 @@ data class QueryConfig internal constructor(
     fun filterExpression(filterExpression: Expression) =
       apply { this.filterExpression = filterExpression }
 
+    fun returnConsumedCapacity(returnConsumedCapacity: ReturnConsumedCapacity) =
+      apply { this.returnConsumedCapacity = returnConsumedCapacity }
+
     fun build() = QueryConfig(
       asc,
       pageSize,
       consistentRead,
-      filterExpression
+      filterExpression,
+      returnConsumedCapacity
     )
   }
 }
@@ -107,7 +116,7 @@ sealed class KeyCondition<K>
  * - begins_with (a, substr)— true if the value of attribute a begins with a particular substring.
  */
 data class BeginsWith<K>(
-  val prefix: K
+  val prefix: K,
 ) : KeyCondition<K>()
 
 /**
@@ -116,5 +125,5 @@ data class BeginsWith<K>(
  */
 data class Between<K>(
   val startInclusive: K,
-  val endInclusive: K
+  val endInclusive: K,
 ) : KeyCondition<K>()

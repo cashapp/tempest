@@ -19,6 +19,7 @@ package app.cash.tempest2
 import kotlinx.coroutines.reactive.awaitFirst
 import org.reactivestreams.Publisher
 import software.amazon.awssdk.enhanced.dynamodb.Expression
+import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 
 interface AsyncQueryable<K : Any, I : Any> {
 
@@ -32,8 +33,17 @@ interface AsyncQueryable<K : Any, I : Any> {
     pageSize: Int = 100,
     consistentRead: Boolean = false,
     filterExpression: Expression? = null,
-    initialOffset: Offset<K>? = null
-  ): Page<K, I> = queryAsync(keyCondition, asc, pageSize, consistentRead, filterExpression, initialOffset).awaitFirst()
+    initialOffset: Offset<K>? = null,
+    returnConsumedCapacity: ReturnConsumedCapacity? = null,
+  ): Page<K, I> = queryAsync(
+    keyCondition,
+    asc,
+    pageSize,
+    consistentRead,
+    filterExpression,
+    initialOffset,
+    returnConsumedCapacity
+  ).awaitFirst()
 
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
@@ -43,7 +53,8 @@ interface AsyncQueryable<K : Any, I : Any> {
     pageSize: Int,
     consistentRead: Boolean,
     filterExpression: Expression?,
-    initialOffset: Offset<K>?
+    initialOffset: Offset<K>?,
+    returnConsumedCapacity: ReturnConsumedCapacity?,
   ): Publisher<Page<K, I>>
 
   fun queryAsync(keyCondition: KeyCondition<K>) = queryAsync(
@@ -67,13 +78,14 @@ interface AsyncQueryable<K : Any, I : Any> {
   fun queryAsync(
     keyCondition: KeyCondition<K>,
     config: QueryConfig,
-    initialOffset: Offset<K>?
+    initialOffset: Offset<K>?,
   ) = queryAsync(
     keyCondition,
     config.asc,
     config.pageSize,
     config.consistentRead,
     config.filterExpression,
-    initialOffset
+    initialOffset,
+    config.returnConsumedCapacity
   )
 }
