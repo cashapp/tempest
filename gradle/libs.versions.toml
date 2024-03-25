@@ -1,6 +1,6 @@
 [versions]
 ktlint = "0.40.0"
-kotlin = "1.8.22"
+kotlin = "1.9.23"
 
 [libraries]
 assertj = { module = "org.assertj:assertj-core", version = "3.23.1" }
@@ -9,7 +9,7 @@ aws2DynamodbEnhanced = { module = "software.amazon.awssdk:dynamodb-enhanced", ve
 awsDynamodb = { module = "com.amazonaws:aws-java-sdk-dynamodb", version = "1.11.960" }
 awsDynamodbLocal = { module = "com.amazonaws:DynamoDBLocal", version = "1.13.5" }
 clikt = { module = "com.github.ajalt:clikt", version = "2.8.0" }
-dokkaGradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version = "1.7.0" }
+dokkaGradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version = "1.9.20" }
 dockerCore = { module = "com.github.docker-java:docker-java-core", version = "3.2.13" }
 dockerTransport = { module = "com.github.docker-java:docker-java-transport-httpclient5", version = "3.2.13" }
 findbugsJsr305 = { module = "com.google.code.findbugs:jsr305", version = "3.0.2" }
