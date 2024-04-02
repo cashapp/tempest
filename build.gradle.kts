@@ -72,14 +72,14 @@ subprojects {
   plugins.withType<KotlinPluginWrapper> {
     tasks.withType<KotlinCompile> {
       kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_11.toString()
+        jvmTarget = JavaVersion.VERSION_11.toString()
       }
       // dependsOn("spotlessKotlinApply")
     }
 
     tasks.withType<JavaCompile> {
-      sourceCompatibility = JavaVersion.VERSION_1_11.toString()
-      targetCompatibility = JavaVersion.VERSION_1_11.toString()
+      sourceCompatibility = JavaVersion.VERSION_11.toString()
+      targetCompatibility = JavaVersion.VERSION_11.toString()
     }
 
     dependencies {
