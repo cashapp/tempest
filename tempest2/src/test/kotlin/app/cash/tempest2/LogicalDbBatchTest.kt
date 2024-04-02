@@ -88,9 +88,9 @@ class LogicalDbBatchTest {
 
   @Test
   fun `batchLoad more than 16MB`() = runBlockingTest {
-    val threeHundredKbDescription = "a".repeat(300_000)
+    val twoHundredKbDescription = "a".repeat(200_000)
 
-    // Generate ~30MB of data. Dynamo only supports reading 16MB per batch request, so we need to handled retries to
+    // Generate ~20MB of data. Dynamo only supports reading 16MB per batch request, so we need to handled retries to
     // get the second page of data
     val albumTracks = (1 until (MAX_BATCH_READ)).map {
       AlbumTrack(
@@ -98,7 +98,7 @@ class LogicalDbBatchTest {
         it.toLong(),
         "track $it",
         Duration.parse("PT3M28S"),
-        threeHundredKbDescription,
+        twoHundredKbDescription,
       )
     }
     for (albumTrack in albumTracks) {

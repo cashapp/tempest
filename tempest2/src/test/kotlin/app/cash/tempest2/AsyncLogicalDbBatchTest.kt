@@ -23,7 +23,6 @@ import app.cash.tempest2.musiclibrary.testDb
 import app.cash.tempest2.testing.asyncLogicalDb
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.time.Duration
 
