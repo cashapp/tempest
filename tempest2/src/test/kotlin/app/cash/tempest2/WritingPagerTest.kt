@@ -31,8 +31,6 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException
-import java.util.function.BiFunction
-import kotlin.streams.toList
 
 class WritingPagerTest {
 

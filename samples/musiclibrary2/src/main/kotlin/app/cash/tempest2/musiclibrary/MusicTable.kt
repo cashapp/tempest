@@ -94,14 +94,16 @@ data class AlbumTrack(
   @Attribute(name = "sort_key", prefix = "TRACK_")
   val track_token: String,
   val track_title: String,
-  val run_length: Duration
+  val run_length: Duration,
+  val track_description: String = "",
 ) {
   constructor(
     album_token: String,
     track_number: Long,
     track_title: String,
-    run_length: Duration
-  ) : this(album_token, "%016x".format(track_number), track_title, run_length)
+    run_length: Duration,
+    track_description: String = "",
+  ) : this(album_token, "%016x".format(track_number), track_title, run_length, track_description)
 
   @Transient
   val key = Key(album_token, track_token)

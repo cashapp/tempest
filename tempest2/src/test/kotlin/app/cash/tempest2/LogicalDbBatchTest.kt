@@ -87,6 +87,39 @@ class LogicalDbBatchTest {
   }
 
   @Test
+  fun `batchLoad more than 16MB`() = runBlockingTest {
+    val twoHundredKbDescription = "a".repeat(200_000)
+
+    // Generate ~20MB of data. Dynamo only supports reading 16MB per batch request, so we need to handled retries to
+    // get the second page of data
+    val albumTracks = (1 until (MAX_BATCH_READ)).map {
+      AlbumTrack(
+        "ALBUM_1",
+        it.toLong(),
+        "track $it",
+        Duration.parse("PT3M28S"),
+        twoHundredKbDescription,
+      )
+    }
+    for (albumTrack in albumTracks) {
+      musicTable.albumTracks.save(albumTrack)
+    }
+    val playlistInfo = PlaylistInfo(
+      playlist_token = "PLAYLIST_1",
+      playlist_name = "WFH Music",
+      playlist_tracks = listOf(AlbumTrack.Key("ALBUM_1", 1))
+    )
+    musicTable.playlistInfo.save(playlistInfo)
+
+    val loadedItems = musicDb.batchLoad(
+      PlaylistInfo.Key("PLAYLIST_1"),
+      *(albumTracks.map { AlbumTrack.Key("ALBUM_1", track_number = it.track_number) }.toTypedArray())
+    )
+    assertThat(loadedItems.getItems<AlbumTrack>()).containsExactlyInAnyOrderElementsOf(albumTracks)
+    assertThat(loadedItems.getItems<PlaylistInfo>()).containsExactly(playlistInfo)
+  }
+
+  @Test
   fun batchLoadMultipleTables() {
     val albumTracks = listOf(
       AlbumTrack("ALBUM_1", 1, "dreamin'", Duration.parse("PT3M28S")),
