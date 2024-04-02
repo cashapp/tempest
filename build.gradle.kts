@@ -72,14 +72,14 @@ subprojects {
   plugins.withType<KotlinPluginWrapper> {
     tasks.withType<KotlinCompile> {
       kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8.toString()
+        jvmTarget = JavaVersion.VERSION_11.toString()
       }
       // dependsOn("spotlessKotlinApply")
     }
 
     tasks.withType<JavaCompile> {
-      sourceCompatibility = JavaVersion.VERSION_1_8.toString()
-      targetCompatibility = JavaVersion.VERSION_1_8.toString()
+      sourceCompatibility = JavaVersion.VERSION_11.toString()
+      targetCompatibility = JavaVersion.VERSION_11.toString()
     }
 
     dependencies {
@@ -107,7 +107,7 @@ subprojects {
       dokkaSourceSets.configureEach {
         reportUndocumented.set(false)
         skipDeprecated.set(true)
-        jdkVersion.set(8)
+        jdkVersion.set(11)
 
         externalDocumentationLink {
           url.set(URL("https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/"))
