@@ -113,7 +113,7 @@ class LogicalDbBatchTest {
 
     val loadedItems = musicDb.batchLoad(
       PlaylistInfo.Key("PLAYLIST_1"),
-      albumTracks.map { AlbumTrack.Key("ALBUM_1", track_number = it.track_number) }
+      *(albumTracks.map { AlbumTrack.Key("ALBUM_1", track_number = it.track_number) }.toTypedArray())
     )
     assertThat(loadedItems.getItems<AlbumTrack>()).containsExactlyInAnyOrderElementsOf(albumTracks)
     assertThat(loadedItems.getItems<PlaylistInfo>()).containsExactly(playlistInfo)
