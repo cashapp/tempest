@@ -54,6 +54,7 @@ class MusicItem {
   var track_title: String? = null
   @get:DynamoDbConvertedBy(DurationTypeConverter::class)
   var run_length: Duration? = null
+  var track_description: String? = null
 
   // PlaylistInfo.
   var playlist_name: String? = null
