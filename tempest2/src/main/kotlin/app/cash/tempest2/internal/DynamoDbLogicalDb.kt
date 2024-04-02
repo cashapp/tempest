@@ -101,8 +101,8 @@ internal class DynamoDbLogicalDb(
         returnConsumedCapacity
       )
 
-      val pages = batchRequests.map {
-        dynamoDbEnhancedClient.batchGetItem(it).iterator().next()
+      val pages = batchRequests.flatMap {
+        dynamoDbEnhancedClient.batchGetItem(it).iterator().asSequence().toList()
       }
 
       return toBatchLoadResponse(keysByTable, requestKeys, pages)
