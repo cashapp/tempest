@@ -73,7 +73,7 @@ subprojects {
     tasks.withType<KotlinCompile> {
       kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
-        freeCompilerArgs = listOf("-Xjvm-default=all")
+        freeCompilerArgs = listOf("-Xjvm-default=all-compatibility")
       }
       // dependsOn("spotlessKotlinApply")
     }
