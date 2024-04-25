@@ -111,7 +111,7 @@ interface TestDynamoDbClient : Service {
       .dynamoDbClient(asyncDynamoDb)
       .extensions(extensions)
       .build()
-    return AsyncLogicalDb.create(type, enhancedClient)
+    return AsyncLogicalDb.create(type, enhancedClient, tableNameResolver)
   }
 
   fun <DB : AsyncLogicalDb> asyncLogicalDb(type: Class<DB>): DB {
