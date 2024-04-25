@@ -133,16 +133,18 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
 
   companion object {
     inline operator fun <reified DB : AsyncLogicalDb> invoke(
-      dynamoDbEnhancedClient: DynamoDbEnhancedAsyncClient
+      dynamoDbEnhancedClient: DynamoDbEnhancedAsyncClient,
+      tableNameResolver: TableNameResolver? = null
     ): DB {
-      return create(DB::class, dynamoDbEnhancedClient)
+      return create(DB::class, dynamoDbEnhancedClient, tableNameResolver)
     }
 
     fun <DB : AsyncLogicalDb> create(
       dbType: KClass<DB>,
-      dynamoDbEnhancedClient: DynamoDbEnhancedAsyncClient
+      dynamoDbEnhancedClient: DynamoDbEnhancedAsyncClient,
+      tableNameResolver: TableNameResolver? = null,
     ): DB {
-      return AsyncLogicalDbFactory(dynamoDbEnhancedClient).logicalDb(dbType)
+      return AsyncLogicalDbFactory(dynamoDbEnhancedClient).logicalDb(dbType, tableNameResolver)
     }
 
     // Overloaded functions for Java callers (Kotlin interface companion objects do not support
@@ -152,8 +154,15 @@ interface AsyncLogicalDb : AsyncLogicalTable.Factory {
     @JvmStatic
     fun <DB : AsyncLogicalDb> create(
       dbType: Class<DB>,
-      dynamoDbEnhancedClient: DynamoDbEnhancedAsyncClient
-    ) = create(dbType.kotlin, dynamoDbEnhancedClient)
+      dynamoDbEnhancedClient: DynamoDbEnhancedAsyncClient,
+    ) = create(dbType, dynamoDbEnhancedClient, tableNameResolver = null)
+
+    @JvmStatic
+    fun <DB : AsyncLogicalDb> create(
+      dbType: Class<DB>,
+      dynamoDbEnhancedClient: DynamoDbEnhancedAsyncClient,
+      tableNameResolver: TableNameResolver?
+    ) = create(dbType.kotlin, dynamoDbEnhancedClient, tableNameResolver)
   }
 
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).

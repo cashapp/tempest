@@ -17,6 +17,7 @@
 package app.cash.tempest2.testing
 
 import app.cash.tempest2.LogicalDb
+import app.cash.tempest2.TableNameResolver
 import com.google.common.util.concurrent.Service
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
@@ -56,11 +57,19 @@ interface TestDynamoDbClient : Service {
     type: KClass<DB>,
     extensions: List<DynamoDbEnhancedClientExtension>
   ): DB {
+    return logicalDb(type, extensions, tableNameResolver = null)
+  }
+
+  fun <DB : LogicalDb> logicalDb(
+    type: KClass<DB>,
+    extensions: List<DynamoDbEnhancedClientExtension>,
+    tableNameResolver: TableNameResolver? = null
+  ): DB {
     val enhancedClient = DynamoDbEnhancedClient.builder()
       .dynamoDbClient(dynamoDb)
       .extensions(extensions)
       .build()
-    return LogicalDb.create(type, enhancedClient)
+    return LogicalDb.create(type, enhancedClient, tableNameResolver)
   }
 
   fun <DB : LogicalDb> logicalDb(type: Class<DB>): DB {
@@ -90,11 +99,19 @@ interface TestDynamoDbClient : Service {
     type: KClass<DB>,
     extensions: List<DynamoDbEnhancedClientExtension>
   ): DB {
+    return asyncLogicalDb(type, extensions, tableNameResolver = null)
+  }
+
+  fun <DB : AsyncLogicalDb> asyncLogicalDb(
+    type: KClass<DB>,
+    extensions: List<DynamoDbEnhancedClientExtension>,
+    tableNameResolver: TableNameResolver?
+  ): DB {
     val enhancedClient = DynamoDbEnhancedAsyncClient.builder()
       .dynamoDbClient(asyncDynamoDb)
       .extensions(extensions)
       .build()
-    return app.cash.tempest2.AsyncLogicalDb.create(type, enhancedClient)
+    return AsyncLogicalDb.create(type, enhancedClient)
   }
 
   fun <DB : AsyncLogicalDb> asyncLogicalDb(type: Class<DB>): DB {
@@ -113,18 +130,30 @@ interface TestDynamoDbClient : Service {
   }
 }
 
-inline fun <reified DB : LogicalDb> TestDynamoDbClient.logicalDb(vararg extensions: DynamoDbEnhancedClientExtension): DB {
-  return logicalDb(extensions.toList())
+inline fun <reified DB : LogicalDb> TestDynamoDbClient.logicalDb(
+  vararg extensions: DynamoDbEnhancedClientExtension,
+  tableNameResolver: TableNameResolver? = null
+): DB {
+  return logicalDb(extensions.toList(), tableNameResolver)
 }
 
-inline fun <reified DB : LogicalDb> TestDynamoDbClient.logicalDb(extensions: List<DynamoDbEnhancedClientExtension>): DB {
-  return logicalDb(DB::class, extensions)
+inline fun <reified DB : LogicalDb> TestDynamoDbClient.logicalDb(
+  extensions: List<DynamoDbEnhancedClientExtension>,
+  tableNameResolver: TableNameResolver? = null
+): DB {
+  return logicalDb(DB::class, extensions, tableNameResolver)
 }
 
-inline fun <reified DB : AsyncLogicalDb> TestDynamoDbClient.asyncLogicalDb(vararg extensions: DynamoDbEnhancedClientExtension): DB {
-  return asyncLogicalDb(extensions.toList())
+inline fun <reified DB : AsyncLogicalDb> TestDynamoDbClient.asyncLogicalDb(
+  vararg extensions: DynamoDbEnhancedClientExtension,
+  tableNameResolver: TableNameResolver? = null
+): DB {
+  return asyncLogicalDb(extensions.toList(), tableNameResolver)
 }
 
-inline fun <reified DB : AsyncLogicalDb> TestDynamoDbClient.asyncLogicalDb(extensions: List<DynamoDbEnhancedClientExtension>): DB {
-  return asyncLogicalDb(DB::class, extensions)
+inline fun <reified DB : AsyncLogicalDb> TestDynamoDbClient.asyncLogicalDb(
+  extensions: List<DynamoDbEnhancedClientExtension>,
+  tableNameResolver: TableNameResolver? = null
+): DB {
+  return asyncLogicalDb(DB::class, extensions, tableNameResolver)
 }

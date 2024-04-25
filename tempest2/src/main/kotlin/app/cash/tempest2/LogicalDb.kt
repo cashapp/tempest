@@ -160,16 +160,18 @@ interface LogicalDb : LogicalTable.Factory {
 
   companion object {
     inline operator fun <reified DB : LogicalDb> invoke(
-      dynamoDbEnhancedClient: DynamoDbEnhancedClient
+      dynamoDbEnhancedClient: DynamoDbEnhancedClient,
+      tableNameResolver: TableNameResolver? = null
     ): DB {
-      return create(DB::class, dynamoDbEnhancedClient)
+      return create(DB::class, dynamoDbEnhancedClient, tableNameResolver)
     }
 
     fun <DB : LogicalDb> create(
       dbType: KClass<DB>,
-      dynamoDbEnhancedClient: DynamoDbEnhancedClient
+      dynamoDbEnhancedClient: DynamoDbEnhancedClient,
+      tableNameResolver: TableNameResolver? = null
     ): DB {
-      return LogicalDbFactory(dynamoDbEnhancedClient).logicalDb(dbType)
+      return LogicalDbFactory(dynamoDbEnhancedClient).logicalDb(dbType, tableNameResolver)
     }
 
     // Overloaded functions for Java callers (Kotlin interface companion objects do not support
@@ -180,7 +182,14 @@ interface LogicalDb : LogicalTable.Factory {
     fun <DB : LogicalDb> create(
       dbType: Class<DB>,
       dynamoDbEnhancedClient: DynamoDbEnhancedClient
-    ) = create(dbType.kotlin, dynamoDbEnhancedClient)
+    ) = create(dbType, dynamoDbEnhancedClient, tableNameResolver = null)
+
+    @JvmStatic
+    fun <DB : LogicalDb> create(
+      dbType: Class<DB>,
+      dynamoDbEnhancedClient: DynamoDbEnhancedClient,
+      tableNameResolver: TableNameResolver?
+    ) = create(dbType.kotlin, dynamoDbEnhancedClient, tableNameResolver)
   }
 }
 

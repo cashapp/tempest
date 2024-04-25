@@ -31,6 +31,7 @@ import app.cash.tempest2.LogicalTable
 import app.cash.tempest2.Queryable
 import app.cash.tempest2.Scannable
 import app.cash.tempest2.SecondaryIndex
+import app.cash.tempest2.TableNameResolver
 import app.cash.tempest2.View
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable
@@ -51,7 +52,7 @@ internal class LogicalDbFactory(
     V2RawItemTypeFactory()
   )
 
-  fun <DB : LogicalDb> logicalDb(dbType: KClass<DB>): DB {
+  fun <DB : LogicalDb> logicalDb(dbType: KClass<DB>, tableNameResolver: TableNameResolver?): DB {
     val logicalDb = DynamoDbLogicalDb(
       DynamoDbLogicalDb.MappedTableResourceFactory.simple(dynamoDbEnhancedClient::table),
       schema,
@@ -62,7 +63,7 @@ internal class LogicalDbFactory(
         continue
       }
       val tableType = member.returnType.jvmErasure as KClass<LogicalTable<Any>>
-      val tableName = getTableName(member, dbType)
+      val tableName = getTableName(member, dbType, tableType, tableNameResolver)
       val table = logicalTable(tableName, tableType)
       methodHandlers[member.javaMethod] = GetterMethodHandler(table)
     }

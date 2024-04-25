@@ -27,6 +27,7 @@ import app.cash.tempest.internal.StringAttributeValue
 import app.cash.tempest2.Attribute
 import app.cash.tempest2.ForIndex
 import app.cash.tempest2.TableName
+import app.cash.tempest2.TableNameResolver
 import software.amazon.awssdk.enhanced.dynamodb.TableMetadata
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
@@ -87,8 +88,15 @@ internal class V2RawItemTypeFactory : RawItemType.Factory {
   }
 }
 
-internal fun getTableName(member: ClassMember, dbType: KClass<*>): String {
-  val tableName = member.annotations.filterIsInstance<TableName>().singleOrNull()?.value
+internal fun getTableName(
+  member: ClassMember,
+  dbType: KClass<*>,
+  tableType: KClass<*>,
+  tableNameResolver: TableNameResolver?
+): String {
+  val tableNameFromAnnotation = member.annotations.filterIsInstance<TableName>().singleOrNull()?.value
+  val tableNameFromResolver = tableNameResolver?.resolveTableName(tableType.java, tableNameFromAnnotation)
+  val tableName = tableNameFromResolver ?: tableNameFromAnnotation
   requireNotNull(tableName) {
     "Please annotate ${member.javaMethod} in $dbType with `@TableName`"
   }
