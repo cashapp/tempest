@@ -373,11 +373,10 @@ class DynamoDbQueryableTest {
   fun queryAll() {
     musicTable.givenAlbums(AFTER_HOURS_EP)
 
-    val itr = musicTable.albumTracks.queryAll(
+    val page = musicTable.albumTracks.queryAll(
       keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
-    ).iterator()
+    ).iterator().next()
 
-    val page = itr.next()
     assertThat(page.hasMorePages).isFalse()
     assertThat(page.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(0..4))
   }
@@ -408,12 +407,11 @@ class DynamoDbQueryableTest {
   fun queryAllDesc() {
     musicTable.givenAlbums(AFTER_HOURS_EP)
 
-    val itr = musicTable.albumTracks.queryAll(
+    val page = musicTable.albumTracks.queryAll(
       keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
       asc = false
-    ).iterator()
+    ).iterator().next()
 
-    val page = itr.next()
     assertThat(page.hasMorePages).isFalse()
     assertThat(page.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.reversed())
   }
