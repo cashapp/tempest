@@ -238,6 +238,27 @@ class DynamoDbScannableTest {
     )
   }
 
+  @Test
+  fun scanAllContents() {
+    musicTable.givenAlbums(
+      THE_DARK_SIDE_OF_THE_MOON,
+      THE_WALL,
+      WHAT_YOU_DO_TO_ME_SINGLE,
+      AFTER_HOURS_EP,
+      LOCKDOWN_SINGLE
+    )
+
+    val sequence = musicTable.albumInfo.scanAllContents()
+
+    assertThat(sequence.map { it.album_title }.toList()).containsExactly(
+      THE_DARK_SIDE_OF_THE_MOON.album_title,
+      THE_WALL.album_title,
+      WHAT_YOU_DO_TO_ME_SINGLE.album_title,
+      AFTER_HOURS_EP.album_title,
+      LOCKDOWN_SINGLE.album_title
+    )
+  }
+
   private fun releaseYearIs(year: Int): Expression {
     return Expression.builder()
       .expression("begins_with(release_date, :year)")
