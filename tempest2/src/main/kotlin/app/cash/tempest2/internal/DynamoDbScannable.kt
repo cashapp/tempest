@@ -65,14 +65,13 @@ internal class DynamoDbScannable<K : Any, I : Any, R : Any>(
     override fun scanAll(
       pageSize: Int,
       consistentRead: Boolean,
-      filterExpression: Expression?,
       initialOffset: Offset<K>?
     ): Sequence<Page<K, I>> {
       return generateSequence(
-        scan(pageSize, consistentRead, filterExpression, initialOffset)
+        scan(pageSize, consistentRead, null, initialOffset)
       ) { page ->
         page.offset?.let { offset ->
-          scan(offset)
+          scan(pageSize, consistentRead, null, offset)
         }
       }
     }
@@ -80,10 +79,9 @@ internal class DynamoDbScannable<K : Any, I : Any, R : Any>(
     override fun scanAllContents(
       pageSize: Int,
       consistentRead: Boolean,
-      filterExpression: Expression?,
       initialOffset: Offset<K>?
     ): Sequence<I> {
-      return scanAll(pageSize, consistentRead, filterExpression, initialOffset)
+      return scanAll(pageSize, consistentRead, initialOffset)
         .map { it.contents }
         .flatten()
     }

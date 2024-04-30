@@ -70,7 +70,8 @@ interface Queryable<K : Any, I : Any> {
   )
 
   /**
-   * Executes a query and returns a sequence of pages that contains all results.
+   * Executes a query and returns a sequence of pages that contains all results, regardless of page size.
+   * New pages will be fetched as needed when the resulting sequence is enumerated.
    */
   fun queryAll(
     keyCondition: KeyCondition<K>,
@@ -119,7 +120,7 @@ interface Queryable<K : Any, I : Any> {
   }
 
   /**
-   * Executes a query and returns a sequence that contains all results, regardless of page size.
+   * Executes a query and returns a sequence containing all results, regardless of page size.
    * New pages will be fetched as needed when the resulting sequence is enumerated.
    */
   fun queryAllContents(

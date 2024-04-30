@@ -50,4 +50,15 @@ internal class UnsupportedQueryable<K : Any, I : Any>(
   ): Sequence<I> {
     TODO("Not yet implemented")
   }
+
+  override fun queryAll(
+    keyCondition: KeyCondition<K>,
+    asc: Boolean,
+    pageSize: Int,
+    consistentRead: Boolean,
+    filterExpression: Expression?,
+    initialOffset: Offset<K>?
+  ): Sequence<Page<K, I>> {
+    TODO("Not yet implemented")
+  }
 }

@@ -55,12 +55,12 @@ interface Scannable<K : Any, I : Any> {
   )
 
   /**
-   * Executes a scan and returns a sequence of pages that contains all results.
+   * Executes a scan and returns a sequence of pages that contains all results, regardless of page size.
+   * New pages will be fetched as needed when the resulting sequence is enumerated.
    */
   fun scanAll(
     pageSize: Int = 100,
     consistentRead: Boolean = false,
-    filterExpression: Expression? = null,
     initialOffset: Offset<K>? = null,
   ): Sequence<Page<K, I>>
 
@@ -81,21 +81,21 @@ interface Scannable<K : Any, I : Any> {
     initialOffset = null
   )
 
-  fun scanAll(config: ScanConfig, initialOffset: Offset<K>?) = scanAll(
-    config.pageSize,
-    config.consistentRead,
-    config.filterExpression,
-    initialOffset
-  )
+  fun scanAll(config: ScanConfig, initialOffset: Offset<K>?): Sequence<Page<K, I>> {
+    return scanAll(
+      config.pageSize,
+      config.consistentRead,
+      initialOffset
+    )
+  }
 
   /**
-   * Executes a scan and returns a sequence that contains all results, regardless of page size.
+   * Executes a scan and returns a sequence containing all results, regardless of page size.
    * New pages will be fetched as needed when the resulting sequence is enumerated.
    */
   fun scanAllContents(
     pageSize: Int = 100,
     consistentRead: Boolean = false,
-    filterExpression: Expression? = null,
     initialOffset: Offset<K>? = null,
   ): Sequence<I>
 
@@ -116,12 +116,13 @@ interface Scannable<K : Any, I : Any> {
     initialOffset = null
   )
 
-  fun scanAllContents(config: ScanConfig, initialOffset: Offset<K>?) = scanAllContents(
-    config.pageSize,
-    config.consistentRead,
-    config.filterExpression,
-    initialOffset
-  )
+  fun scanAllContents(config: ScanConfig, initialOffset: Offset<K>?): Sequence<I> {
+    return scanAllContents(
+      config.pageSize,
+      config.consistentRead,
+      initialOffset
+    )
+  }
 }
 
 data class ScanConfig internal constructor(
