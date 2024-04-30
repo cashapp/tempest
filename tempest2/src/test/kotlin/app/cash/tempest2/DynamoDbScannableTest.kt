@@ -183,6 +183,61 @@ class DynamoDbScannableTest {
     )
   }
 
+  @Test
+  fun scanAll() {
+    musicTable.givenAlbums(
+      THE_DARK_SIDE_OF_THE_MOON,
+      THE_WALL,
+      WHAT_YOU_DO_TO_ME_SINGLE,
+      AFTER_HOURS_EP,
+      LOCKDOWN_SINGLE
+    )
+
+    val page = musicTable.albumInfo.scanAll().iterator().next()
+
+    assertThat(page.hasMorePages).isFalse()
+    assertThat(page.albumTitles).containsExactly(
+      THE_DARK_SIDE_OF_THE_MOON.album_title,
+      THE_WALL.album_title,
+      WHAT_YOU_DO_TO_ME_SINGLE.album_title,
+      AFTER_HOURS_EP.album_title,
+      LOCKDOWN_SINGLE.album_title
+    )
+  }
+
+  @Test
+  fun scanAllPagination() {
+    musicTable.givenAlbums(
+      THE_DARK_SIDE_OF_THE_MOON,
+      THE_WALL,
+      WHAT_YOU_DO_TO_ME_SINGLE,
+      AFTER_HOURS_EP,
+      LOCKDOWN_SINGLE
+    )
+
+    val itr = musicTable.albumInfo.scanAll(pageSize = 2).iterator()
+
+    val page1 = itr.next()
+    assertThat(page1.hasMorePages).isTrue()
+    assertThat(page1.albumTitles).containsExactly(
+      THE_DARK_SIDE_OF_THE_MOON.album_title,
+      THE_WALL.album_title,
+    )
+
+    val page2 = itr.next()
+    assertThat(page2.hasMorePages).isTrue()
+    assertThat(page2.albumTitles).containsExactly(
+      WHAT_YOU_DO_TO_ME_SINGLE.album_title,
+      AFTER_HOURS_EP.album_title,
+    )
+
+    val page3 = itr.next()
+    assertThat(page3.hasMorePages).isFalse()
+    assertThat(page3.albumTitles).containsExactly(
+      LOCKDOWN_SINGLE.album_title,
+    )
+  }
+
   private fun releaseYearIs(year: Int): Expression {
     return Expression.builder()
       .expression("begins_with(release_date, :year)")
