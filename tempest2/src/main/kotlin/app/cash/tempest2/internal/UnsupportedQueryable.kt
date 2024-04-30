@@ -39,4 +39,15 @@ internal class UnsupportedQueryable<K : Any, I : Any>(
   ): Page<K, I> {
     throw UnsupportedOperationException("Require $rawType to have a range key. You can query a table or an index only if it has a composite primary key (partition key and sort key)")
   }
+
+  override fun queryAllContents(
+    keyCondition: KeyCondition<K>,
+    asc: Boolean,
+    pageSize: Int,
+    consistentRead: Boolean,
+    filterExpression: Expression?,
+    initialOffset: Offset<K>?
+  ): Sequence<I> {
+    TODO("Not yet implemented")
+  }
 }

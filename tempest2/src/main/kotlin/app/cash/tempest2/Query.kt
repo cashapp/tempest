@@ -68,6 +68,103 @@ interface Queryable<K : Any, I : Any> {
     initialOffset,
     config.returnConsumedCapacity
   )
+
+  /**
+   * Executes a query and returns a sequence of pages that contains all results.
+   */
+  fun queryAll(
+    keyCondition: KeyCondition<K>,
+    asc: Boolean = true,
+    pageSize: Int = 100,
+    consistentRead: Boolean = false,
+    filterExpression: Expression? = null,
+    initialOffset: Offset<K>? = null,
+  ): Sequence<Page<K, I>>
+
+  // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
+
+  fun queryAll(keyCondition: KeyCondition<K>) = queryAll(
+    keyCondition,
+    config = QueryConfig.Builder().build(),
+    initialOffset = null,
+  )
+
+  fun queryAll(keyCondition: KeyCondition<K>, initialOffset: Offset<K>?) = queryAll(
+    keyCondition,
+    config = QueryConfig.Builder().build(),
+    initialOffset = initialOffset,
+  )
+
+  fun queryAll(keyCondition: KeyCondition<K>, config: QueryConfig): Sequence<Page<K, I>> {
+    return queryAll(
+      keyCondition,
+      config = config,
+      initialOffset = null,
+    )
+  }
+
+  fun queryAll(
+    keyCondition: KeyCondition<K>,
+    config: QueryConfig,
+    initialOffset: Offset<K>?,
+  ): Sequence<Page<K, I>> {
+    return queryAll(
+      keyCondition,
+      config.asc,
+      config.pageSize,
+      config.consistentRead,
+      config.filterExpression,
+      initialOffset,
+    )
+  }
+
+  /**
+   * Executes a query and returns a sequence that contains all results, regardless of page size.
+   * New pages will be fetched as needed when the resulting sequence is enumerated.
+   */
+  fun queryAllContents(
+    keyCondition: KeyCondition<K>,
+    asc: Boolean = true,
+    pageSize: Int = 100,
+    consistentRead: Boolean = false,
+    filterExpression: Expression? = null,
+    initialOffset: Offset<K>? = null,
+  ): Sequence<I>
+
+  // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
+
+  fun queryAllContents(keyCondition: KeyCondition<K>) = queryAllContents(
+    keyCondition,
+    config = QueryConfig.Builder().build(),
+    initialOffset = null,
+  )
+
+  fun queryAllContents(keyCondition: KeyCondition<K>, initialOffset: Offset<K>?) = queryAllContents(
+    keyCondition,
+    config = QueryConfig.Builder().build(),
+    initialOffset = initialOffset,
+  )
+
+  fun queryAllContents(keyCondition: KeyCondition<K>, config: QueryConfig) = queryAllContents(
+    keyCondition,
+    config = config,
+    initialOffset = null,
+  )
+
+  fun queryAllContents(
+    keyCondition: KeyCondition<K>,
+    config: QueryConfig,
+    initialOffset: Offset<K>?,
+  ): Sequence<I> {
+    return queryAllContents(
+      keyCondition,
+      config.asc,
+      config.pageSize,
+      config.consistentRead,
+      config.filterExpression,
+      initialOffset,
+    )
+  }
 }
 
 data class QueryConfig internal constructor(

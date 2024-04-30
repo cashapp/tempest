@@ -53,6 +53,75 @@ interface Scannable<K : Any, I : Any> {
     config.filterExpression,
     initialOffset
   )
+
+  /**
+   * Executes a scan and returns a sequence of pages that contains all results.
+   */
+  fun scanAll(
+    pageSize: Int = 100,
+    consistentRead: Boolean = false,
+    filterExpression: Expression? = null,
+    initialOffset: Offset<K>? = null,
+  ): Sequence<Page<K, I>>
+
+  // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
+
+  fun scanAll() = scanAll(
+    ScanConfig.Builder().build(),
+    initialOffset = null
+  )
+
+  fun scanAll(initialOffset: Offset<K>?) = scanAll(
+    ScanConfig.Builder().build(),
+    initialOffset = initialOffset
+  )
+
+  fun scanAll(config: ScanConfig) = scanAll(
+    config,
+    initialOffset = null
+  )
+
+  fun scanAll(config: ScanConfig, initialOffset: Offset<K>?) = scanAll(
+    config.pageSize,
+    config.consistentRead,
+    config.filterExpression,
+    initialOffset
+  )
+
+  /**
+   * Executes a scan and returns a sequence that contains all results, regardless of page size.
+   * New pages will be fetched as needed when the resulting sequence is enumerated.
+   */
+  fun scanAllContents(
+    pageSize: Int = 100,
+    consistentRead: Boolean = false,
+    filterExpression: Expression? = null,
+    initialOffset: Offset<K>? = null,
+  ): Sequence<I>
+
+  // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
+
+  fun scanAllContents() = scanAllContents(
+    ScanConfig.Builder().build(),
+    initialOffset = null
+  )
+
+  fun scanAllContents(initialOffset: Offset<K>?) = scanAllContents(
+    ScanConfig.Builder().build(),
+    initialOffset = initialOffset
+  )
+
+  fun scanAllContents(config: ScanConfig) = scanAllContents(
+    config,
+    initialOffset = null
+  )
+
+  fun scanAllContents(config: ScanConfig, initialOffset: Offset<K>?) = scanAllContents(
+    config.pageSize,
+    config.consistentRead,
+    config.filterExpression,
+    initialOffset
+  )
 }
 
 data class ScanConfig internal constructor(
