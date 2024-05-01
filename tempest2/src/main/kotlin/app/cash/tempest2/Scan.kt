@@ -61,6 +61,7 @@ interface Scannable<K : Any, I : Any> {
   fun scanAll(
     pageSize: Int = 100,
     consistentRead: Boolean = false,
+    filterExpression: Expression? = null,
     initialOffset: Offset<K>? = null,
   ): Sequence<Page<K, I>>
 
@@ -85,6 +86,7 @@ interface Scannable<K : Any, I : Any> {
     return scanAll(
       config.pageSize,
       config.consistentRead,
+      config.filterExpression,
       initialOffset
     )
   }
@@ -96,6 +98,7 @@ interface Scannable<K : Any, I : Any> {
   fun scanAllContents(
     pageSize: Int = 100,
     consistentRead: Boolean = false,
+    filterExpression: Expression? = null,
     initialOffset: Offset<K>? = null,
   ): Sequence<I>
 
@@ -120,6 +123,7 @@ interface Scannable<K : Any, I : Any> {
     return scanAllContents(
       config.pageSize,
       config.consistentRead,
+      config.filterExpression,
       initialOffset
     )
   }
