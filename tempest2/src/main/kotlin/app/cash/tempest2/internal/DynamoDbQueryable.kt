@@ -85,9 +85,7 @@ internal class DynamoDbQueryable<K : Any, I : Any, R : Any>(
         query(keyCondition, asc, pageSize, consistentRead, filterExpression, initialOffset)
       ) { page ->
         page.offset?.let { offset ->
-          query(
-            keyCondition, asc, pageSize, consistentRead, filterExpression, initialOffset = offset
-          )
+          query(keyCondition, asc, pageSize, consistentRead, filterExpression, offset)
         }
       }
     }
