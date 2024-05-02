@@ -369,6 +369,101 @@ class DynamoDbQueryableTest {
     assertThat(page1.consumedCapacity?.capacityUnits()).isGreaterThan(0.0)
   }
 
+  @Test
+  fun queryAll() {
+    musicTable.givenAlbums(AFTER_HOURS_EP)
+
+    val page = musicTable.albumTracks.queryAll(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
+    ).iterator().next()
+
+    assertThat(page.hasMorePages).isFalse()
+    assertThat(page.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(0..4))
+  }
+
+  @Test
+  fun queryAllPagination() {
+    musicTable.givenAlbums(AFTER_HOURS_EP)
+
+    val itr = musicTable.albumTracks.queryAll(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
+      pageSize = 2
+    ).iterator()
+
+    val page1 = itr.next()
+    assertThat(page1.hasMorePages).isTrue()
+    assertThat(page1.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(0..1))
+
+    val page2 = itr.next()
+    assertThat(page2.hasMorePages).isTrue()
+    assertThat(page2.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(2..3))
+
+    val page3 = itr.next()
+    assertThat(page3.hasMorePages).isFalse()
+    assertThat(page3.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.slice(4..4))
+  }
+
+  @Test
+  fun queryAllDesc() {
+    musicTable.givenAlbums(AFTER_HOURS_EP)
+
+    val page = musicTable.albumTracks.queryAll(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
+      asc = false
+    ).iterator().next()
+
+    assertThat(page.hasMorePages).isFalse()
+    assertThat(page.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.reversed())
+  }
+
+  @Test
+  fun queryAllDescPagination() {
+    musicTable.givenAlbums(AFTER_HOURS_EP)
+
+    val itr = musicTable.albumTracks.queryAll(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
+      asc = false,
+      pageSize = 2
+    ).iterator()
+
+    val page1 = itr.next()
+    assertThat(page1.hasMorePages).isTrue()
+    assertThat(page1.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.reversed().slice(0..1))
+
+    val page2 = itr.next()
+    assertThat(page2.hasMorePages).isTrue()
+    assertThat(page2.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.reversed().slice(2..3))
+
+    val page3 = itr.next()
+    assertThat(page3.hasMorePages).isFalse()
+    assertThat(page3.trackTitles).containsAll(AFTER_HOURS_EP.trackTitles.reversed().slice(4..4))
+  }
+
+  @Test
+  fun queryAllContents() {
+    musicTable.givenAlbums(AFTER_HOURS_EP)
+
+    val sequence = musicTable.albumTracks.queryAllContents(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
+    )
+
+    assertThat(sequence.map { it.track_title }
+      .toList()).containsAll(AFTER_HOURS_EP.trackTitles.slice(0..4))
+  }
+
+  @Test
+  fun queryAllContentsDesc() {
+    musicTable.givenAlbums(AFTER_HOURS_EP)
+
+    val sequence = musicTable.albumTracks.queryAllContents(
+      keyCondition = BeginsWith(AlbumTrack.Key(AFTER_HOURS_EP.album_token, "")),
+      asc = false
+    )
+
+    assertThat(sequence.map { it.track_title }
+      .toList()).containsAll(AFTER_HOURS_EP.trackTitles.reversed())
+  }
+
   private fun runLengthLongerThan(duration: Duration): Expression {
     return Expression.builder()
       .expression("run_length > :duration")

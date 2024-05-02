@@ -183,6 +183,83 @@ class DynamoDbScannableTest {
     )
   }
 
+  @Test
+  fun scanAll() {
+    musicTable.givenAlbums(
+      THE_DARK_SIDE_OF_THE_MOON,
+      THE_WALL,
+      WHAT_YOU_DO_TO_ME_SINGLE,
+      AFTER_HOURS_EP,
+      LOCKDOWN_SINGLE
+    )
+
+    val page = musicTable.albumInfoByArtist.scanAll().iterator().next()
+
+    assertThat(page.hasMorePages).isFalse()
+    assertThat(page.albumTitles).containsExactlyInAnyOrder(
+      THE_DARK_SIDE_OF_THE_MOON.album_title,
+      THE_WALL.album_title,
+      WHAT_YOU_DO_TO_ME_SINGLE.album_title,
+      AFTER_HOURS_EP.album_title,
+      LOCKDOWN_SINGLE.album_title
+    )
+  }
+
+  @Test
+  fun scanAllPagination() {
+    musicTable.givenAlbums(
+      THE_DARK_SIDE_OF_THE_MOON,
+      THE_WALL,
+      WHAT_YOU_DO_TO_ME_SINGLE,
+      AFTER_HOURS_EP,
+      LOCKDOWN_SINGLE
+    )
+
+    val itr = musicTable.albumInfoByArtist.scanAll(pageSize = 2).iterator()
+    val items = mutableListOf<AlbumInfo>()
+
+    val page1 = itr.next()
+    assertThat(page1.hasMorePages).isTrue()
+    items.addAll(page1.contents)
+
+    val page2 = itr.next()
+    assertThat(page2.hasMorePages).isTrue()
+    items.addAll(page2.contents)
+
+    val page3 = itr.next()
+    assertThat(page3.hasMorePages).isFalse()
+    items.addAll(page3.contents)
+
+    assertThat(items.map { it.album_title }).containsExactlyInAnyOrder(
+      THE_DARK_SIDE_OF_THE_MOON.album_title,
+      THE_WALL.album_title,
+      WHAT_YOU_DO_TO_ME_SINGLE.album_title,
+      AFTER_HOURS_EP.album_title,
+      LOCKDOWN_SINGLE.album_title
+    )
+  }
+
+  @Test
+  fun scanAllContents() {
+    musicTable.givenAlbums(
+      THE_DARK_SIDE_OF_THE_MOON,
+      THE_WALL,
+      WHAT_YOU_DO_TO_ME_SINGLE,
+      AFTER_HOURS_EP,
+      LOCKDOWN_SINGLE
+    )
+
+    val sequence = musicTable.albumInfoByArtist.scanAllContents()
+
+    assertThat(sequence.map { it.album_title }.toList()).containsExactlyInAnyOrder(
+      THE_DARK_SIDE_OF_THE_MOON.album_title,
+      THE_WALL.album_title,
+      WHAT_YOU_DO_TO_ME_SINGLE.album_title,
+      AFTER_HOURS_EP.album_title,
+      LOCKDOWN_SINGLE.album_title
+    )
+  }
+
   private fun releaseYearIs(year: Int): Expression {
     return Expression.builder()
       .expression("begins_with(release_date, :year)")

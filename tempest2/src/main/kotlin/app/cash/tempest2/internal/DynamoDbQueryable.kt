@@ -72,6 +72,36 @@ internal class DynamoDbQueryable<K : Any, I : Any, R : Any>(
         .iterator().next()
       return toQueryResponse(page)
     }
+
+    override fun queryAll(
+      keyCondition: KeyCondition<K>,
+      asc: Boolean,
+      pageSize: Int,
+      consistentRead: Boolean,
+      filterExpression: Expression?,
+      initialOffset: Offset<K>?
+    ): Sequence<Page<K, I>> {
+      return generateSequence(
+        query(keyCondition, asc, pageSize, consistentRead, filterExpression, initialOffset)
+      ) { page ->
+        page.offset?.let { offset ->
+          query(keyCondition, asc, pageSize, consistentRead, filterExpression, offset)
+        }
+      }
+    }
+
+    override fun queryAllContents(
+      keyCondition: KeyCondition<K>,
+      asc: Boolean,
+      pageSize: Int,
+      consistentRead: Boolean,
+      filterExpression: Expression?,
+      initialOffset: Offset<K>?
+    ): Sequence<I> {
+      return queryAll(keyCondition, asc, pageSize, consistentRead, filterExpression, initialOffset)
+        .map { it.contents }
+        .flatten()
+    }
   }
 
   fun async(dynamoDbTable: DynamoDbAsyncTable<R>) = Async(dynamoDbTable)
