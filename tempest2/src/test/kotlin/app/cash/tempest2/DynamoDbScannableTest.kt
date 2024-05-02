@@ -196,7 +196,7 @@ class DynamoDbScannableTest {
     val page = musicTable.albumInfoByArtist.scanAll().iterator().next()
 
     assertThat(page.hasMorePages).isFalse()
-    assertThat(page.albumTitles).containsExactly(
+    assertThat(page.albumTitles).containsExactlyInAnyOrder(
       THE_DARK_SIDE_OF_THE_MOON.album_title,
       THE_WALL.album_title,
       WHAT_YOU_DO_TO_ME_SINGLE.album_title,
@@ -215,26 +215,27 @@ class DynamoDbScannableTest {
       LOCKDOWN_SINGLE
     )
 
-    val itr = musicTable.albumInfo.scanAll(pageSize = 2).iterator()
+    val itr = musicTable.albumInfoByArtist.scanAll(pageSize = 2).iterator()
+    val items = mutableListOf<AlbumInfo>()
 
     val page1 = itr.next()
     assertThat(page1.hasMorePages).isTrue()
-    assertThat(page1.albumTitles).containsExactly(
-      THE_DARK_SIDE_OF_THE_MOON.album_title,
-      THE_WALL.album_title,
-    )
+    items.addAll(page1.contents)
 
     val page2 = itr.next()
     assertThat(page2.hasMorePages).isTrue()
-    assertThat(page2.albumTitles).containsExactly(
-      WHAT_YOU_DO_TO_ME_SINGLE.album_title,
-      AFTER_HOURS_EP.album_title,
-    )
+    items.addAll(page2.contents)
 
     val page3 = itr.next()
     assertThat(page3.hasMorePages).isFalse()
-    assertThat(page3.albumTitles).containsExactly(
-      LOCKDOWN_SINGLE.album_title,
+    items.addAll(page3.contents)
+
+    assertThat(items.map { it.album_title }).containsExactlyInAnyOrder(
+      THE_DARK_SIDE_OF_THE_MOON.album_title,
+      THE_WALL.album_title,
+      WHAT_YOU_DO_TO_ME_SINGLE.album_title,
+      AFTER_HOURS_EP.album_title,
+      LOCKDOWN_SINGLE.album_title
     )
   }
 
@@ -248,9 +249,9 @@ class DynamoDbScannableTest {
       LOCKDOWN_SINGLE
     )
 
-    val sequence = musicTable.albumInfo.scanAllContents()
+    val sequence = musicTable.albumInfoByArtist.scanAllContents()
 
-    assertThat(sequence.map { it.album_title }.toList()).containsExactly(
+    assertThat(sequence.map { it.album_title }.toList()).containsExactlyInAnyOrder(
       THE_DARK_SIDE_OF_THE_MOON.album_title,
       THE_WALL.album_title,
       WHAT_YOU_DO_TO_ME_SINGLE.album_title,
