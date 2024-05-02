@@ -193,7 +193,7 @@ class DynamoDbScannableTest {
       LOCKDOWN_SINGLE
     )
 
-    val page = musicTable.albumInfo.scanAll().iterator().next()
+    val page = musicTable.albumInfoByArtist.scanAll().iterator().next()
 
     assertThat(page.hasMorePages).isFalse()
     assertThat(page.albumTitles).containsExactly(
