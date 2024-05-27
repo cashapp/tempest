@@ -24,12 +24,14 @@ import com.github.dockerjava.api.model.Ports
 import com.google.common.util.concurrent.AbstractIdleService
 
 class DockerDynamoDbServer private constructor(
-  override val port: Int
+  override val port: Int,
+  private val releasePort: () -> Unit
 ) : AbstractIdleService(), TestDynamoDbServer {
 
   override val id = "tempest-docker-dynamodb-local-$port"
 
   override fun startUp() {
+    releasePort()
     composer.start()
 
     // Temporary client to block until the container is running
@@ -68,6 +70,6 @@ class DockerDynamoDbServer private constructor(
   )
 
   object Factory : TestDynamoDbServer.Factory<DockerDynamoDbServer> {
-    override fun create(port: Int) = DockerDynamoDbServer(port)
+    override fun create(port: Int, releasePort: () -> Unit) = DockerDynamoDbServer(port, releasePort)
   }
 }
