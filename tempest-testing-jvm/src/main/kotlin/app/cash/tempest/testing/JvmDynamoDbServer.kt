@@ -23,7 +23,7 @@ import java.io.File
 
 class JvmDynamoDbServer private constructor(
   override val port: Int,
-  private val releasePort: () -> Unit
+  private val onBeforeStartup: () -> Unit
 ) : AbstractIdleService(), TestDynamoDbServer {
 
   override val id = "tempest-jvm-dynamodb-local-$port"
@@ -34,7 +34,7 @@ class JvmDynamoDbServer private constructor(
     val libraryFile = libsqlite4javaNativeLibrary()
     System.setProperty("sqlite4java.library.path", libraryFile.parent)
 
-    releasePort()
+    onBeforeStartup()
     server = ServerRunner.createServerFromCommandLineArgs(
       arrayOf("-inMemory", "-port", port.toString())
     )
@@ -89,6 +89,6 @@ class JvmDynamoDbServer private constructor(
   }
 
   object Factory : TestDynamoDbServer.Factory<JvmDynamoDbServer> {
-    override fun create(port: Int, releasePort: () -> Unit) = JvmDynamoDbServer(port, releasePort)
+    override fun create(port: Int, onBeforeStartup: () -> Unit) = JvmDynamoDbServer(port, onBeforeStartup)
   }
 }

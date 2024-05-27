@@ -27,6 +27,6 @@ interface TestDynamoDbServer : Service {
 
   interface Factory<T : TestDynamoDbServer> {
     fun create(port: Int): T = create(port) {}
-    fun create(port: Int, releasePort: () -> Unit): T
+    fun create(port: Int, onBeforeStartup: () -> Unit): T
   }
 }
