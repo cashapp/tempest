@@ -32,8 +32,12 @@ import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
 
-fun pickRandomPort(): Int {
-  ServerSocket(0).use { socket -> return socket.localPort }
+fun allocateRandomPort(): ServerSocket {
+  val socket = ServerSocket(0) //use { socket -> return socket.localPort }
+  Runtime.getRuntime().addShutdownHook(
+    Thread { socket.close() }
+  )
+  return socket
 }
 
 private const val CONNECT_TIMEOUT_MILLIS = 1_000

@@ -26,6 +26,7 @@ interface TestDynamoDbServer : Service {
   val port: Int
 
   interface Factory<T : TestDynamoDbServer> {
-    fun create(port: Int): T
+    fun create(port: Int): T = create(port) {}
+    fun create(port: Int, onBeforeStartup: () -> Unit): T
   }
 }
