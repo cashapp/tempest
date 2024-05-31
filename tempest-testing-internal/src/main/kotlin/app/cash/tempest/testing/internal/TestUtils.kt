@@ -33,7 +33,7 @@ import java.net.ServerSocket
 import java.net.Socket
 
 fun allocateRandomPort(): ServerSocket {
-  val socket = ServerSocket(0) //use { socket -> return socket.localPort }
+  val socket = ServerSocket(0)
   Runtime.getRuntime().addShutdownHook(
     Thread { socket.close() }
   )
