@@ -4,6 +4,7 @@ import app.cash.tempest2.testing.TestDynamoDbClient
 import app.cash.tempest2.testing.TestDynamoDbServer
 import app.cash.tempest2.testing.TestTable
 import com.google.common.util.concurrent.AbstractIdleService
+import java.net.ServerSocket
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -45,24 +46,27 @@ class TestDynamoDbService(
   }
 
   companion object {
-    private val defaultPorts = ConcurrentHashMap<String, Int>()
-    private fun defaultPort(key: String): PortHolder {
-      var releasePort: () -> Unit = {}
+    private val allocatedSockets = ConcurrentHashMap<String, ServerSocket>()
+    private fun defaultPortHolder(key: String): PortHolder {
       // Only pick random port once to share one test server with multiple tests.
-      val port = defaultPorts.getOrPut(key) {
-        val socket = allocateRandomPort()
-        releasePort = { socket.close() }
-        socket.localPort
+      val socket = allocatedSockets.getOrPut(key) { allocateRandomPort() }
+      return PortHolder(socket.localPort) {
+        if (!socket.isClosed) {
+          socket.close()
+        }
       }
-      return PortHolder(port, releasePort)
     }
 
     private val runningServers = ConcurrentHashMap.newKeySet<String>()
     private val log = getLogger<TestDynamoDbService>()
 
     @JvmStatic
-    fun create(serverFactory: TestDynamoDbServer.Factory<*>, tables: List<TestTable>, port: Int? = null): TestDynamoDbService {
-      val portHolder = port?.let { PortHolder(it) } ?: defaultPort(serverFactory.toString())
+    fun create(
+      serverFactory: TestDynamoDbServer.Factory<*>,
+      tables: List<TestTable>,
+      port: Int? = null
+    ): TestDynamoDbService {
+      val portHolder = port?.let { PortHolder(it) } ?: defaultPortHolder(serverFactory.toString())
       return TestDynamoDbService(
         DefaultTestDynamoDbClient(tables, portHolder.value),
         serverFactory.create(portHolder.value, portHolder.releasePort)
