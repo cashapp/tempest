@@ -24,14 +24,12 @@ import software.amazon.awssdk.services.dynamodb.model.DeleteTableRequest
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException
 
 class DockerDynamoDbServer private constructor(
-  override val port: Int,
-  private val onBeforeStartup: () -> Unit
+  override val port: Int
 ) : AbstractIdleService(), TestDynamoDbServer {
 
   override val id = "tempest2-docker-dynamodb-local-$port"
 
   override fun startUp() {
-    onBeforeStartup()
     composer.start()
 
     // Temporary client to block until the container is running
@@ -69,6 +67,6 @@ class DockerDynamoDbServer private constructor(
   )
 
   object Factory : TestDynamoDbServer.Factory<DockerDynamoDbServer> {
-    override fun create(port: Int, onBeforeStartup: () -> Unit) = DockerDynamoDbServer(port, onBeforeStartup)
+    override fun create(port: Int) = DockerDynamoDbServer(port)
   }
 }

@@ -46,15 +46,9 @@ class TestDynamoDbService(
 
   companion object {
     private val defaultPorts = ConcurrentHashMap<String, Int>()
-    private fun defaultPort(key: String): PortHolder {
-      var releasePort: () -> Unit = {}
+    private fun defaultPort(key: String): Int {
       // Only pick random port once to share one test server with multiple tests.
-      val port = defaultPorts.getOrPut(key) {
-        val socket = allocateRandomPort()
-        releasePort = { socket.close() }
-        socket.localPort
-      }
-      return PortHolder(port, releasePort)
+      return defaultPorts.getOrPut(key, ::pickRandomPort)
     }
 
     private val runningServers = ConcurrentHashMap.newKeySet<String>()
@@ -62,13 +56,11 @@ class TestDynamoDbService(
 
     @JvmStatic
     fun create(serverFactory: TestDynamoDbServer.Factory<*>, tables: List<TestTable>, port: Int? = null): TestDynamoDbService {
-      val portHolder = port?.let { PortHolder(it) } ?: defaultPort(serverFactory.toString())
+      val port = port ?: defaultPort(serverFactory.toString())
       return TestDynamoDbService(
-        DefaultTestDynamoDbClient(tables, portHolder.value),
-        serverFactory.create(portHolder.value, portHolder.releasePort)
+        DefaultTestDynamoDbClient(tables, port),
+        serverFactory.create(port)
       )
     }
   }
-
-  private data class PortHolder(val value: Int, val releasePort: () -> Unit = {})
 }

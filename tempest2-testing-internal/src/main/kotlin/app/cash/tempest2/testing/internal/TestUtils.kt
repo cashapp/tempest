@@ -33,12 +33,8 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.URI
 
-fun allocateRandomPort(): ServerSocket {
-  val socket = ServerSocket(0)
-  Runtime.getRuntime().addShutdownHook(
-    Thread { socket.close() }
-  )
-  return socket
+fun pickRandomPort(): Int {
+  ServerSocket(0).use { socket -> return socket.localPort }
 }
 
 private val AWS_CREDENTIALS_PROVIDER = StaticCredentialsProvider.create(
