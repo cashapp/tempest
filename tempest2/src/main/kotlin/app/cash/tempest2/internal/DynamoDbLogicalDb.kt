@@ -303,10 +303,8 @@ internal class DynamoDbLogicalDb(
       for (rawItem in rawClobbersItems) {
         unprocessedClobbers.add(rawItem.rawItemKey().key)
       }
-      val rawDeleteItems = results.flatMap { it.unprocessedDeleteItemsForTable(table) }
-      for (rawItem in rawDeleteItems) {
-        unprocessedDeletes.add(rawItem.rawItemKey().key)
-      }
+      val unprocessedDeletesForTable = results.flatMap { it.unprocessedDeleteItemsForTable(table) }.filterNotNull()
+      unprocessedDeletes.addAll(unprocessedDeletesForTable)
     }
 
     return app.cash.tempest2.BatchWriteResult(
