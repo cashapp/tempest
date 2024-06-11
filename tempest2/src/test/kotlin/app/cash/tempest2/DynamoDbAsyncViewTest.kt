@@ -30,6 +30,7 @@ import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException
 import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
+import software.amazon.awssdk.services.dynamodb.model.ReturnValuesOnConditionCheckFailure
 import java.time.LocalDate
 
 class DynamoDbAsyncViewTest {
@@ -96,7 +97,7 @@ class DynamoDbAsyncViewTest {
       LocalDate.of(2020, 2, 21),
       "Contemporary R&B"
     )
-    musicTable.albumInfo.save(albumInfo, ifNotExist())
+    musicTable.albumInfo.save(albumInfo, ifNotExist(), ReturnValuesOnConditionCheckFailure.ALL_OLD)
 
     // This fails because the album info already exists.
     assertThatExceptionOfType(ConditionalCheckFailedException::class.java)
