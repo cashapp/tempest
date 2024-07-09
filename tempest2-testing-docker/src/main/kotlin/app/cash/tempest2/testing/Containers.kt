@@ -152,7 +152,11 @@ class Composer(private val name: String, private vararg val containers: Containe
             }
         }
 
-        network.stop()
+        try {
+            network.stop()
+        } catch (th: Throwable) {
+            log.error(th) { "could not remove network ${network.id()}" }
+        }
     }
 
     private class LogContainerResultCallback :
