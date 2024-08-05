@@ -31,6 +31,15 @@ class DefaultTestDynamoDbClient(
   override val dynamoDbStreams = buildDynamoDbStreams(hostName, port)
 
   override fun startUp() {
+    reset()
+  }
+
+  override fun shutDown() {
+    dynamoDb.shutdown()
+    dynamoDbStreams.shutdown()
+  }
+
+  override fun reset() {
     // Cleans up the tables before each run.
     for (tableName in dynamoDb.listTables().tableNames) {
       dynamoDb.deleteTable(tableName)
@@ -38,10 +47,5 @@ class DefaultTestDynamoDbClient(
     for (table in tables) {
       dynamoDb.createTable(table)
     }
-  }
-
-  override fun shutDown() {
-    dynamoDb.shutdown()
-    dynamoDbStreams.shutdown()
   }
 }

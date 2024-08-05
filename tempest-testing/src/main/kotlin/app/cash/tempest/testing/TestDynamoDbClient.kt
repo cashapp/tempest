@@ -48,6 +48,9 @@ interface TestDynamoDbClient : Service {
   fun <DB : LogicalDb> logicalDb(type: Class<DB>, mapperConfig: DynamoDBMapperConfig): DB {
     return logicalDb(type.kotlin, mapperConfig)
   }
+
+  /** Cleans up tables in between test runs. */
+  fun reset()
 }
 
 inline fun <reified DB : LogicalDb> TestDynamoDbClient.logicalDb(): DB {
