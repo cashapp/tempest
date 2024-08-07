@@ -128,6 +128,9 @@ interface TestDynamoDbClient : Service {
   ): DB {
     return asyncLogicalDb(type.kotlin, extensions)
   }
+
+  /** Cleans up tables in between test runs. */
+  fun reset()
 }
 
 inline fun <reified DB : LogicalDb> TestDynamoDbClient.logicalDb(
