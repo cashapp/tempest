@@ -21,6 +21,7 @@ import software.amazon.awssdk.enhanced.dynamodb.extensions.VersionedRecordExtens
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.ConsumedCapacity
 import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
+import software.amazon.awssdk.services.dynamodb.model.ReturnValuesOnConditionCheckFailure
 
 interface View<K : Any, I : Any> {
   /**
@@ -45,7 +46,8 @@ interface View<K : Any, I : Any> {
    */
   fun save(
     item: I,
-    saveExpression: Expression? = null
+    saveExpression: Expression? = null,
+    returnValuesOnConditionCheckFailure: ReturnValuesOnConditionCheckFailure? = null
   )
 
   /**
@@ -76,7 +78,12 @@ interface View<K : Any, I : Any> {
 
   fun save(
     item: I
-  ) = save(item, saveExpression = null)
+  ) = save(item, saveExpression = null, returnValuesOnConditionCheckFailure = null)
+
+  fun save(
+    item: I,
+    saveExpression: Expression? = null
+  ) = save(item, saveExpression, returnValuesOnConditionCheckFailure = null)
 
   fun deleteKey(
     key: K
