@@ -68,14 +68,13 @@ internal class DynamoDbScannable<K : Any, I : Any, R : Any>(
       pageSize: Int,
       consistentRead: Boolean,
       filterExpression: Expression?,
-      initialOffset: Offset<K>?,
-      workerId: WorkerId?
+      initialOffset: Offset<K>?
     ): Sequence<Page<K, I>> {
       return generateSequence(
-        scan(pageSize, consistentRead, filterExpression, initialOffset, workerId)
+        scan(pageSize, consistentRead, filterExpression, initialOffset)
       ) { page ->
         page.offset?.let { offset ->
-          scan(pageSize, consistentRead, filterExpression, offset, workerId)
+          scan(pageSize, consistentRead, filterExpression, offset)
         }
       }
     }
@@ -84,10 +83,9 @@ internal class DynamoDbScannable<K : Any, I : Any, R : Any>(
       pageSize: Int,
       consistentRead: Boolean,
       filterExpression: Expression?,
-      initialOffset: Offset<K>?,
-      workerId: WorkerId?
+      initialOffset: Offset<K>?
     ): Sequence<I> {
-      return scanAll(pageSize, consistentRead, filterExpression, initialOffset, workerId)
+      return scanAll(pageSize, consistentRead, filterExpression, initialOffset)
         .map { it.contents }
         .flatten()
     }

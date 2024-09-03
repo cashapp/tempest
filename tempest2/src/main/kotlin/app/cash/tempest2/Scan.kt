@@ -22,6 +22,9 @@ interface Scannable<K : Any, I : Any> {
   /**
    * Scans up to the [pageSize] items or a maximum of 1 MB of data. This limit applies before the
    * filter expression is evaluated.
+   *
+   * @param workerId identifies a tuple of `segment` and `totalSegments` in the context of parallel
+   * scans.
    */
   fun scan(
     pageSize: Int = 100,
@@ -65,7 +68,6 @@ interface Scannable<K : Any, I : Any> {
     consistentRead: Boolean = false,
     filterExpression: Expression? = null,
     initialOffset: Offset<K>? = null,
-    workerId: WorkerId? = null,
   ): Sequence<Page<K, I>>
 
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
@@ -80,18 +82,31 @@ interface Scannable<K : Any, I : Any> {
     initialOffset = initialOffset
   )
 
+  /**
+   * Executes a scan and returns a sequence of pages that contains all results, regardless of page size.
+   * New pages will be fetched as needed when the resulting sequence is enumerated.
+   *
+   * This method doesn't support parallel scans. `workerId`, if provided as part of `config`, will
+   * be ignored.
+   */
   fun scanAll(config: ScanConfig) = scanAll(
     config,
     initialOffset = null
   )
 
+  /**
+   * Executes a scan and returns a sequence of pages that contains all results, regardless of page size.
+   * New pages will be fetched as needed when the resulting sequence is enumerated.
+   *
+   * This method doesn't support parallel scans. `workerId`, if provided as part of `config`, will
+   * be ignored.
+   */
   fun scanAll(config: ScanConfig, initialOffset: Offset<K>?): Sequence<Page<K, I>> {
     return scanAll(
       config.pageSize,
       config.consistentRead,
       config.filterExpression,
-      initialOffset,
-      config.workerId
+      initialOffset
     )
   }
 
@@ -104,7 +119,6 @@ interface Scannable<K : Any, I : Any> {
     consistentRead: Boolean = false,
     filterExpression: Expression? = null,
     initialOffset: Offset<K>? = null,
-    workerId: WorkerId? = null,
   ): Sequence<I>
 
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
@@ -119,51 +133,42 @@ interface Scannable<K : Any, I : Any> {
     initialOffset = initialOffset
   )
 
+  /**
+   * Executes a scan and returns a sequence that contains all results, regardless of page size.
+   * New pages will be fetched as needed when the resulting sequence is enumerated.
+   *
+   * This method doesn't support parallel scans. `workerId`, if provided as part of `config`, will
+   * be ignored.
+   */
   fun scanAllContents(config: ScanConfig) = scanAllContents(
     config,
     initialOffset = null
   )
 
+  /**
+   * Executes a scan and returns a sequence that contains all results, regardless of page size.
+   * New pages will be fetched as needed when the resulting sequence is enumerated.
+   *
+   * This method doesn't support parallel scans. `workerId`, if provided as part of `config`, will
+   * be ignored.
+   */
   fun scanAllContents(config: ScanConfig, initialOffset: Offset<K>?): Sequence<I> {
     return scanAllContents(
       config.pageSize,
       config.consistentRead,
       config.filterExpression,
-      initialOffset,
-      config.workerId
+      initialOffset
     )
   }
 }
 
 /**
- * By default, the Scan operation processes data sequentially. Amazon DynamoDB returns data to the
- * application in 1 MB increments, and an application performs additional Scan operations to
- * retrieve the next 1 MB of data.
- *
- * The larger the table or index being scanned, the more time the Scan takes to complete. In
- * addition, a sequential Scan might not always be able to fully use the provisioned read throughput
- * capacity: Even though DynamoDB distributes a large table's data across multiple physical
- * partitions, a Scan operation can only read one partition at a time. For this reason, the
- * throughput of a Scan is constrained by the maximum throughput of a single partition.
- *
- * To address these issues, the Scan operation can logically divide a table or secondary index into
- * multiple segments, with multiple application workers scanning the segments in parallel. Each
- * worker can be a thread (in programming languages that support multithreading) or an operating
- * system process. To perform a parallel scan, each worker issues its own Scan request with an
- * unique [WorkerId].
+ * In the context of parallel scans, a worker is analogous to a thread or an operating
+ * system process. Each worker then issues its own Scan request with a unique [WorkerId], which
+ * represents a tuple of `segment` and `totalSegments`.
  */
 data class WorkerId(
-  /**
-   * A segment to be scanned by a particular worker. Each worker should use a different value for
-   * Segment.
-   *
-   * Segments are zero-based, so the first number is always 0.
-   */
   val segment: Int,
-  /**
-   * The total number of segments for the parallel scan. This value must be the same as the number
-   * of workers that your application will use.
-   */
   val totalSegments: Int
 ) {
   init {

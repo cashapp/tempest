@@ -128,6 +128,37 @@ class DynamoDbScannableTest {
   }
 
   @Test
+  fun primaryIndexParallelScanNoFilter() {
+    musicTable.givenAlbums(
+      THE_DARK_SIDE_OF_THE_MOON,
+      THE_WALL,
+      WHAT_YOU_DO_TO_ME_SINGLE,
+      AFTER_HOURS_EP,
+      LOCKDOWN_SINGLE
+    )
+
+    val worker1Page1 = musicTable.albumInfoByArtist.scan(
+      workerId = WorkerId(0, 2),
+      pageSize = 50
+    )
+    assertThat(worker1Page1.hasMorePages).isFalse()
+
+    val worker2Page1 = musicTable.albumInfoByArtist.scan(
+      workerId = WorkerId(1, 2),
+      pageSize = 50
+    )
+    assertThat(worker2Page1.hasMorePages).isFalse()
+
+    assertThat(worker1Page1.albumTitles + worker2Page1.albumTitles).containsExactlyInAnyOrder(
+      THE_DARK_SIDE_OF_THE_MOON.album_title,
+      THE_WALL.album_title,
+      WHAT_YOU_DO_TO_ME_SINGLE.album_title,
+      AFTER_HOURS_EP.album_title,
+      LOCKDOWN_SINGLE.album_title
+    )
+  }
+
+  @Test
   fun localSecondaryIndex() {
     musicTable.givenAlbums(THE_WALL)
     val expectedTrackTitles = THE_WALL.trackTitles.sorted()
@@ -228,38 +259,7 @@ class DynamoDbScannableTest {
   }
 
   @Test
-  fun scanAllParallelScan() {
-    musicTable.givenAlbums(
-      THE_DARK_SIDE_OF_THE_MOON,
-      THE_WALL,
-      WHAT_YOU_DO_TO_ME_SINGLE,
-      AFTER_HOURS_EP,
-      LOCKDOWN_SINGLE
-    )
-
-    val worker1Page1 = musicTable.albumInfoByArtist.scanAll(
-      workerId = WorkerId(0, 2),
-      pageSize = 50
-    ).iterator().next()
-    assertThat(worker1Page1.hasMorePages).isFalse()
-
-    val worker2Page1 = musicTable.albumInfoByArtist.scanAll(
-      workerId = WorkerId(1, 2),
-      pageSize = 50
-    ).iterator().next()
-    assertThat(worker2Page1.hasMorePages).isFalse()
-
-    assertThat(worker1Page1.albumTitles + worker2Page1.albumTitles).containsExactlyInAnyOrder(
-      THE_DARK_SIDE_OF_THE_MOON.album_title,
-      THE_WALL.album_title,
-      WHAT_YOU_DO_TO_ME_SINGLE.album_title,
-      AFTER_HOURS_EP.album_title,
-      LOCKDOWN_SINGLE.album_title
-    )
-  }
-
-  @Test
-  fun scanAllParallelScanAndScanConfig() {
+  fun scanAllWorkerIdShouldBeIgnored() {
     musicTable.givenAlbums(
       THE_DARK_SIDE_OF_THE_MOON,
       THE_WALL,
@@ -284,8 +284,9 @@ class DynamoDbScannableTest {
     ).iterator().next()
     assertThat(worker2Page1.hasMorePages).isFalse()
 
-    assertThat(worker1Page1.albumTitles.intersect(worker2Page1.albumTitles)).isEmpty()
-    assertThat(worker1Page1.albumTitles + worker2Page1.albumTitles).containsExactlyInAnyOrder(
+    assertThat(worker1Page1.albumTitles).containsExactlyInAnyOrderElementsOf(
+      worker2Page1.albumTitles)
+    assertThat(worker1Page1.albumTitles).containsExactlyInAnyOrder(
       THE_DARK_SIDE_OF_THE_MOON.album_title,
       THE_WALL.album_title,
       WHAT_YOU_DO_TO_ME_SINGLE.album_title,
