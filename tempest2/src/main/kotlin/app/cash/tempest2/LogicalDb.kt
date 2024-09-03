@@ -111,7 +111,7 @@ interface LogicalDb : LogicalTable.Factory {
   fun batchLoad(
     keys: Iterable<Any>,
     consistentReads: Boolean
-  ) = batchLoad(keys, consistentReads = false, MAX_BATCH_READ)
+  ) = batchLoad(keys, consistentReads, MAX_BATCH_READ)
 
   fun batchLoad(
     vararg keys: Any,

@@ -54,10 +54,11 @@ class LogicalDbBatchTest {
     musicTable.playlistInfo.save(playlistInfo)
 
     val loadedItems = musicDb.batchLoad(
-      PlaylistInfo.Key("PLAYLIST_1"),
+      keys = listOf( PlaylistInfo.Key("PLAYLIST_1"),
       AlbumTrack.Key("ALBUM_1", track_number = 1),
       AlbumTrack.Key("ALBUM_1", track_number = 2),
-      AlbumTrack.Key("ALBUM_1", track_number = 3)
+      AlbumTrack.Key("ALBUM_1", track_number = 3)),
+      consistentReads = true
     )
     assertThat(loadedItems.getItems<AlbumTrack>()).containsAll(albumTracks)
     assertThat(loadedItems.getItems<PlaylistInfo>()).containsExactly(playlistInfo)
