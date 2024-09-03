@@ -21,6 +21,7 @@ import app.cash.tempest2.AsyncScannable
 import app.cash.tempest2.Offset
 import app.cash.tempest2.Page
 import app.cash.tempest2.Scannable
+import app.cash.tempest2.WorkerId
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.asPublisher
@@ -50,9 +51,10 @@ internal class DynamoDbScannable<K : Any, I : Any, R : Any>(
       pageSize: Int,
       consistentRead: Boolean,
       filterExpression: Expression?,
-      initialOffset: Offset<K>?
+      initialOffset: Offset<K>?,
+      workerId: WorkerId?
     ): Page<K, I> {
-      val request = toScanRequest(consistentRead, pageSize, filterExpression, initialOffset)
+      val request = toScanRequest(consistentRead, pageSize, filterExpression, initialOffset, workerId)
       val page = if (secondaryIndexName != null) {
         dynamoDbTable.index(secondaryIndexName).scan(request)
       } else {
@@ -66,13 +68,14 @@ internal class DynamoDbScannable<K : Any, I : Any, R : Any>(
       pageSize: Int,
       consistentRead: Boolean,
       filterExpression: Expression?,
-      initialOffset: Offset<K>?
+      initialOffset: Offset<K>?,
+      workerId: WorkerId?
     ): Sequence<Page<K, I>> {
       return generateSequence(
-        scan(pageSize, consistentRead, filterExpression, initialOffset)
+        scan(pageSize, consistentRead, filterExpression, initialOffset, workerId)
       ) { page ->
         page.offset?.let { offset ->
-          scan(pageSize, consistentRead, filterExpression, offset)
+          scan(pageSize, consistentRead, filterExpression, offset, workerId)
         }
       }
     }
@@ -81,9 +84,10 @@ internal class DynamoDbScannable<K : Any, I : Any, R : Any>(
       pageSize: Int,
       consistentRead: Boolean,
       filterExpression: Expression?,
-      initialOffset: Offset<K>?
+      initialOffset: Offset<K>?,
+      workerId: WorkerId?
     ): Sequence<I> {
-      return scanAll(pageSize, consistentRead, filterExpression, initialOffset)
+      return scanAll(pageSize, consistentRead, filterExpression, initialOffset, workerId)
         .map { it.contents }
         .flatten()
     }
@@ -99,7 +103,7 @@ internal class DynamoDbScannable<K : Any, I : Any, R : Any>(
       pageSize: Int,
       consistentRead: Boolean,
       filterExpression: Expression?,
-      initialOffset: Offset<K>?
+      initialOffset: Offset<K>?,
     ): Publisher<Page<K, I>> {
       val request = toScanRequest(consistentRead, pageSize, filterExpression, initialOffset)
       return if (secondaryIndexName != null) {
@@ -118,7 +122,8 @@ internal class DynamoDbScannable<K : Any, I : Any, R : Any>(
     consistentRead: Boolean,
     pageSize: Int,
     filterExpression: Expression?,
-    initialOffset: Offset<K>?
+    initialOffset: Offset<K>?,
+    workerId: WorkerId? = null
   ): ScanEnhancedRequest {
     val scan = ScanEnhancedRequest.builder()
       .consistentRead(consistentRead)
@@ -129,6 +134,10 @@ internal class DynamoDbScannable<K : Any, I : Any, R : Any>(
     }
     if (initialOffset != null) {
       scan.exclusiveStartKey(initialOffset.encodeOffset())
+    }
+    if (workerId != null) {
+      scan.segment(workerId.segment)
+      scan.totalSegments(workerId.totalSegments)
     }
     return scan.build()
   }

@@ -514,19 +514,7 @@ worker can be a thread (in programming languages that support multithreading) or
 system process. To perform a parallel scan, each worker issues its own Scan request with an
 unique `WorkerId`.
 
-=== "Kotlin - SDK 2.x"
-    
-    ```kotlin
-    Not supported
-    ```
-
-=== "Java - SDK 2.x"
-
-    ```java
-    Not supported
-    ```
-
-=== "Kotlin - SDK 1.x"
+=== "Kotlin"
     
     ```kotlin
     private val table: MusicTable
@@ -545,7 +533,7 @@ unique `WorkerId`.
     }
     ```
 
-=== "Java - SDK 1.x"
+=== "Java"
 
     ```java
     private final MusicTable table;
