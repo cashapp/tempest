@@ -37,26 +37,26 @@ interface Scannable<K : Any, I : Any> {
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
   fun scan() = scan(
-    ScanConfig.Builder().build(),
+    config = ScanConfig.Builder().build(),
     initialOffset = null
   )
 
   fun scan(initialOffset: Offset<K>?) = scan(
-    ScanConfig.Builder().build(),
+    config = ScanConfig.Builder().build(),
     initialOffset = initialOffset
   )
 
   fun scan(config: ScanConfig) = scan(
-    config,
+    config = config,
     initialOffset = null
   )
 
   fun scan(config: ScanConfig, initialOffset: Offset<K>?) = scan(
-    config.pageSize,
-    config.consistentRead,
-    config.filterExpression,
-    initialOffset,
-    config.workerId
+    pageSize = config.pageSize,
+    consistentRead = config.consistentRead,
+    filterExpression = config.filterExpression,
+    initialOffset = initialOffset,
+    workerId = config.workerId
   )
 
   /**
@@ -73,12 +73,12 @@ interface Scannable<K : Any, I : Any> {
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
   fun scanAll() = scanAll(
-    ScanConfig.Builder().build(),
+    config = ScanConfig.Builder().build(),
     initialOffset = null
   )
 
   fun scanAll(initialOffset: Offset<K>?) = scanAll(
-    ScanConfig.Builder().build(),
+    config = ScanConfig.Builder().build(),
     initialOffset = initialOffset
   )
 
@@ -90,7 +90,7 @@ interface Scannable<K : Any, I : Any> {
    * be ignored.
    */
   fun scanAll(config: ScanConfig) = scanAll(
-    config,
+    config = config,
     initialOffset = null
   )
 
@@ -103,10 +103,10 @@ interface Scannable<K : Any, I : Any> {
    */
   fun scanAll(config: ScanConfig, initialOffset: Offset<K>?): Sequence<Page<K, I>> {
     return scanAll(
-      config.pageSize,
-      config.consistentRead,
-      config.filterExpression,
-      initialOffset
+      pageSize = config.pageSize,
+      consistentRead = config.consistentRead,
+      filterExpression = config.filterExpression,
+      initialOffset = initialOffset
     )
   }
 
@@ -124,12 +124,12 @@ interface Scannable<K : Any, I : Any> {
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
   fun scanAllContents() = scanAllContents(
-    ScanConfig.Builder().build(),
+    config = ScanConfig.Builder().build(),
     initialOffset = null
   )
 
   fun scanAllContents(initialOffset: Offset<K>?) = scanAllContents(
-    ScanConfig.Builder().build(),
+    config = ScanConfig.Builder().build(),
     initialOffset = initialOffset
   )
 
@@ -141,7 +141,7 @@ interface Scannable<K : Any, I : Any> {
    * be ignored.
    */
   fun scanAllContents(config: ScanConfig) = scanAllContents(
-    config,
+    config = config,
     initialOffset = null
   )
 
@@ -154,10 +154,10 @@ interface Scannable<K : Any, I : Any> {
    */
   fun scanAllContents(config: ScanConfig, initialOffset: Offset<K>?): Sequence<I> {
     return scanAllContents(
-      config.pageSize,
-      config.consistentRead,
-      config.filterExpression,
-      initialOffset
+      pageSize = config.pageSize,
+      consistentRead = config.consistentRead,
+      filterExpression = config.filterExpression,
+      initialOffset = initialOffset
     )
   }
 }

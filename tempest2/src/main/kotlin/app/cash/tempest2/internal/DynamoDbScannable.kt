@@ -101,7 +101,7 @@ internal class DynamoDbScannable<K : Any, I : Any, R : Any>(
       pageSize: Int,
       consistentRead: Boolean,
       filterExpression: Expression?,
-      initialOffset: Offset<K>?,
+      initialOffset: Offset<K>?
     ): Publisher<Page<K, I>> {
       val request = toScanRequest(consistentRead, pageSize, filterExpression, initialOffset)
       return if (secondaryIndexName != null) {
