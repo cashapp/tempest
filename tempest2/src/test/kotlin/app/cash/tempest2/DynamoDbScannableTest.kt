@@ -106,6 +106,59 @@ class DynamoDbScannableTest {
   }
 
   @Test
+  fun primaryIndexParallelScan() {
+    musicTable.givenAlbums(THE_WALL)
+
+    val worker1Page1 = musicTable.albumTracks.scan(
+      workerId = WorkerId(0, 2),
+      pageSize = 50,
+      filterExpression = isTrack()
+    )
+    assertThat(worker1Page1.hasMorePages).isFalse()
+
+    val worker2Page1 = musicTable.albumTracks.scan(
+      workerId = WorkerId(1, 2),
+      pageSize = 50,
+      filterExpression = isTrack()
+    )
+    assertThat(worker1Page1.hasMorePages).isFalse()
+
+    assertThat(worker1Page1.trackTitles + worker2Page1.trackTitles)
+      .containsExactlyInAnyOrderElementsOf(THE_WALL.trackTitles)
+  }
+
+  @Test
+  fun primaryIndexParallelScanNoFilter() {
+    musicTable.givenAlbums(
+      THE_DARK_SIDE_OF_THE_MOON,
+      THE_WALL,
+      WHAT_YOU_DO_TO_ME_SINGLE,
+      AFTER_HOURS_EP,
+      LOCKDOWN_SINGLE
+    )
+
+    val worker1Page1 = musicTable.albumInfoByArtist.scan(
+      workerId = WorkerId(0, 2),
+      pageSize = 50
+    )
+    assertThat(worker1Page1.hasMorePages).isFalse()
+
+    val worker2Page1 = musicTable.albumInfoByArtist.scan(
+      workerId = WorkerId(1, 2),
+      pageSize = 50
+    )
+    assertThat(worker2Page1.hasMorePages).isFalse()
+
+    assertThat(worker1Page1.albumTitles + worker2Page1.albumTitles).containsExactlyInAnyOrder(
+      THE_DARK_SIDE_OF_THE_MOON.album_title,
+      THE_WALL.album_title,
+      WHAT_YOU_DO_TO_ME_SINGLE.album_title,
+      AFTER_HOURS_EP.album_title,
+      LOCKDOWN_SINGLE.album_title
+    )
+  }
+
+  @Test
   fun localSecondaryIndex() {
     musicTable.givenAlbums(THE_WALL)
     val expectedTrackTitles = THE_WALL.trackTitles.sorted()
@@ -197,6 +250,43 @@ class DynamoDbScannableTest {
 
     assertThat(page.hasMorePages).isFalse()
     assertThat(page.albumTitles).containsExactlyInAnyOrder(
+      THE_DARK_SIDE_OF_THE_MOON.album_title,
+      THE_WALL.album_title,
+      WHAT_YOU_DO_TO_ME_SINGLE.album_title,
+      AFTER_HOURS_EP.album_title,
+      LOCKDOWN_SINGLE.album_title
+    )
+  }
+
+  @Test
+  fun scanAllWorkerIdShouldBeIgnored() {
+    musicTable.givenAlbums(
+      THE_DARK_SIDE_OF_THE_MOON,
+      THE_WALL,
+      WHAT_YOU_DO_TO_ME_SINGLE,
+      AFTER_HOURS_EP,
+      LOCKDOWN_SINGLE
+    )
+
+    val worker1Page1 = musicTable.albumInfoByArtist.scanAll(
+      ScanConfig.Builder()
+        .workerId(WorkerId(0, 2))
+        .pageSize(50)
+        .build()
+    ).iterator().next()
+    assertThat(worker1Page1.hasMorePages).isFalse()
+
+    val worker2Page1 = musicTable.albumInfoByArtist.scanAll(
+      ScanConfig.Builder()
+        .workerId(WorkerId(1, 2))
+        .pageSize(50)
+        .build()
+    ).iterator().next()
+    assertThat(worker2Page1.hasMorePages).isFalse()
+
+    assertThat(worker1Page1.albumTitles).containsExactlyInAnyOrderElementsOf(
+      worker2Page1.albumTitles)
+    assertThat(worker1Page1.albumTitles).containsExactlyInAnyOrder(
       THE_DARK_SIDE_OF_THE_MOON.album_title,
       THE_WALL.album_title,
       WHAT_YOU_DO_TO_ME_SINGLE.album_title,

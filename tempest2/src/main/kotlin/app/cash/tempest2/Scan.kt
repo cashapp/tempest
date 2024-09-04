@@ -22,36 +22,41 @@ interface Scannable<K : Any, I : Any> {
   /**
    * Scans up to the [pageSize] items or a maximum of 1 MB of data. This limit applies before the
    * filter expression is evaluated.
+   *
+   * @param workerId identifies a tuple of `segment` and `totalSegments` in the context of parallel
+   * scans.
    */
   fun scan(
     pageSize: Int = 100,
     consistentRead: Boolean = false,
     filterExpression: Expression? = null,
-    initialOffset: Offset<K>? = null
+    initialOffset: Offset<K>? = null,
+    workerId: WorkerId? = null,
   ): Page<K, I>
 
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
   fun scan() = scan(
-    ScanConfig.Builder().build(),
+    config = ScanConfig.Builder().build(),
     initialOffset = null
   )
 
   fun scan(initialOffset: Offset<K>?) = scan(
-    ScanConfig.Builder().build(),
+    config = ScanConfig.Builder().build(),
     initialOffset = initialOffset
   )
 
   fun scan(config: ScanConfig) = scan(
-    config,
+    config = config,
     initialOffset = null
   )
 
   fun scan(config: ScanConfig, initialOffset: Offset<K>?) = scan(
-    config.pageSize,
-    config.consistentRead,
-    config.filterExpression,
-    initialOffset
+    pageSize = config.pageSize,
+    consistentRead = config.consistentRead,
+    filterExpression = config.filterExpression,
+    initialOffset = initialOffset,
+    workerId = config.workerId
   )
 
   /**
@@ -68,26 +73,40 @@ interface Scannable<K : Any, I : Any> {
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
   fun scanAll() = scanAll(
-    ScanConfig.Builder().build(),
+    config = ScanConfig.Builder().build(),
     initialOffset = null
   )
 
   fun scanAll(initialOffset: Offset<K>?) = scanAll(
-    ScanConfig.Builder().build(),
+    config = ScanConfig.Builder().build(),
     initialOffset = initialOffset
   )
 
+  /**
+   * Executes a scan and returns a sequence of pages that contains all results, regardless of page size.
+   * New pages will be fetched as needed when the resulting sequence is enumerated.
+   *
+   * This method doesn't support parallel scans. `workerId`, if provided as part of `config`, will
+   * be ignored.
+   */
   fun scanAll(config: ScanConfig) = scanAll(
-    config,
+    config = config,
     initialOffset = null
   )
 
+  /**
+   * Executes a scan and returns a sequence of pages that contains all results, regardless of page size.
+   * New pages will be fetched as needed when the resulting sequence is enumerated.
+   *
+   * This method doesn't support parallel scans. `workerId`, if provided as part of `config`, will
+   * be ignored.
+   */
   fun scanAll(config: ScanConfig, initialOffset: Offset<K>?): Sequence<Page<K, I>> {
     return scanAll(
-      config.pageSize,
-      config.consistentRead,
-      config.filterExpression,
-      initialOffset
+      pageSize = config.pageSize,
+      consistentRead = config.consistentRead,
+      filterExpression = config.filterExpression,
+      initialOffset = initialOffset
     )
   }
 
@@ -105,39 +124,69 @@ interface Scannable<K : Any, I : Any> {
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
   fun scanAllContents() = scanAllContents(
-    ScanConfig.Builder().build(),
+    config = ScanConfig.Builder().build(),
     initialOffset = null
   )
 
   fun scanAllContents(initialOffset: Offset<K>?) = scanAllContents(
-    ScanConfig.Builder().build(),
+    config = ScanConfig.Builder().build(),
     initialOffset = initialOffset
   )
 
+  /**
+   * Executes a scan and returns a sequence that contains all results, regardless of page size.
+   * New pages will be fetched as needed when the resulting sequence is enumerated.
+   *
+   * This method doesn't support parallel scans. `workerId`, if provided as part of `config`, will
+   * be ignored.
+   */
   fun scanAllContents(config: ScanConfig) = scanAllContents(
-    config,
+    config = config,
     initialOffset = null
   )
 
+  /**
+   * Executes a scan and returns a sequence that contains all results, regardless of page size.
+   * New pages will be fetched as needed when the resulting sequence is enumerated.
+   *
+   * This method doesn't support parallel scans. `workerId`, if provided as part of `config`, will
+   * be ignored.
+   */
   fun scanAllContents(config: ScanConfig, initialOffset: Offset<K>?): Sequence<I> {
     return scanAllContents(
-      config.pageSize,
-      config.consistentRead,
-      config.filterExpression,
-      initialOffset
+      pageSize = config.pageSize,
+      consistentRead = config.consistentRead,
+      filterExpression = config.filterExpression,
+      initialOffset = initialOffset
     )
+  }
+}
+
+/**
+ * In the context of parallel scans, a worker is analogous to a thread or an operating
+ * system process. Each worker then issues its own Scan request with a unique [WorkerId], which
+ * represents a tuple of `segment` and `totalSegments`.
+ */
+data class WorkerId(
+  val segment: Int,
+  val totalSegments: Int
+) {
+  init {
+    require(segment < totalSegments) { "Expect $segment to be less than $totalSegments" }
   }
 }
 
 data class ScanConfig internal constructor(
   val pageSize: Int,
   val consistentRead: Boolean,
-  val filterExpression: Expression?
+  val filterExpression: Expression?,
+  val workerId: WorkerId?
 ) {
   class Builder {
     private var pageSize = 100
     private var consistentRead = false
     private var filterExpression: Expression? = null
+    private var workerId: WorkerId? = null
 
     fun pageSize(pageSize: Int) = apply { this.pageSize = pageSize }
 
@@ -146,10 +195,13 @@ data class ScanConfig internal constructor(
     fun filterExpression(filterExpression: Expression) =
       apply { this.filterExpression = filterExpression }
 
+    fun workerId(workerId: WorkerId) = apply { this.workerId = workerId }
+
     fun build() = ScanConfig(
       pageSize,
       consistentRead,
-      filterExpression
+      filterExpression,
+      workerId
     )
   }
 }

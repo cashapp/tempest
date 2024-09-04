@@ -21,21 +21,28 @@ import app.cash.tempest2.Between;
 import app.cash.tempest2.Offset;
 import app.cash.tempest2.Page;
 import app.cash.tempest2.QueryConfig;
+import app.cash.tempest2.ScanConfig;
+import app.cash.tempest2.WorkerId;
 import app.cash.tempest2.musiclibrary.java.AlbumTrack;
 import app.cash.tempest2.musiclibrary.java.MusicTable;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import software.amazon.awssdk.enhanced.dynamodb.Expression;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 public class QueryNScan {
 
   private final MusicTable table;
+  private final ExecutorService executor;
 
-  public QueryNScan(MusicTable table) {
+  public QueryNScan(MusicTable table, ExecutorService executor) {
     this.table = table;
+    this.executor = executor;
   }
 
   // Query - Key Condition - Partition Key and Entity Type.
@@ -164,5 +171,25 @@ public class QueryNScan {
   }
 
   // Scan - Parallel.
-  // Not supported.
+  public List<AlbumTrack> loadAllAlbumTracks2() {
+    Future<List<AlbumTrack>> segment1 = executor.submit(() -> loadSegment(1));
+    Future<List<AlbumTrack>> segment2 = executor.submit(() -> loadSegment(2));
+    List<AlbumTrack> results = new ArrayList<>();
+    try {
+      results.addAll(segment1.get());
+      results.addAll(segment2.get());
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IllegalStateException("Failed to load tracks", e);
+    }
+    return results;
+  }
+
+  private List<AlbumTrack> loadSegment(int segment) {
+    Page<AlbumTrack.Key, AlbumTrack> page = table.albumTracks().scan(
+        new ScanConfig.Builder()
+            .workerId(new WorkerId(segment, /* totalSegments */ 2))
+            .build()
+    );
+    return page.getContents();
+  }
 }
