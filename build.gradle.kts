@@ -118,7 +118,7 @@ subprojects {
         }
 
         if (dokkaTask.name == "dokkaGfm") {
-          outputDirectory.set(project.file("$rootDir/docs/0.x"))
+          outputDirectory.set(project.file("$rootDir/docs/1.x"))
         }
       }
     }
