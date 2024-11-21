@@ -60,7 +60,7 @@ nav:
       - 'Testing': guide/testing.md
       - 'Asynchronous Programming': guide/asynchronous_programming.md
       - 'DynamoDB Resources': guide/dynamodb_resources.md
-      - 'v2 Migration Guide': guide/v2_uprgade_guide.md
+      - 'v2 Migration Guide': guide/v2_upgrade_guide.md
 
   - 'Reference':
       - 'For AWS SDK 1.x':
