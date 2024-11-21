@@ -1,8 +1,13 @@
 name: Publish the mkdocs to gh-pages
 
 on:
-  release:
-    types: [published]
+  push:
+    paths:
+      - "docs/**"
+      - "*.md"
+      - "mkdocs.yml"
+    branches:
+      - main
 
 env:
   GRADLE_OPTS: -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=true -Dkotlin.incremental=false -Dorg.gradle.jvmargs="-Xmx3g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"
