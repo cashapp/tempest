@@ -3,7 +3,7 @@ ktlint = "0.40.0"
 kotlin = "1.9.23"
 
 [libraries]
-assertj = { module = "org.assertj:assertj-core", version = "3.23.1" }
+assertj = { module = "org.assertj:assertj-core", version = "3.26.3" }
 aws2Dynamodb = { module = "software.amazon.awssdk:dynamodb", version = "2.25.11" }
 aws2DynamodbEnhanced = { module = "software.amazon.awssdk:dynamodb-enhanced", version = "2.25.11" }
 awsDynamodb = { module = "com.amazonaws:aws-java-sdk-dynamodb", version = "1.11.960" }
