@@ -16,7 +16,7 @@ findbugsJsr305 = { module = "com.google.code.findbugs:jsr305", version = "3.0.2"
 guava = { module = "com.google.guava:guava", version = "31.0.1-jre" }
 junit4Api = { module = "junit:junit", version = "4.13.2" }
 junitApi = { module = "org.junit.jupiter:junit-jupiter-api", version = "5.8.2" }
-junitEngine = { module = "org.junit.jupiter:junit-jupiter-engine", version = "5.8.2" }
+junitEngine = { module = "org.junit.jupiter:junit-jupiter-engine", version = "5.11.4" }
 junitGradlePlugin = { module = "org.junit.platform:junit-platform-gradle-plugin", version = "1.2.0" }
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinReflection = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
