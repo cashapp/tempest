@@ -29,4 +29,4 @@ loggingApi = { module = "io.github.microutils:kotlin-logging", version = "2.0.10
 mavenPublishGradlePlugin = { module = "com.vanniktech:gradle-maven-publish-plugin", version = "0.25.2" }
 nettyBom = { module = "io.netty:netty-bom", version = "4.1.79.Final" }
 okio = { module = "com.squareup.okio:okio", version = "3.4.0" }
-wireGradlePlugin = { module = "com.squareup.wire:wire-gradle-plugin", version = "4.8.1" }
+wireGradlePlugin = { module = "com.squareup.wire:wire-gradle-plugin", version = "5.2.1" }
