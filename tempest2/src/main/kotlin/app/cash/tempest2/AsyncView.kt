@@ -22,6 +22,7 @@ import software.amazon.awssdk.enhanced.dynamodb.extensions.VersionedRecordExtens
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.ConsumedCapacity
 import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
+import software.amazon.awssdk.services.dynamodb.model.ReturnValuesOnConditionCheckFailure
 import java.util.concurrent.CompletableFuture
 
 interface AsyncView<K : Any, I : Any> {
@@ -47,8 +48,14 @@ interface AsyncView<K : Any, I : Any> {
    */
   suspend fun save(
     item: I,
-    saveExpression: Expression? = null
-  ) = saveAsync(item, saveExpression).await()
+    saveExpression: Expression? = null,
+  ) = save(item, saveExpression, null)
+
+  suspend fun save(
+    item: I,
+    saveExpression: Expression? = null,
+    returnValuesOnConditionCheckFailure: ReturnValuesOnConditionCheckFailure? = null
+  ) = saveAsync(item, saveExpression, returnValuesOnConditionCheckFailure).await()
 
   /**
    * Deletes the item identified by [key] from its DynamoDB table using [deleteExpression]. Any
@@ -86,12 +93,18 @@ interface AsyncView<K : Any, I : Any> {
 
   fun saveAsync(
     item: I,
-    saveExpression: Expression?
+    saveExpression: Expression?,
+    returnValuesOnConditionCheckFailure: ReturnValuesOnConditionCheckFailure? = null
   ): CompletableFuture<Void>
 
   fun saveAsync(
     item: I
-  ) = saveAsync(item, saveExpression = null)
+  ) = saveAsync(item, saveExpression = null, returnValuesOnConditionCheckFailure = null)
+
+  fun saveAsync(
+    item: I,
+    saveExpression: Expression?
+  ) = saveAsync(item, saveExpression, returnValuesOnConditionCheckFailure = null)
 
   fun deleteKeyAsync(
     key: K,
