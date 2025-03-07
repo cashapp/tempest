@@ -14,6 +14,8 @@ dependencies {
   implementation(libs.kotlinStdLib)
   implementation(libs.dockerCore)
   implementation(libs.dockerTransport)
+  implementation(platform(libs.miskBom))
+  implementation(libs.miskDocker)
 
   testImplementation(libs.assertj)
   testImplementation(libs.junitEngine)

@@ -1,6 +1,7 @@
 [versions]
 ktlint = "0.40.0"
 kotlin = "1.9.23"
+misk = "2025.03.07.152727-5eb2c85"
 
 [libraries]
 assertj = { module = "org.assertj:assertj-core", version = "3.23.1" }
@@ -30,3 +31,5 @@ mavenPublishGradlePlugin = { module = "com.vanniktech:gradle-maven-publish-plugi
 nettyBom = { module = "io.netty:netty-bom", version = "4.1.79.Final" }
 okio = { module = "com.squareup.okio:okio", version = "3.4.0" }
 wireGradlePlugin = { module = "com.squareup.wire:wire-gradle-plugin", version = "4.8.1" }
+miskBom = { module = "com.squareup.misk:misk-bom", version.ref = "misk" }
+miskDocker = { module = "com.squareup.misk:misk-docker"}

@@ -11,6 +11,7 @@ import com.github.dockerjava.api.model.Frame
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
+import misk.docker.withMiskDefaults
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -181,7 +182,9 @@ class Composer(private val name: String, private vararg val containers: Containe
   private companion object {
     private val log = getLogger<Composer>()
     private val defaultDockerClientConfig =
-      DefaultDockerClientConfig.createDefaultConfigBuilder().build()
+      DefaultDockerClientConfig.createDefaultConfigBuilder()
+        .withMiskDefaults()
+        .build()
     private val httpClient = ApacheDockerHttpClient.Builder()
       .dockerHost(defaultDockerClientConfig.dockerHost)
       .sslConfig(defaultDockerClientConfig.sslConfig)
