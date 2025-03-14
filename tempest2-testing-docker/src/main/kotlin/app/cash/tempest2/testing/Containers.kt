@@ -1,5 +1,6 @@
 package app.cash.tempest2.testing
 
+import app.cash.tempest.docker.withLocalDockerCredentials
 import app.cash.tempest2.testing.internal.getLogger
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.async.ResultCallbackTemplate
@@ -181,7 +182,7 @@ class Composer(private val name: String, private vararg val containers: Containe
     private companion object {
         private val log = getLogger<Composer>()
         private val defaultDockerClientConfig =
-            DefaultDockerClientConfig.createDefaultConfigBuilder().build()
+            DefaultDockerClientConfig.createDefaultConfigBuilder().withLocalDockerCredentials().build()
         private val httpClient = ApacheDockerHttpClient.Builder()
             .dockerHost(defaultDockerClientConfig.dockerHost)
             .sslConfig(defaultDockerClientConfig.sslConfig)

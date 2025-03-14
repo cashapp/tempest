@@ -10,6 +10,7 @@ plugins {
 
 dependencies {
   api(project(":tempest-testing"))
+  api(project(":tempest-docker"))
   implementation(project(":tempest-testing-internal"))
   implementation(libs.kotlinStdLib)
   implementation(libs.dockerCore)
