@@ -1,4 +1,4 @@
-# misk-docker
+# tempest-docker
 
 A helper class which attempts to fetch docker registry credentials via the credential store defined
 in `$HOME/.docker/config.json`.
@@ -8,7 +8,7 @@ This is necessary for pulling images that require authentication.
 # Basic Usage
 
 ```kotlin
-import misk.docker.withMiskDefaults
+import app.cash.tempest.docker.withLocalDockerCredentials
 
 val defaultDockerClientConfig = DefaultDockerClientConfig
     .createDefaultConfigBuilder()
@@ -19,7 +19,7 @@ val defaultDockerClientConfig = DefaultDockerClientConfig
 # Basic Usage with custom registry URL
 
 ```kotlin
-import misk.docker.withMiskDefaults
+import app.cash.tempest.docker.withLocalDockerCredentials
 
 val defaultDockerClientConfig = DefaultDockerClientConfig
     .createDefaultConfigBuilder()
@@ -30,7 +30,7 @@ val defaultDockerClientConfig = DefaultDockerClientConfig
 # Advanced Usage
 
 ```kotlin
-import misk.docker.withMiskDefaults
+import app.cash.tempest.docker.withLocalDockerCredentials
 
 val credentials = DockerCredentials.getDockerCredentials("https://index.docker.io/v1/")
 
