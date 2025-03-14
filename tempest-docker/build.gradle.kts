@@ -24,3 +24,9 @@ configure<MavenPublishBaseExtension> {
     KotlinJvm(javadocJar = Dokka("dokkaGfm"))
   )
 }
+
+tasks.withType<Test> {
+  // Makes fake docker credential scripts available to tests
+  val fakeBinPath = File("${projectDir}/src/test/resources").absolutePath
+  environment("PATH", fakeBinPath + File.pathSeparator + System.getenv("PATH"))
+}
