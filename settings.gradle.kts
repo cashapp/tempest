@@ -1,6 +1,7 @@
 include("tempest-internal")
 include("tempest")
 include("tempest-bom")
+include("tempest-docker")
 include("tempest-testing")
 include("tempest-testing-internal")
 include("tempest-testing-docker")
