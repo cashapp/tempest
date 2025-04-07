@@ -17,6 +17,7 @@
 package app.cash.tempest2.musiclibrary
 
 import app.cash.tempest.musiclibrary.Album
+import app.cash.tempest2.musiclibrary.versionedattribute.VersionedAttributeItem
 import app.cash.tempest2.Page
 import app.cash.tempest2.testing.JvmDynamoDbServer
 import app.cash.tempest2.testing.TestDynamoDb
@@ -46,6 +47,7 @@ fun testDb(tableName: String = "music_items") = TestDynamoDb.Builder(JvmDynamoDb
         .build()
     }
   )
+  .addTable(TestTable.create<VersionedAttributeItem>("versioned_attributes"))
   .build()
 
 fun EnhancedGSI(indexName: String, projectionType: String = "ALL"): EnhancedGlobalSecondaryIndex? {
