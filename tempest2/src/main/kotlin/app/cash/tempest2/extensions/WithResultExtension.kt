@@ -1,13 +1,13 @@
 package app.cash.tempest2.extensions
 
-import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
-import software.amazon.awssdk.enhanced.dynamodb.*
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClientExtension
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbExtensionContext
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbExtensionContext.BeforeWrite
-import software.amazon.awssdk.enhanced.dynamodb.extensions.ReadModification
 import software.amazon.awssdk.enhanced.dynamodb.extensions.WriteModification
 import software.amazon.awssdk.enhanced.dynamodb.internal.operations.OperationName
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Enables WithResult APIs that reflect the auto generated updates to the item in the response.
@@ -44,9 +44,6 @@ class WithResultExtension private constructor() : DynamoDbEnhancedClientExtensio
     // No updates.
     return EMPTY_WRITE
   }
-
-  override fun afterRead(context: DynamoDbExtensionContext.AfterRead?): ReadModification =
-    EMPTY_READ
 
   companion object {
     @RequiresOptIn(message = "Requires WithResultExtension to be installed last on the DynamoEnhancedClient")
@@ -93,7 +90,7 @@ class WithResultExtension private constructor() : DynamoDbEnhancedClientExtensio
      *
      * @return a key to be used for getResult(s)
      */
-    internal fun initiateRequest(totalItems: Int = 1) : UUID {
+    internal fun initiateRequest(totalItems: Int = 1): UUID {
       val trackerKey = TrackerKey.generate()
       val tracker = Tracker(totalItems)
 
@@ -108,7 +105,7 @@ class WithResultExtension private constructor() : DynamoDbEnhancedClientExtensio
      *
      * @param requestId the requestId returned by initiateRequest.
      */
-    internal fun getResults(requestId: UUID) : Set<Map<String, AttributeValue>> {
+    internal fun getResults(requestId: UUID): Set<Map<String, AttributeValue>> {
       val trackerKey = TrackerKey.fromRequestId(requestId)
       val tracker = itemTracker.remove(trackerKey)!!
 
@@ -124,7 +121,7 @@ class WithResultExtension private constructor() : DynamoDbEnhancedClientExtensio
      *
      * @param requestId the requestId returned by initiateRequest.
      */
-    internal fun getResult(requestId: UUID) : Map<String, AttributeValue> =
+    internal fun getResult(requestId: UUID): Map<String, AttributeValue> =
       getResults(requestId).single()
 
     /**
@@ -139,13 +136,12 @@ class WithResultExtension private constructor() : DynamoDbEnhancedClientExtensio
     }
 
     private val EMPTY_WRITE = WriteModification.builder().build()
-    private val EMPTY_READ = ReadModification.builder().build()
-    private val itemTracker : MutableMap<TrackerKey, Tracker> = ConcurrentHashMap<TrackerKey, Tracker>()
+    private val itemTracker: MutableMap<TrackerKey, Tracker> = ConcurrentHashMap<TrackerKey, Tracker>()
 
     /**
      * Create an instance of the extension.
      */
-    fun create() : WithResultExtension {
+    fun create(): WithResultExtension {
       return WithResultExtension()
     }
   }

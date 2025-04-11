@@ -18,9 +18,9 @@ package app.cash.tempest2
 
 import app.cash.tempest2.extensions.WithResultExtension
 import app.cash.tempest2.extensions.WithResultExtension.Companion.WithResultExtensionInstalledLast
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.enhanced.dynamodb.extensions.VersionedRecordExtension
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.services.dynamodb.model.ConsumedCapacity
 import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 

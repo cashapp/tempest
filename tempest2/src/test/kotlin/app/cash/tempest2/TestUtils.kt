@@ -1,11 +1,11 @@
 package app.cash.tempest2
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.runBlocking
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import kotlin.time.Duration
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.runBlocking
 
 // Exists to silence Intellij warning "Junit test should return Unit".
 fun runBlockingTest(block: suspend CoroutineScope.() -> Unit) {
