@@ -67,7 +67,7 @@ class DynamoDbAsyncViewWithResultTest {
     fakeClock.add(1.hours)
 
     val result = versionedAttributeTable.attributes.saveWithResult(item)
-    assertThat(WithResultExtension.currentRequestTrackerKey.get()).isNull()
+    assertThat(WithResultExtension.inMemoryItemsResult.get()).isNull()
     assertThat(result).isEqualTo(
       item.copy(
         version = 1L,
@@ -103,7 +103,7 @@ class DynamoDbAsyncViewWithResultTest {
     fakeClock.add(1.hours)
 
     val result = versionedAttributeTable.attributes.saveWithResult(item)
-    assertThat(WithResultExtension.currentRequestTrackerKey.get()).isNull()
+    assertThat(WithResultExtension.inMemoryItemsResult.get()).isNull()
     assertThat(result).isEqualTo(
       item.copy(
         version = 1L,
@@ -123,7 +123,7 @@ class DynamoDbAsyncViewWithResultTest {
       versionedAttributeTable.attributes.saveWithResult(updatedDescription, ifNotExist())
     }
 
-    assertThat(WithResultExtension.currentRequestTrackerKey.get()).isNull()
+    assertThat(WithResultExtension.inMemoryItemsResult.get()).isNull()
   }
 
   @Test
@@ -137,7 +137,7 @@ class DynamoDbAsyncViewWithResultTest {
     fakeClock.add(1.hours)
 
     val result = versionedAttributeTable.attributes.saveWithResult(item)
-    assertThat(WithResultExtension.currentRequestTrackerKey.get()).isNull()
+    assertThat(WithResultExtension.inMemoryItemsResult.get()).isNull()
     assertThat(result).isEqualTo(
       item.copy(
         version = 1L,
@@ -151,7 +151,7 @@ class DynamoDbAsyncViewWithResultTest {
       versionedAttributeTable.attributes.saveWithResult(item)
     }
 
-    assertThat(WithResultExtension.currentRequestTrackerKey.get()).isNull()
+    assertThat(WithResultExtension.inMemoryItemsResult.get()).isNull()
   }
 
   @Test
