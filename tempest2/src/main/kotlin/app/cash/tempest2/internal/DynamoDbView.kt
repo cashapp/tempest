@@ -75,20 +75,13 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
     override fun saveWithResult(
       item: I,
       saveExpression: Expression?
-    ) : I {
-      val request = toSaveRequest(item, saveExpression)
-      val extensionId = WithResultExtension.initiateRequest()
-
-      runCatching {
+    ): I =
+      WithResultExtension.runWithResult({
+        val request = toSaveRequest(item, saveExpression)
         dynamoDbTable.putItem(request)
-      }.onFailure {
-        WithResultExtension.onError(extensionId)
-      }.getOrThrow()
-
-      return WithResultExtension.getResult(extensionId).let {
-        itemCodec.toApp(tableSchema.mapToItem(it))
+      }) { _, itemUpdate ->
+        itemCodec.toApp(tableSchema.mapToItem(itemUpdate.single()))
       }
-    }
 
     override fun deleteKey(
       key: K,
@@ -144,22 +137,15 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
     override fun saveAsyncWithResult(
       item: I,
       saveExpression: Expression?
-    ): CompletableFuture<I> {
-      val request = toSaveRequest(item, saveExpression)
-      val extensionId = WithResultExtension.initiateRequest()
-
-      val completion = runCatching {
-          dynamoDbTable.putItem(request)
-        }.onFailure {
-          WithResultExtension.onError(extensionId)
-        }.getOrThrow()
-
-      return completion.thenApply {
-          WithResultExtension.getResult(extensionId).let {
-            itemCodec.toApp(tableSchema.mapToItem(it))
-          }
+    ): CompletableFuture<I> =
+      WithResultExtension.runWithResult({
+        val request = toSaveRequest(item, saveExpression)
+        dynamoDbTable.putItem(request)
+      }) { completion, itemUpdate ->
+        completion.thenApply {
+          itemCodec.toApp(tableSchema.mapToItem(itemUpdate.single()))
         }
-    }
+      }
 
     override fun deleteKeyAsync(
       key: K,
