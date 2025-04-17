@@ -19,6 +19,8 @@ package app.cash.tempest2.internal
 import app.cash.tempest.internal.Codec
 import app.cash.tempest2.AsyncView
 import app.cash.tempest2.View
+import app.cash.tempest2.extensions.WithResultExtension
+import app.cash.tempest2.extensions.WithResultExtension.Companion.WithResultExtensionInstalledLast
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable
 import software.amazon.awssdk.enhanced.dynamodb.Expression
@@ -69,6 +71,18 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
       dynamoDbTable.putItem(request)
     }
 
+    @WithResultExtensionInstalledLast
+    override fun saveWithResult(
+      item: I,
+      saveExpression: Expression?
+    ): I =
+      WithResultExtension.runWithResult({
+        val request = toSaveRequest(item, saveExpression)
+        dynamoDbTable.putItem(request)
+      }) { _, itemUpdate ->
+        itemCodec.toApp(tableSchema.mapToItem(itemUpdate.single()))
+      }
+
     override fun deleteKey(
       key: K,
       deleteExpression: Expression?
@@ -118,6 +132,20 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
       val request = toSaveRequest(item, saveExpression)
       return dynamoDbTable.putItem(request)
     }
+
+    @WithResultExtensionInstalledLast
+    override fun saveAsyncWithResult(
+      item: I,
+      saveExpression: Expression?
+    ): CompletableFuture<I> =
+      WithResultExtension.runWithResult({
+        val request = toSaveRequest(item, saveExpression)
+        dynamoDbTable.putItem(request)
+      }) { completion, itemUpdate ->
+        completion.thenApply {
+          itemCodec.toApp(tableSchema.mapToItem(itemUpdate.single()))
+        }
+      }
 
     override fun deleteKeyAsync(
       key: K,

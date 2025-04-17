@@ -16,9 +16,11 @@
 
 package app.cash.tempest2
 
+import app.cash.tempest2.extensions.WithResultExtension
+import app.cash.tempest2.extensions.WithResultExtension.Companion.WithResultExtensionInstalledLast
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.enhanced.dynamodb.extensions.VersionedRecordExtension
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.ConsumedCapacity
 import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 
@@ -49,6 +51,22 @@ interface View<K : Any, I : Any> {
   )
 
   /**
+   * This method requires the [WithResultExtension] to be installed on the [DynamoDbEnhancedClient].
+   * This extension must be installed last!
+   *
+   * Saves an item in DynamoDB. This method uses [DynamoDbClient.putItem] to clear
+   * and replace all attributes, including unmodeled ones, on save. Partial update, i.e.
+   * [DynamoDbClient.updateItem], is not supported yet.
+   *
+   * Any options specified in the [saveExpression] parameter will be overlaid on any constraints due
+   * to versioned attributes.
+   *
+   * Any auto generated in memory updates will be reflected in the result item.
+   */
+  @WithResultExtensionInstalledLast
+  fun saveWithResult(item: I, saveExpression: Expression? = null): I
+
+  /**
    * Deletes the item identified by [key] from its DynamoDB table using [deleteExpression]. Any
    * options specified in the [deleteExpression] parameter will be overlaid on any constraints due
    * to versioned attributes.
@@ -77,6 +95,11 @@ interface View<K : Any, I : Any> {
   fun save(
     item: I
   ) = save(item, saveExpression = null)
+
+  @WithResultExtensionInstalledLast
+  fun saveWithResult(
+    item: I
+  ) = saveWithResult(item, saveExpression = null)
 
   fun deleteKey(
     key: K
