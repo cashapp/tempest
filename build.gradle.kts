@@ -17,6 +17,7 @@ buildscript {
     classpath(libs.junitGradlePlugin)
     classpath(libs.kotlinGradlePlugin)
     classpath(libs.mavenPublishGradlePlugin)
+    classpath(libs.shadowGradlePlugin)
     classpath(libs.wireGradlePlugin)
   }
 }
