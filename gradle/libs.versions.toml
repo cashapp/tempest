@@ -32,4 +32,4 @@ moshiKotlin = { module = "com.squareup.moshi:moshi-kotlin", version = "1.15.2" }
 nettyBom = { module = "io.netty:netty-bom", version = "4.1.79.Final" }
 okio = { module = "com.squareup.okio:okio", version = "3.4.0" }
 okioFakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version = "3.4.0" }
-wireGradlePlugin = { module = "com.squareup.wire:wire-gradle-plugin", version = "4.8.1" }
+wireGradlePlugin = { module = "com.squareup.wire:wire-gradle-plugin", version = "5.3.1" }
