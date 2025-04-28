@@ -16,8 +16,8 @@
 
 package app.cash.tempest.testing
 
-import shaded.com.amazonaws.services.dynamodbv2.local.main.ServerRunner
-import shaded.com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer
+import app.cash.tempest.testing.dynamodb.local.shaded.com.amazonaws.services.dynamodbv2.local.main.ServerRunner
+import app.cash.tempest.testing.dynamodb.local.shaded.com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer
 import com.google.common.util.concurrent.AbstractIdleService
 
 class JvmDynamoDbServer private constructor(

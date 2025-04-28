@@ -10,7 +10,7 @@ plugins {
 }
 
 dependencies {
-  // Ignore transtive dependencies and insyead manage explicitly.
+  // Ignore transtive dependencies and instead manage explicitly.
   implementation(libs.awsDynamodbLocal) {
     isTransitive = false
   }
@@ -49,19 +49,21 @@ tasks.shadowJar {
   }
 
   // Relocate packages to avoid conflicts.
-  relocate("com.amazon.dynamodb.grammar", "shaded.com.amazon.dynamodb.grammar")
-  relocate("com.amazon.ion", "shaded.com.amazon.ion")
-  relocate("com.amazonaws.services.dynamodbv2.dataMembers", "shaded.com.amazonaws.services.dynamodbv2.dataMembers")
-  relocate("com.amazonaws.services.dynamodbv2.datamodel", "shaded.com.amazonaws.services.dynamodbv2.datamodel")
-  relocate("com.amazonaws.services.dynamodbv2.dbenv", "shaded.com.amazonaws.services.dynamodbv2.dbenv")
-  relocate("com.amazonaws.services.dynamodbv2.exceptions", "shaded.com.amazonaws.services.dynamodbv2.exceptions")
-  relocate("com.amazonaws.services.dynamodbv2.local", "shaded.com.amazonaws.services.dynamodbv2.local")
-  relocate("com.fasterxml.jackson", "shaded.com.fasterxml.jackson")
-  relocate("ddb.partiql", "shaded.ddb.partiql")
-  relocate("kotlin", "shaded.kotlin")
-  relocate("org.eclipse.jetty", "shaded.org.eclipse.jetty")
-  relocate("org.partiql", "shaded.org.partiql")
-  
+  listOf(
+    "com.amazon.dynamodb.grammar",
+    "com.amazon.ion",
+    "com.amazonaws.services.dynamodbv2.dataMembers",
+    "com.amazonaws.services.dynamodbv2.datamodel",
+    "com.amazonaws.services.dynamodbv2.dbenv",
+    "com.amazonaws.services.dynamodbv2.exceptions",
+    "com.amazonaws.services.dynamodbv2.local",
+    "com.fasterxml.jackson",
+    "ddb.partiql",
+    "kotlin",
+    "org.eclipse.jetty",
+    "org.partiql",
+  ).forEach { relocate(it, "app.cash.tempest.testing.dynamodb.local.shaded.${it}") }
+
   mergeServiceFiles()
 
   // Publish shadow JAR as the main JAR.
