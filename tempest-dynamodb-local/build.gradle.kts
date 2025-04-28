@@ -1,8 +1,9 @@
-import com.vanniktech.maven.publish.JavaLibrary
-import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.JavadocJar.Dokka
+import com.vanniktech.maven.publish.KotlinJvm
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 
 plugins {
+  kotlin("jvm")
   `java-library`
   id("com.gradleup.shadow")
   id("com.vanniktech.maven.publish.base")
@@ -30,6 +31,10 @@ dependencies {
   shadow(libs.guava)
   shadow(libs.slf4jApi)
   shadow(libs.bundles.sqlite4java)
+}
+
+tasks.named<Jar>("jar") {
+  archiveClassifier.set("unshaded")
 }
 
 tasks.shadowJar {
@@ -65,9 +70,35 @@ tasks.shadowJar {
 
 configure<MavenPublishBaseExtension> {
   configure(
-    JavaLibrary(
-      javadocJar = JavadocJar.Empty(),
-      sourcesJar = false,
-    )
+    KotlinJvm(javadocJar = Dokka("dokkaGfm"))
   )
+
+  pom {
+    withXml {
+      val root = asNode()
+
+      // First collect all dependencies nodes.
+      val dependenciesNodes = root.children()
+        .filterIsInstance<groovy.util.Node>()
+        .filter { it.name().toString().contains("dependencies") }
+        .toList()
+
+      // Then remove them safely.
+      dependenciesNodes.forEach { node ->
+        root.remove(node)
+      }
+
+      // Add a new dependencies node with shadow configuration.
+      val dependenciesNode = root.appendNode("dependencies")
+
+      // Add all shadow dependencies to the POM.
+      project.configurations.named("shadow").get().allDependencies.forEach { dep ->
+        val dependencyNode = dependenciesNode.appendNode("dependency")
+        dependencyNode.appendNode("groupId", dep.group)
+        dependencyNode.appendNode("artifactId", dep.name)
+        dependencyNode.appendNode("version", dep.version)
+        dependencyNode.appendNode("scope", "compile")
+      }
+    }
+  }
 }
