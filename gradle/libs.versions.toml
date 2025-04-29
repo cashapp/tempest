@@ -27,7 +27,6 @@ jacksonDatatypeJsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datat
 jettyAlpnClient = { module = "org.eclipse.jetty:jetty-alpn-client", version.ref = "jetty" } # for DynamoDBLocal
 jettyClient = { module = "org.eclipse.jetty:jetty-client", version.ref = "jetty" } # for DynamoDBLocal
 jettyServer = { module = "org.eclipse.jetty:jetty-server", version.ref = "jetty" } # for DynamoDBLocal
-json = { module = "org.json:json", version = "20250107" }
 junit4Api = { module = "junit:junit", version = "4.13.2" }
 junitApi = { module = "org.junit.jupiter:junit-jupiter-api", version = "5.8.2" }
 junitEngine = { module = "org.junit.jupiter:junit-jupiter-engine", version = "5.11.4" }
