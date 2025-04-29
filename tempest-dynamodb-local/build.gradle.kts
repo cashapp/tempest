@@ -1,6 +1,7 @@
 import com.vanniktech.maven.publish.JavadocJar.Dokka
 import com.vanniktech.maven.publish.KotlinJvm
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import org.json.JSONObject
 
 plugins {
   kotlin("jvm")
@@ -68,6 +69,47 @@ tasks.shadowJar {
 
   // Publish shadow JAR as the main JAR.
   archiveClassifier = ""
+}
+
+// Override all published JARs to point at the shadow jar
+listOf(configurations["apiElements"], configurations["runtimeElements"]).forEach {
+  it.outgoing {
+    artifacts.clear()
+    artifact(tasks.named("shadowJar"))
+  }
+}
+
+// Post-process the gradle module metadata JSON to use the shadow JAR's dependencies as the runtime
+// dependencies in gradle builds.
+tasks.withType<GenerateModuleMetadata>().configureEach {
+  doLast {
+    try {
+      outputFile.get().asFile.takeIf { it.exists() }?.let { moduleFile ->
+        val moduleJson = JSONObject(moduleFile.readText())
+        val variants = moduleJson.getJSONArray("variants")
+
+        val shadowVariant = (0 until variants.length())
+          .map { variants.getJSONObject(it) }
+          .find { it.getString("name") == "shadowRuntimeElements" }
+        if (shadowVariant == null) {
+          throw NoSuchElementException("could not find the `shadowRuntimeElements` variant!")
+        }
+
+        val runtimeVariant = (0 until variants.length())
+          .map { variants.getJSONObject(it) }
+          .find { it.getString("name") == "runtimeElements" }
+        if (runtimeVariant == null) {
+          throw NoSuchElementException("could not find the `runtimeElements` variant!")
+        }
+
+        runtimeVariant.put("dependencies", shadowVariant.get("dependencies"))
+
+        moduleFile.writeText(moduleJson.toString(2))
+      }
+    } catch (e: Exception) {
+      throw GradleException("could not post-process the module metadata!", e)
+    }
+  }
 }
 
 configure<MavenPublishBaseExtension> {
