@@ -14,7 +14,7 @@ buildscript {
 
   dependencies {
     classpath(libs.dokkaGradlePlugin)
-    classpath(libs.json)
+    classpath(libs.jacksonDatabind)
     classpath(libs.junitGradlePlugin)
     classpath(libs.kotlinGradlePlugin)
     classpath(libs.mavenPublishGradlePlugin)

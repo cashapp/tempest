@@ -1,7 +1,12 @@
+import com.fasterxml.jackson.databind.MapperFeature
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.databind.json.JsonMapper
+import com.fasterxml.jackson.databind.node.ArrayNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.vanniktech.maven.publish.JavadocJar.Dokka
 import com.vanniktech.maven.publish.KotlinJvm
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
-import org.json.JSONObject
 
 plugins {
   kotlin("jvm")
@@ -85,26 +90,30 @@ tasks.withType<GenerateModuleMetadata>().configureEach {
   doLast {
     try {
       outputFile.get().asFile.takeIf { it.exists() }?.let { moduleFile ->
-        val moduleJson = JSONObject(moduleFile.readText())
-        val variants = moduleJson.getJSONArray("variants")
+        val mapper = JsonMapper.builder()
+            .enable(SerializationFeature.INDENT_OUTPUT)
+            .nodeFactory(JsonNodeFactory.withExactBigDecimals(true))
+            .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, false)
+            .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, false)
+            .build()
+        val moduleJson = mapper.readTree(moduleFile) as ObjectNode
+        val variants = moduleJson.get("variants") as ArrayNode
 
-        val shadowVariant = (0 until variants.length())
-          .map { variants.getJSONObject(it) }
-          .find { it.getString("name") == "shadowRuntimeElements" }
-        if (shadowVariant == null) {
-          throw NoSuchElementException("could not find the `shadowRuntimeElements` variant!")
-        }
+        val shadowVariant = variants
+          .elements().asSequence()
+          .map { it as ObjectNode }
+          .find { it.get("name").asText() == "shadowRuntimeElements" }
+          ?: throw NoSuchElementException("could not find the `shadowRuntimeElements` variant!")
 
-        val runtimeVariant = (0 until variants.length())
-          .map { variants.getJSONObject(it) }
-          .find { it.getString("name") == "runtimeElements" }
-        if (runtimeVariant == null) {
-          throw NoSuchElementException("could not find the `runtimeElements` variant!")
-        }
+        val runtimeVariant = variants
+          .elements().asSequence()
+          .map { it as ObjectNode }
+          .find { it.get("name").asText() == "runtimeElements" }
+          ?: throw NoSuchElementException("could not find the `runtimeElements` variant!")
 
-        runtimeVariant.put("dependencies", shadowVariant.get("dependencies"))
+        runtimeVariant.replace("dependencies", shadowVariant.get("dependencies"))
 
-        moduleFile.writeText(moduleJson.toString(2))
+        moduleFile.writeText(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(moduleJson))
       }
     } catch (e: Exception) {
       throw GradleException("could not post-process the module metadata!", e)
