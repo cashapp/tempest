@@ -24,10 +24,11 @@ dependencies {
   // Implementation dependencies will be shaded in the JAR.
   implementation(libs.bundles.jackson)
   implementation(libs.bundles.jetty)
+  implementation(libs.antlr4Runtime)
   implementation(libs.kotlinStdLib)
 
   // Shadow dependencies will not be shaded.
-  shadow(libs.antlr4Runtime)
+  shadow(libs.bundles.sqlite4java)
   shadow(libs.aws2Dynamodb)
   shadow(libs.aws2DynamodbEnhanced)
   shadow(libs.aws2Pinpoint)
@@ -36,7 +37,6 @@ dependencies {
   shadow(libs.commonsLang3)
   shadow(libs.guava)
   shadow(libs.slf4jApi)
-  shadow(libs.bundles.sqlite4java)
 }
 
 tasks.named<Jar>("jar") {
@@ -51,6 +51,7 @@ tasks.shadowJar {
     include(dependency("com.fasterxml.jackson.dataformat:.*"))
     include(dependency("com.fasterxml.jackson.datatype:.*"))
     include(dependency("com.fasterxml.jackson.module:.*"))
+    include(dependency("org.antlr:.*"))
     include(dependency("org.eclipse.jetty:.*"))
   }
 
@@ -66,6 +67,7 @@ tasks.shadowJar {
     "com.fasterxml.jackson",
     "ddb.partiql",
     "kotlin",
+    "org.antlr",
     "org.eclipse.jetty",
     "org.partiql",
   ).forEach { relocate(it, "app.cash.tempest.testing.dynamodb.local.shaded.${it}") }
