@@ -17,6 +17,7 @@ buildscript {
     classpath(libs.junitGradlePlugin)
     classpath(libs.kotlinGradlePlugin)
     classpath(libs.mavenPublishGradlePlugin)
+    classpath(libs.shadowGradlePlugin)
     classpath(libs.wireGradlePlugin)
   }
 }
@@ -100,26 +101,23 @@ subprojects {
     jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED")
   }
 
-  // We have to set the dokka configuration after evaluation since the com.vanniktech.maven.publish
-  // plugin overwrites our dokka configuration on projects where it's applied.
-  afterEvaluate {
-    tasks.withType<DokkaTask>().configureEach {
-      val dokkaTask = this
-      dokkaSourceSets.configureEach {
-        reportUndocumented.set(false)
-        skipDeprecated.set(true)
-        jdkVersion.set(11)
+  tasks.withType<DokkaTask>().configureEach {
+    val dokkaTask = this
 
-        externalDocumentationLink {
-          url.set(URL("https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/"))
-          packageListUrl.set(
-            URL("https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/package-list")
-          )
-        }
+    if (dokkaTask.name == "dokkaGfm") {
+      outputDirectory.set(project.file("$rootDir/docs/1.x/${project.name}"))
+    }
 
-        if (dokkaTask.name == "dokkaGfm") {
-          outputDirectory.set(project.file("$rootDir/docs/1.x"))
-        }
+    dokkaSourceSets.configureEach {
+      reportUndocumented.set(false)
+      skipDeprecated.set(true)
+      jdkVersion.set(11)
+
+      externalDocumentationLink {
+        url.set(URL("https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/"))
+        packageListUrl.set(
+          URL("https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/package-list")
+        )
       }
     }
   }

@@ -16,10 +16,9 @@
 
 package app.cash.tempest2.testing
 
-import com.amazonaws.services.dynamodbv2.local.main.ServerRunner
-import com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer
+import app.cash.tempest.testing.dynamodb.local.shaded.com.amazonaws.services.dynamodbv2.local.main.ServerRunner
+import app.cash.tempest.testing.dynamodb.local.shaded.com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer
 import com.google.common.util.concurrent.AbstractIdleService
-import java.io.File
 
 class JvmDynamoDbServer private constructor(
   override val port: Int,

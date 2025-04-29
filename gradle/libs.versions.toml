@@ -1,19 +1,32 @@
 [versions]
+aws2 = "2.31.30"
+jackson = "2.14.3"
+jetty = "12.0.9"
 ktlint = "0.40.0"
 kotlin = "1.9.23"
+sqlite4java = "1.0.392"
 
 [libraries]
+antlr4Runtime = { module = "org.antlr:antlr4-runtime", version = "4.13.2" }
 assertj = { module = "org.assertj:assertj-core", version = "3.23.1" }
-aws2Dynamodb = { module = "software.amazon.awssdk:dynamodb", version = "2.25.11" }
-aws2DynamodbEnhanced = { module = "software.amazon.awssdk:dynamodb-enhanced", version = "2.25.11" }
-awsDynamodb = { module = "com.amazonaws:aws-java-sdk-dynamodb", version = "1.11.960" }
+aws2Dynamodb = { module = "software.amazon.awssdk:dynamodb", version.ref = "aws2" }
+aws2DynamodbEnhanced = { module = "software.amazon.awssdk:dynamodb-enhanced", version.ref = "aws2" }
+aws2Pinpoint = { module = "software.amazon.awssdk:pinpoint", version.ref = "aws2" } # for DynamoDBLocal
+awsDynamodb = { module = "com.amazonaws:aws-java-sdk-dynamodb", version = "1.12.782" }
 awsDynamodbLocal = { module = "com.amazonaws:DynamoDBLocal", version = "2.6.0" }
 clikt = { module = "com.github.ajalt:clikt", version = "2.8.0" }
+commonsCli = { module = "commons-cli:commons-cli", version = "1.9.0" } # for DynamoDBLocal
+commonsLang3 = { module = "org.apache.commons:commons-lang3", version = "3.17.0" } # for DynamoDBLocal
 dokkaGradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version = "1.9.20" }
 dockerCore = { module = "com.github.docker-java:docker-java-core", version = "3.2.13" }
 dockerTransport = { module = "com.github.docker-java:docker-java-transport-httpclient5", version = "3.2.13" }
 findbugsJsr305 = { module = "com.google.code.findbugs:jsr305", version = "3.0.2" }
 guava = { module = "com.google.guava:guava", version = "31.0.1-jre" }
+jacksonDatabind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" } # for DynamoDBLocal
+jacksonDatatypeJsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" } # for DynamoDBLocal
+jettyAlpnClient = { module = "org.eclipse.jetty:jetty-alpn-client", version.ref = "jetty" } # for DynamoDBLocal
+jettyClient = { module = "org.eclipse.jetty:jetty-client", version.ref = "jetty" } # for DynamoDBLocal
+jettyServer = { module = "org.eclipse.jetty:jetty-server", version.ref = "jetty" } # for DynamoDBLocal
 junit4Api = { module = "junit:junit", version = "4.13.2" }
 junitApi = { module = "org.junit.jupiter:junit-jupiter-api", version = "5.8.2" }
 junitEngine = { module = "org.junit.jupiter:junit-jupiter-engine", version = "5.11.4" }
@@ -26,10 +39,22 @@ kotlinxCoroutinesJdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-jdk
 kotlinxCoroutinesReactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version = "1.6.4" }
 log4jCore = { module = "org.apache.logging.log4j:log4j-core", version = "2.17.1" }
 loggingApi = { module = "io.github.microutils:kotlin-logging", version = "2.0.10" }
-mavenPublishGradlePlugin = { module = "com.vanniktech:gradle-maven-publish-plugin", version = "0.25.2" }
+mavenPublishGradlePlugin = { module = "com.vanniktech:gradle-maven-publish-plugin", version = "0.28.0" }
 moshiCore = { module = "com.squareup.moshi:moshi", version = "1.15.2" }
 moshiKotlin = { module = "com.squareup.moshi:moshi-kotlin", version = "1.15.2" }
 nettyBom = { module = "io.netty:netty-bom", version = "4.1.79.Final" }
 okio = { module = "com.squareup.okio:okio", version = "3.4.0" }
 okioFakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version = "3.4.0" }
+shadowGradlePlugin = { module = "com.gradleup.shadow:shadow-gradle-plugin", version = "8.3.6" }
+slf4jApi = { module = "org.slf4j:slf4j-api", version = "2.0.17" } # for DynamoDBLocal
+sqlite4javaLinuxI386 = { module = "com.almworks.sqlite4java:libsqlite4java-linux-i386", version.ref = "sqlite4java" } # for DynamoDBLocal
+sqlite4javaLinuxAmd64 = { module = "com.almworks.sqlite4java:libsqlite4java-linux-amd64", version.ref = "sqlite4java" } # for DynamoDBLocal
+sqlite4javaOsx = { module = "com.almworks.sqlite4java:libsqlite4java-osx", version.ref = "sqlite4java" } # for DynamoDBLocal
+sqlite4javaWinX64 = { module = "com.almworks.sqlite4java:sqlite4java-win32-x64", version.ref = "sqlite4java" } # for DynamoDBLocal
+sqlite4javaWinX86 = { module = "com.almworks.sqlite4java:sqlite4java-win32-x86", version.ref = "sqlite4java" } # for DynamoDBLocal
 wireGradlePlugin = { module = "com.squareup.wire:wire-gradle-plugin", version = "4.8.1" }
+
+[bundles]
+jackson = ["jacksonDatabind", "jacksonDatatypeJsr310"]
+jetty = ["jettyAlpnClient", "jettyClient", "jettyServer"]
+sqlite4java = ["sqlite4javaLinuxI386", "sqlite4javaLinuxAmd64", "sqlite4javaOsx", "sqlite4javaWinX64", "sqlite4javaWinX86"]

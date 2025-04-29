@@ -11,7 +11,7 @@ plugins {
 dependencies {
   api(project(":tempest2-testing"))
   implementation(project(":tempest2-testing-internal"))
-  implementation(libs.awsDynamodbLocal)
+  implementation(project(path = ":tempest-dynamodb-local", configuration = "shadow"))
   implementation(libs.kotlinStdLib)
 
   testImplementation(libs.assertj)
