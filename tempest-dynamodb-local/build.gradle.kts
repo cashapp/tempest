@@ -1,9 +1,3 @@
-import com.fasterxml.jackson.databind.MapperFeature
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.JsonNodeFactory
-import com.fasterxml.jackson.databind.node.ObjectNode
 import com.vanniktech.maven.publish.JavadocJar.Dokka
 import com.vanniktech.maven.publish.KotlinJvm
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
@@ -16,7 +10,7 @@ plugins {
 }
 
 dependencies {
-  // Ignore transtive dependencies and instead manage explicitly.
+  // Ignore transitive dependencies and instead manage explicitly.
   implementation(libs.awsDynamodbLocal) {
     isTransitive = false
   }
@@ -28,6 +22,7 @@ dependencies {
   implementation(libs.kotlinStdLib)
 
   // Shadow dependencies will not be shaded.
+  // https://gradleup.com/shadow/configuration/#configuring-the-runtime-classpath
   shadow(libs.bundles.sqlite4java)
   shadow(libs.aws2Dynamodb)
   shadow(libs.aws2DynamodbEnhanced)
@@ -39,12 +34,18 @@ dependencies {
   shadow(libs.slf4jApi)
 }
 
-tasks.named<Jar>("jar") {
+tasks.jar {
   archiveClassifier.set("unshaded")
 }
 
 tasks.shadowJar {
-  // Dependencies to be shaded must be explicitly included as dependencies.
+  // https://gradleup.com/shadow/configuration/reproducible-builds/
+  isPreserveFileTimestamps = false
+  isReproducibleFileOrder = true
+
+  // Explicit allow-list of dependencies to be included. Without this block, _everything_ on runtimeClasspath would be
+  // included. An alternative would be an explicit deny-list, but this is seen as safer. Engineers should take care to
+  // update it when they update the dependencies of this project.
   dependencies {
     include(dependency("com.amazonaws:DynamoDBLocal"))
     include(dependency("com.fasterxml.jackson.core:.*"))
@@ -78,82 +79,25 @@ tasks.shadowJar {
   archiveClassifier = ""
 }
 
-// Override all published JARs to point at the shadow jar
-listOf(configurations["apiElements"], configurations["runtimeElements"]).forEach {
-  it.outgoing {
-    artifacts.clear()
-    artifact(tasks.named("shadowJar"))
-  }
+tasks.assemble {
+  dependsOn(tasks.shadowJar)
 }
 
-// Post-process the gradle module metadata JSON to use the shadow JAR's dependencies as the runtime
-// dependencies in gradle builds.
-tasks.withType<GenerateModuleMetadata>().configureEach {
-  doLast {
-    try {
-      outputFile.get().asFile.takeIf { it.exists() }?.let { moduleFile ->
-        val mapper = JsonMapper.builder()
-            .enable(SerializationFeature.INDENT_OUTPUT)
-            .nodeFactory(JsonNodeFactory.withExactBigDecimals(true))
-            .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, false)
-            .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, false)
-            .build()
-        val moduleJson = mapper.readTree(moduleFile) as ObjectNode
-        val variants = moduleJson.get("variants") as ArrayNode
-
-        val shadowVariant = variants
-          .elements().asSequence()
-          .map { it as ObjectNode }
-          .find { it.get("name").asText() == "shadowRuntimeElements" }
-          ?: throw NoSuchElementException("could not find the `shadowRuntimeElements` variant!")
-
-        val runtimeVariant = variants
-          .elements().asSequence()
-          .map { it as ObjectNode }
-          .find { it.get("name").asText() == "runtimeElements" }
-          ?: throw NoSuchElementException("could not find the `runtimeElements` variant!")
-
-        runtimeVariant.replace("dependencies", shadowVariant.get("dependencies"))
-
-        moduleFile.writeText(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(moduleJson))
-      }
-    } catch (e: Exception) {
-      throw GradleException("could not post-process the module metadata!", e)
+val javaComponent = components["java"] as AdhocComponentWithVariants
+listOf("apiElements", "runtimeElements")
+  .map { configurations[it] }
+  .forEach { unpublishable ->
+    // Hide the un-shadowed variants in local consumption, by mangling their attributes
+    unpublishable.attributes {
+      attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named("DO_NOT_USE"))
     }
+
+    // Hide the un-shadowed variants in publishing
+    javaComponent.withVariantsFromConfiguration(unpublishable) { skip() }
   }
-}
 
 configure<MavenPublishBaseExtension> {
   configure(
     KotlinJvm(javadocJar = Dokka("dokkaGfm"))
   )
-
-  pom {
-    withXml {
-      val root = asNode()
-
-      // First collect all dependencies nodes.
-      val dependenciesNodes = root.children()
-        .filterIsInstance<groovy.util.Node>()
-        .filter { it.name().toString().contains("dependencies") }
-        .toList()
-
-      // Then remove them safely.
-      dependenciesNodes.forEach { node ->
-        root.remove(node)
-      }
-
-      // Add a new dependencies node with shadow configuration.
-      val dependenciesNode = root.appendNode("dependencies")
-
-      // Add all shadow dependencies to the POM.
-      project.configurations.named("shadow").get().allDependencies.forEach { dep ->
-        val dependencyNode = dependenciesNode.appendNode("dependency")
-        dependencyNode.appendNode("groupId", dep.group)
-        dependencyNode.appendNode("artifactId", dep.name)
-        dependencyNode.appendNode("version", dep.version)
-        dependencyNode.appendNode("scope", "compile")
-      }
-    }
-  }
 }
