@@ -65,6 +65,8 @@ tasks.shadowJar {
     "com.amazonaws.services.dynamodbv2.dbenv",
     "com.amazonaws.services.dynamodbv2.exceptions",
     "com.amazonaws.services.dynamodbv2.local",
+    "com.amazonaws.services.dynamodbv2.parser",
+    "com.amazonaws.services.dynamodbv2.rr",
     "com.fasterxml.jackson",
     "ddb.partiql",
     "kotlin",
