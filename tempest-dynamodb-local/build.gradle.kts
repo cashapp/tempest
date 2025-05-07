@@ -57,23 +57,8 @@ tasks.shadowJar {
   }
 
   // Relocate packages to avoid conflicts.
-  listOf(
-    "com.amazon.dynamodb.grammar",
-    "com.amazon.ion",
-    "com.amazonaws.services.dynamodbv2.dataMembers",
-    "com.amazonaws.services.dynamodbv2.datamodel",
-    "com.amazonaws.services.dynamodbv2.dbenv",
-    "com.amazonaws.services.dynamodbv2.exceptions",
-    "com.amazonaws.services.dynamodbv2.local",
-    "com.amazonaws.services.dynamodbv2.parser",
-    "com.amazonaws.services.dynamodbv2.rr",
-    "com.fasterxml.jackson",
-    "ddb.partiql",
-    "kotlin",
-    "org.antlr",
-    "org.eclipse.jetty",
-    "org.partiql",
-  ).forEach { relocate(it, "app.cash.tempest.testing.dynamodb.local.shaded.${it}") }
+  enableRelocation = true
+  relocationPrefix = "app.cash.tempest.testing.dynamodb.local.shaded"
 
   mergeServiceFiles()
 
