@@ -45,7 +45,7 @@ moshiKotlin = { module = "com.squareup.moshi:moshi-kotlin", version = "1.15.2" }
 nettyBom = { module = "io.netty:netty-bom", version = "4.1.79.Final" }
 okio = { module = "com.squareup.okio:okio", version = "3.4.0" }
 okioFakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version = "3.4.0" }
-shadowGradlePlugin = { module = "com.gradleup.shadow:shadow-gradle-plugin", version = "8.3.6" }
+shadowGradlePlugin = { module = "com.gradleup.shadow:shadow-gradle-plugin", version = "9.0.0-beta13" }
 slf4jApi = { module = "org.slf4j:slf4j-api", version = "2.0.17" } # for DynamoDBLocal
 sqlite4javaLinuxI386 = { module = "com.almworks.sqlite4java:libsqlite4java-linux-i386", version.ref = "sqlite4java" } # for DynamoDBLocal
 sqlite4javaLinuxAmd64 = { module = "com.almworks.sqlite4java:libsqlite4java-linux-amd64", version.ref = "sqlite4java" } # for DynamoDBLocal
