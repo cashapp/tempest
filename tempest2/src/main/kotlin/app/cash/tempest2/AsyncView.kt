@@ -16,6 +16,8 @@
 
 package app.cash.tempest2
 
+import app.cash.tempest2.extensions.WithResultExtension
+import app.cash.tempest2.extensions.WithResultExtension.Companion.WithResultExtensionInstalledLast
 import kotlinx.coroutines.future.await
 import software.amazon.awssdk.enhanced.dynamodb.Expression
 import software.amazon.awssdk.enhanced.dynamodb.extensions.VersionedRecordExtension
@@ -49,6 +51,26 @@ interface AsyncView<K : Any, I : Any> {
     item: I,
     saveExpression: Expression? = null
   ) = saveAsync(item, saveExpression).await()
+
+  /**
+   * This method requires the [WithResultExtension] to be installed on the [DynamoDbEnhancedClient].
+   * This extension must be installed last!
+   *
+   * Saves an item in DynamoDB. This method uses [DynamoDbClient.putItem] to clear
+   * and replace all attributes, including unmodeled ones, on save. Partial update, i.e.
+   * [DynamoDbClient.updateItem], is not supported yet.
+   *
+   * Any options specified in the [saveExpression] parameter will be overlaid on any constraints due
+   * to versioned attributes.
+   *
+   * Any auto generated in memory updates will be reflected in the result item.
+   */
+  @WithResultExtensionInstalledLast
+  suspend fun saveWithResult(
+    item: I,
+    saveExpression: Expression? = null
+  ) = saveAsyncWithResult(item, saveExpression).await()
+
 
   /**
    * Deletes the item identified by [key] from its DynamoDB table using [deleteExpression]. Any
@@ -89,9 +111,20 @@ interface AsyncView<K : Any, I : Any> {
     saveExpression: Expression?
   ): CompletableFuture<Void>
 
+  @WithResultExtensionInstalledLast
+  fun saveAsyncWithResult(
+    item: I,
+    saveExpression: Expression?
+  ): CompletableFuture<I>
+
   fun saveAsync(
     item: I
   ) = saveAsync(item, saveExpression = null)
+
+  @WithResultExtensionInstalledLast
+  fun saveAsyncWithResult(
+    item: I
+  ) = saveAsyncWithResult(item, saveExpression = null)
 
   fun deleteKeyAsync(
     key: K,
