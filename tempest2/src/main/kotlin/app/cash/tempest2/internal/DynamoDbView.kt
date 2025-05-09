@@ -33,6 +33,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest
 import software.amazon.awssdk.services.dynamodb.model.ConsumedCapacity
 import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
+import software.amazon.awssdk.services.dynamodb.model.ReturnValuesOnConditionCheckFailure
 import java.util.concurrent.CompletableFuture
 
 internal class DynamoDbView<K : Any, I : Any, R : Any>(
@@ -65,9 +66,10 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
 
     override fun save(
       item: I,
-      saveExpression: Expression?
+      saveExpression: Expression?,
+      returnValuesOnConditionCheckFailure: ReturnValuesOnConditionCheckFailure?
     ) {
-      val request = toSaveRequest(item, saveExpression)
+      val request = toSaveRequest(item, saveExpression, returnValuesOnConditionCheckFailure)
       dynamoDbTable.putItem(request)
     }
 
@@ -127,9 +129,10 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
 
     override fun saveAsync(
       item: I,
-      saveExpression: Expression?
+      saveExpression: Expression?,
+      returnValuesOnConditionCheckFailure: ReturnValuesOnConditionCheckFailure?
     ): CompletableFuture<Void> {
-      val request = toSaveRequest(item, saveExpression)
+      val request = toSaveRequest(item, saveExpression, returnValuesOnConditionCheckFailure)
       return dynamoDbTable.putItem(request)
     }
 
@@ -182,11 +185,16 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
 
   private fun toLoadResponse(itemObject: R?) = if (itemObject != null) itemCodec.toApp(itemObject) else null
 
-  private fun toSaveRequest(item: I, saveExpression: Expression?): PutItemEnhancedRequest<R> {
+  private fun toSaveRequest(
+    item: I,
+    saveExpression: Expression?,
+    returnValuesOnConditionCheckFailure: ReturnValuesOnConditionCheckFailure?
+  ): PutItemEnhancedRequest<R> {
     val itemObject = itemCodec.toDb(item)
     return PutItemEnhancedRequest.builder(tableSchema.itemType().rawClass())
       .item(itemObject)
       .conditionExpression(saveExpression)
+      .returnValuesOnConditionCheckFailure(returnValuesOnConditionCheckFailure)
       .build()
   }
 
