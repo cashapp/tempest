@@ -18,8 +18,8 @@ data class ParallelVersionedAttribute(
   val partition_key: String,
   val description: String,
 
-  val created_at: Instant? = null,
-  val updated_at: Instant? = null,
+  val created_at_instant: Instant? = null,
+  val updated_at_instant: Instant? = null,
 
   val one_version: Long? = null,
   val one_created_at: Instant? = null,
