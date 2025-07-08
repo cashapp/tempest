@@ -44,42 +44,13 @@ class WritingPager<T> @JvmOverloads constructor(
 
   /** Returns the number of entities that were updated. */
   private fun updatePage(): Int {
-    check(remainingUpdates.isNotEmpty())
+    val (page, appliedCount) = buildTransactionPage(remainingUpdates, maxTransactionItems, handler)
+      ?: return 0
 
-    val currentPageSize = handler.beforePage(remainingUpdates, maxTransactionItems)
-    val currentPage = remainingUpdates.take(currentPageSize)
-
-    val writeSet = TransactionWriteSet.Builder()
-    val appliedUpdates = mutableListOf<T>()
-
-    while (appliedUpdates.size < currentPage.size &&
-      writeSet.size <= maxTransactionItems
-    ) {
-      val newEntity = currentPage[appliedUpdates.size]
-
-      val itemWriteSet = TransactionWriteSet.Builder()
-      handler.item(itemWriteSet, newEntity)
-
-      if (writeSet.size + itemWriteSet.size > maxTransactionItems) {
-        break // This item would have caused us to exceed the page limit. Skip it.
-      }
-
-      writeSet.addAll(itemWriteSet)
-      appliedUpdates += newEntity
-    }
-
-    if (appliedUpdates.isEmpty()) {
-      return 0 // Not updating any items. Discard the transaction.
-    }
-
-    handler.finishPage(writeSet)
-    check(writeSet.size <= maxTransactionItems) { "finishPage wrote too many items" }
-
-    val page = writeSet.build()
     db.transactionWrite(page)
     handler.pageWritten(page)
 
-    return appliedUpdates.size
+    return appliedCount
   }
 
   interface Handler<T> : WritingPagerHandler<T> {
@@ -118,42 +89,13 @@ class AsyncWritingPager<T> @JvmOverloads constructor(
 
   /** Returns the number of entities that were updated. */
   private suspend fun updatePage(): Int {
-    check(remainingUpdates.isNotEmpty())
+    val (page, appliedCount) = buildTransactionPage(remainingUpdates, maxTransactionItems, handler)
+      ?: return 0
 
-    val currentPageSize = handler.beforePage(remainingUpdates, maxTransactionItems)
-    val currentPage = remainingUpdates.take(currentPageSize)
-
-    val writeSet = TransactionWriteSet.Builder()
-    val appliedUpdates = mutableListOf<T>()
-
-    while (appliedUpdates.size < currentPage.size &&
-      writeSet.size <= maxTransactionItems
-    ) {
-      val newEntity = currentPage[appliedUpdates.size]
-
-      val itemWriteSet = TransactionWriteSet.Builder()
-      handler.item(itemWriteSet, newEntity)
-
-      if (writeSet.size + itemWriteSet.size > maxTransactionItems) {
-        break // This item would have caused us to exceed the page limit. Skip it.
-      }
-
-      writeSet.addAll(itemWriteSet)
-      appliedUpdates += newEntity
-    }
-
-    if (appliedUpdates.isEmpty()) {
-      return 0 // Not updating any items. Discard the transaction.
-    }
-
-    handler.finishPage(writeSet)
-    check(writeSet.size <= maxTransactionItems) { "finishPage wrote too many items" }
-
-    val page = writeSet.build()
     db.transactionWrite(page)
     handler.pageWritten(page)
 
-    return appliedUpdates.size
+    return appliedCount
   }
 
   interface Handler<T> : WritingPagerHandler<T> {
@@ -219,4 +161,43 @@ fun <DB : AsyncLogicalDb, T> DB.transactionWritingPager(
     updates = items,
     handler = handler
   )
+}
+
+internal fun <T> buildTransactionPage(
+  remainingUpdates: List<T>,
+  maxTransactionItems: Int,
+  handler: WritingPagerHandler<T>
+): Pair<TransactionWriteSet, Int>? {
+  check(remainingUpdates.isNotEmpty())
+
+  val currentPageSize = handler.beforePage(remainingUpdates, maxTransactionItems)
+  val currentPage = remainingUpdates.take(currentPageSize)
+  val writeSet = TransactionWriteSet.Builder()
+  val appliedUpdates = mutableListOf<T>()
+
+  while (appliedUpdates.size < currentPage.size &&
+    writeSet.size <= maxTransactionItems
+  ) {
+    val newEntity = currentPage[appliedUpdates.size]
+
+    val itemWriteSet = TransactionWriteSet.Builder()
+    handler.item(itemWriteSet, newEntity)
+
+    if (writeSet.size + itemWriteSet.size > maxTransactionItems) {
+      break // This item would have caused us to exceed the page limit. Skip it.
+    }
+
+    writeSet.addAll(itemWriteSet)
+    appliedUpdates += newEntity
+  }
+
+  if (appliedUpdates.isEmpty()) {
+    return null // Not updating any items. Discard the transaction.
+  }
+
+  handler.finishPage(writeSet)
+  check(writeSet.size <= maxTransactionItems) { "finishPage wrote too many items" }
+
+  val page = writeSet.build()
+  return Pair(page, appliedUpdates.size)
 }
