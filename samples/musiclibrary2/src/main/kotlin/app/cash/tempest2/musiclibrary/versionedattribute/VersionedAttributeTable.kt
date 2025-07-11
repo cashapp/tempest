@@ -40,7 +40,7 @@ data class VersionedAttribute(
    * Override to include fractional seconds in Date printing.
    */
   override fun toString(): String =
-    StringBuilder().apply {
+    buildString {
       append("VersionedAttribute(")
       append("partition_key=$partition_key, ")
       append("description=$description, ")
@@ -51,5 +51,5 @@ data class VersionedAttribute(
       append("updated_at_dynamo=$updated_at_dynamo, ")
       append("version=$version")
       append(")")
-    }.toString()
+    }
 }
