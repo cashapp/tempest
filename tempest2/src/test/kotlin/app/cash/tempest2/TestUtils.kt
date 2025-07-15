@@ -21,7 +21,10 @@ fun runBlockingTest(block: suspend CoroutineScope.() -> Unit) {
  * Test should use [getInstant] et al. to read the current time without ticking the clock.
  */
 class FakeClock(val tickOnNow: Duration = 0.seconds) : Clock() {
-  private var epochNow = AtomicLong(452_001_600_000)
+  /**
+   * Start at a fractional second to ensure date/instant are preserving the full timestamp.
+   */
+  private var epochNow = AtomicLong(452_001_630_123)
 
   fun add(duration: Duration) {
     epochNow.addAndGet(duration.inWholeMilliseconds)

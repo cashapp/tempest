@@ -35,4 +35,21 @@ data class VersionedAttribute(
   ) {
     val sort_key: String = ""
   }
+
+  /**
+   * Override to include fractional seconds in Date printing.
+   */
+  override fun toString(): String =
+    buildString {
+      append("VersionedAttribute(")
+      append("partition_key=$partition_key, ")
+      append("description=$description, ")
+      append("created_at_instant=$created_at_instant, ")
+      append("created_at_date=${created_at_date?.toInstant()}, ")
+      append("updated_at_instant=$updated_at_instant, ")
+      append("updated_at_date=${updated_at_date?.toInstant()}, ")
+      append("updated_at_dynamo=$updated_at_dynamo, ")
+      append("version=$version")
+      append(")")
+    }
 }
