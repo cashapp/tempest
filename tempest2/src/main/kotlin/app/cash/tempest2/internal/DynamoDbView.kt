@@ -31,6 +31,7 @@ import software.amazon.awssdk.enhanced.dynamodb.internal.EnhancedClientUtils
 import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest
+import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest
 import software.amazon.awssdk.services.dynamodb.model.ConsumedCapacity
 import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 import java.util.concurrent.CompletableFuture
@@ -100,6 +101,12 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
       val itemObject = dynamoDbTable.deleteItem(request)
       return toItem(itemObject)
     }
+
+    override fun upsert(item: I, upsertExpression: Expression?): I? {
+      val request = toUpsertItemObject(item, upsertExpression)
+      val updatedItemObject = dynamoDbTable.updateItem(request)
+      return toItem(updatedItemObject)
+    }
   }
 
   fun async(dynamoDbTable: DynamoDbAsyncTable<R>) = Async(dynamoDbTable)
@@ -162,6 +169,12 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
       val request = toDeleteItemRequest(item, deleteExpression)
       return dynamoDbTable.deleteItem(request).thenApply(::toItem)
     }
+
+    override fun upsertAsync(item: I, upsertExpression: Expression?): CompletableFuture<I?> {
+      val itemObject = toUpsertItemObject(item, upsertExpression)
+      return dynamoDbTable.updateItem(itemObject)
+        .thenApply(::toItem)
+    }
   }
 
   private fun R.key(): Key {
@@ -203,6 +216,17 @@ internal class DynamoDbView<K : Any, I : Any, R : Any>(
     return DeleteItemEnhancedRequest.builder()
       .key(itemObject.key())
       .conditionExpression(deleteExpression)
+      .build()
+  }
+
+  private fun toUpsertItemObject(
+    item: I,
+    upsertExpression: Expression?
+  ): UpdateItemEnhancedRequest<R?>? {
+    val itemObject = itemCodec.toDb(item)
+    return UpdateItemEnhancedRequest.builder(tableSchema.itemType().rawClass())
+      .item(itemObject)
+      .conditionExpression(upsertExpression)
       .build()
   }
 

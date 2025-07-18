@@ -88,6 +88,20 @@ interface View<K : Any, I : Any> {
     deleteExpression: Expression? = null
   ): I?
 
+  /**
+   * Performs an upsert operation using DynamoDB's UpdateItem operation.
+   * Creates or updates an item with the provided data and optional condition.
+   *
+   * This operation uses a single UpdateItem call. Any exceptions from
+   * DynamoDB (including ConditionalCheckFailedException) are bubbled up
+   * to the caller.
+   *
+   * @param item The item to upsert
+   * @param upsertExpression Optional condition expression for the upsert
+   * @return The result of the UpdateItem operation
+   */
+  fun upsert(item: I, upsertExpression: Expression? = null): I?
+
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
   fun load(key: K) = load(key, false)
@@ -108,4 +122,8 @@ interface View<K : Any, I : Any> {
   fun delete(
     item: I
   ) = delete(item, deleteExpression = null)
+
+  fun upsert(
+    item: I
+  ) = upsert(item, upsertExpression = null)
 }
