@@ -94,6 +94,20 @@ interface AsyncView<K : Any, I : Any> {
     deleteExpression: Expression? = null
   ) = deleteAsync(item, deleteExpression).await()
 
+  /**
+   * Performs an upsert operation using DynamoDB's UpdateItem operation.
+   * Creates or updates an item with the provided data and optional condition.
+   *
+   * This operation uses a single UpdateItem call. Any exceptions from
+   * DynamoDB (including ConditionalCheckFailedException) are bubbled up
+   * to the caller.
+   *
+   * @param item The item to upsert
+   * @param upsertExpression Optional condition expression for the upsert
+   * @return The result of the UpdateItem operation
+   */
+  suspend fun upsert(item: I, upsertExpression: Expression? = null): I? = upsertAsync(item, upsertExpression).await()
+
   // Overloaded functions for Java callers (Kotlin interfaces do not support `@JvmOverloads`).
 
   fun loadAsync(key: K, consistentReads: Boolean): CompletableFuture<I?>
@@ -143,4 +157,12 @@ interface AsyncView<K : Any, I : Any> {
   fun deleteAsync(
     item: I
   ) = deleteAsync(item, deleteExpression = null)
+
+  fun upsertAsync(
+    item: I,
+    upsertExpression: Expression? = null): CompletableFuture<I?>
+
+  fun upsertAsync(
+    item: I
+  ) = upsertAsync(item, upsertExpression = null)
 }

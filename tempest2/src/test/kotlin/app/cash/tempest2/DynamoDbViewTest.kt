@@ -19,6 +19,7 @@ package app.cash.tempest2
 import app.cash.tempest2.musiclibrary.AlbumInfo
 import app.cash.tempest2.musiclibrary.AlbumTrack
 import app.cash.tempest2.musiclibrary.MusicDb
+import app.cash.tempest2.musiclibrary.MusicItem
 import app.cash.tempest2.musiclibrary.PlaylistInfo
 import app.cash.tempest2.musiclibrary.testDb
 import app.cash.tempest2.testing.logicalDb
@@ -27,6 +28,7 @@ import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import software.amazon.awssdk.enhanced.dynamodb.Expression
+import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException
 import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
@@ -173,5 +175,111 @@ class DynamoDbViewTest {
         )
       )
       .build()
+  }
+
+  @Test
+  fun upsertNewItem() {
+    val albumInfo = AlbumInfo(
+      "ALBUM_UPSERT_1",
+      "New Album",
+      "New Artist",
+      LocalDate.of(2024, 1, 1),
+      "Pop"
+    )
+
+    // Create condition to only create if item doesn't exist
+    val condition = Expression.builder()
+      .expression("attribute_not_exists(partition_key)")
+      .build()
+
+    // Upsert should create the item since it doesn't exist
+    val result = musicTable.albumInfo.upsert(albumInfo, condition)
+    assertThat(result).isEqualTo(albumInfo)
+
+    // Verify the item was created
+    val loaded = musicTable.albumInfo.load(albumInfo.key)
+    assertThat(loaded).isEqualTo(albumInfo)
+  }
+
+  @Test
+  fun upsertNewItemWithoutCondition() {
+    val albumInfo = AlbumInfo(
+      "ALBUM_UPSERT_1",
+      "New Album",
+      "New Artist",
+      LocalDate.of(2024, 1, 1),
+      "Pop"
+    )
+
+    // Upsert should create the item since it doesn't exist
+    val result = musicTable.albumInfo.upsert(albumInfo)
+    assertThat(result).isEqualTo(albumInfo)
+
+    // Verify the item was created
+    val loaded = musicTable.albumInfo.load(albumInfo.key)
+    assertThat(loaded).isEqualTo(albumInfo)
+  }
+
+  @Test
+  fun upsertExistingItem() {
+    val originalAlbumInfo = AlbumInfo(
+      "ALBUM_UPSERT_2",
+      "Original Album",
+      "Original Artist",
+      LocalDate.of(2023, 1, 1),
+      "Rock"
+    )
+
+    // First save the original item
+    musicTable.albumInfo.save(originalAlbumInfo)
+
+    // Create a different version of the same item (same key)
+    val modifiedAlbumInfo = AlbumInfo(
+      "ALBUM_UPSERT_2", // Same key
+      "Modified Album",
+      "Modified Artist",
+      LocalDate.of(2024, 1, 1),
+      "Jazz"
+    )
+
+    // Create condition to only create if item doesn't exist
+    val condition = Expression.builder()
+      .expression("attribute_not_exists(partition_key)")
+      .build()
+
+    // Upsert should throw ConditionalCheckFailedException since item already exists
+    assertThatExceptionOfType(ConditionalCheckFailedException::class.java)
+      .isThrownBy {
+        musicTable.albumInfo.upsert(modifiedAlbumInfo, condition)
+      }
+
+    // Verify the original item is still there unchanged
+    val loaded = musicTable.albumInfo.load(originalAlbumInfo.key)
+    assertThat(loaded).isEqualTo(originalAlbumInfo)
+  }
+
+  @Test
+  fun upsertConcurrentCreation() {
+    val albumInfo = AlbumInfo(
+      "ALBUM_UPSERT_3",
+      "Concurrent Album",
+      "Concurrent Artist",
+      LocalDate.of(2024, 1, 1),
+      "Electronic"
+    )
+
+    // Simulate concurrent creation by saving directly first
+    musicTable.albumInfo.save(albumInfo)
+
+    // Create condition to only create if item doesn't exist
+    val condition = Expression.builder()
+      .expression("attribute_not_exists(partition_key)")
+      .build()
+
+    // Now upsert should throw ConditionalCheckFailedException since item already exists
+    assertThatExceptionOfType(ConditionalCheckFailedException::class.java)
+      .isThrownBy {
+        musicTable.albumInfo.upsert(albumInfo, condition)
+      }
   }
 }
