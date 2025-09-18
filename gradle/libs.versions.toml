@@ -51,7 +51,6 @@ sqlite4javaLinuxAmd64 = { module = "com.almworks.sqlite4java:libsqlite4java-linu
 sqlite4javaOsx = { module = "com.almworks.sqlite4java:libsqlite4java-osx", version.ref = "sqlite4java" } # for DynamoDBLocal
 sqlite4javaWinX64 = { module = "com.almworks.sqlite4java:sqlite4java-win32-x64", version.ref = "sqlite4java" } # for DynamoDBLocal
 sqlite4javaWinX86 = { module = "com.almworks.sqlite4java:sqlite4java-win32-x86", version.ref = "sqlite4java" } # for DynamoDBLocal
-wireGradlePlugin = { module = "com.squareup.wire:wire-gradle-plugin", version = "5.4.0" }
 
 [bundles]
 jackson = ["jacksonDatabind", "jacksonDatatypeJsr310"]
