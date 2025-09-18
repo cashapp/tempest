@@ -13,10 +13,6 @@ dependencies {
   implementation(project(":tempest-testing-internal"))
   implementation(project(":tempest-dynamodb-local"))
   implementation(libs.kotlinStdLib)
-
-  testImplementation(libs.assertj)
-  testImplementation(libs.junitApi)
-  testImplementation(libs.junitEngine)
 }
 
 

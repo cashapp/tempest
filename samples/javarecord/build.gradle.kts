@@ -9,6 +9,7 @@ dependencies {
   testImplementation(project(":tempest-testing-junit5"))
   testImplementation(libs.assertj)
   testImplementation(libs.junitEngine)
+  testRuntimeOnly(libs.junitLauncher)
 }
 
 val compileKotlin by tasks.getting(KotlinCompile::class) {

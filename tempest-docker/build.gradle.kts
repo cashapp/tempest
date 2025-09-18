@@ -15,6 +15,7 @@ dependencies {
 
   testImplementation(libs.junitApi)
   testImplementation(libs.junitEngine)
+  testRuntimeOnly(libs.junitLauncher)
   testImplementation(libs.assertj)
   testImplementation(libs.okioFakefilesystem)
 }

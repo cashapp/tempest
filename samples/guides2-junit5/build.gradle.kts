@@ -14,6 +14,8 @@ dependencies {
   testImplementation(libs.assertj)
   testImplementation(libs.junitApi)
   testImplementation(libs.junitEngine)
+  testRuntimeOnly(libs.junitLauncher)
+
   implementation(project(":tempest2-testing-docker"))
   implementation(project(":tempest2-testing-jvm"))
   implementation(project(":tempest2-testing-junit5"))

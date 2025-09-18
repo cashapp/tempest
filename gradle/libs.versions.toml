@@ -30,6 +30,7 @@ junit4Api = { module = "junit:junit", version = "4.13.2" }
 junitApi = { module = "org.junit.jupiter:junit-jupiter-api", version = "5.13.4" }
 junitEngine = { module = "org.junit.jupiter:junit-jupiter-engine", version = "5.13.4" }
 junitGradlePlugin = { module = "org.junit.platform:junit-platform-gradle-plugin", version = "1.2.0" }
+junitLauncher = { module = "org.junit.platform:junit-platform-launcher", version = "1.8.2" }
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinReflection = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlinStdLib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
