@@ -9,17 +9,18 @@ dependencies {
   testImplementation(project(":tempest-testing-junit5"))
   testImplementation(libs.assertj)
   testImplementation(libs.junitEngine)
+  testRuntimeOnly(libs.junitLauncher)
 }
 
 val compileKotlin by tasks.getting(KotlinCompile::class) {
-  kotlinOptions {
-    jvmTarget = JavaVersion.VERSION_14.toString()
+  compilerOptions {
+    jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_14)
   }
 }
 
 val compileTestKotlin by tasks.getting(KotlinCompile::class) {
-  kotlinOptions {
-    jvmTarget = JavaVersion.VERSION_14.toString()
+  compilerOptions {
+    jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_14)
   }
 }
 

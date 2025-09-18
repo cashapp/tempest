@@ -13,20 +13,22 @@ dependencies {
   testImplementation(libs.assertj)
   testImplementation(libs.junitApi)
   testImplementation(libs.junitEngine)
+  testRuntimeOnly(libs.junitLauncher)
+
   implementation(project(":tempest-testing-docker"))
   implementation(project(":tempest-testing-jvm"))
   implementation(project(":tempest-testing-junit5"))
 }
 
 val compileKotlin by tasks.getting(KotlinCompile::class) {
-  kotlinOptions {
-    jvmTarget = JavaVersion.VERSION_11.toString()
+  compilerOptions {
+    jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
   }
 }
 
 val compileTestKotlin by tasks.getting(KotlinCompile::class) {
-  kotlinOptions {
-    jvmTarget = JavaVersion.VERSION_11.toString()
+  compilerOptions {
+    jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
   }
 }
 
