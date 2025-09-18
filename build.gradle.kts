@@ -73,9 +73,9 @@ subprojects {
   // Only apply if the project has the kotlin plugin added:
   plugins.withType<KotlinPluginWrapper> {
     tasks.withType<KotlinCompile> {
-      kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-        freeCompilerArgs = listOf("-Xjvm-default=all-compatibility")
+      compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        freeCompilerArgs.set(listOf("-Xjvm-default=all-compatibility"))
       }
       // dependsOn("spotlessKotlinApply")
     }
