@@ -24,10 +24,21 @@ object TableSchemaFactory {
       //   you to use a custom MethodHandles.Lookup instance, which is necessary when your
       //   application runs in an environment where your application code and dependencies
       //   like the AWS SDK for Java are loaded by different classloaders.
+      var methodHandle : MethodHandles.Lookup? = null;
+      try {
+        // Try and use a handle that is scoped to the target class
+        methodHandle = MethodHandles.privateLookupIn(
+          clazz,
+          MethodHandles.lookup()
+        )
+      } catch (_: Exception) {
+        // In some circumstances the above may fail, so fall back to the default behaviour
+        methodHandle = MethodHandles.lookup()
+      }
       if (clazz.getAnnotation<DynamoDbImmutable>(DynamoDbImmutable::class.java) != null) {
-        TableSchema.fromImmutableClass(ImmutableTableSchemaParams.builder(clazz).lookup(MethodHandles.lookup()).build())
+        TableSchema.fromImmutableClass(ImmutableTableSchemaParams.builder(clazz).lookup(methodHandle).build())
       } else if (clazz.getAnnotation<DynamoDbBean>(DynamoDbBean::class.java) != null) {
-        TableSchema.fromBean(BeanTableSchemaParams.builder(clazz).lookup(MethodHandles.lookup()).build())
+        TableSchema.fromBean(BeanTableSchemaParams.builder(clazz).lookup(methodHandle).build())
       } else {
         throw IllegalArgumentException("Class does not appear to be a valid DynamoDb annotated class. [class = \"$clazz\"]")
       }
