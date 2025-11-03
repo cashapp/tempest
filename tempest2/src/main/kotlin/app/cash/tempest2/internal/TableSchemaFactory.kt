@@ -24,13 +24,15 @@ object TableSchemaFactory {
       //   you to use a custom MethodHandles.Lookup instance, which is necessary when your
       //   application runs in an environment where your application code and dependencies
       //   like the AWS SDK for Java are loaded by different classloaders.
-      var methodHandle : MethodHandles.Lookup? = null;
+      var methodHandle : MethodHandles.Lookup = MethodHandles.lookup();
       try {
-        // Try and use a handle that is scoped to the target class
-        methodHandle = MethodHandles.privateLookupIn(
-          clazz,
-          MethodHandles.lookup()
-        )
+        if (clazz.classLoader != TableSchemaFactory.javaClass.classLoader) {
+          // Try and use a handle that is scoped to the target class if the class is from a different ClassLoader
+          methodHandle = MethodHandles.privateLookupIn(
+            clazz,
+            MethodHandles.lookup()
+          )
+        }
       } catch (_: Exception) {
         // In some circumstances the above may fail, so fall back to the default behaviour
         methodHandle = MethodHandles.lookup()
