@@ -1,3 +1,18 @@
+/*
+ * Copyright 2024 Square Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package app.cash.tempest.hybrid
 
 import app.cash.tempest.InlineView
@@ -16,7 +31,7 @@ import java.io.ByteArrayOutputStream
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executors
+import java.util.concurrent.ExecutorService
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 import kotlin.reflect.full.findAnnotation
@@ -28,12 +43,12 @@ internal class HybridViewProxy(
   private val itemClass: Class<*>,
   private val s3Client: AmazonS3,
   private val objectMapper: ObjectMapper,
-  private val hybridConfig: HybridConfig
+  private val hybridConfig: HybridConfig,
+  private val executorService: ExecutorService
 ) : InvocationHandler {
 
   companion object {
     private val logger = LoggerFactory.getLogger(HybridViewProxy::class.java)
-    private val executor = Executors.newFixedThreadPool(10) // For parallel S3 loads
   }
 
   override fun invoke(proxy: Any, method: Method, args: Array<out Any>?): Any? {
@@ -165,30 +180,13 @@ internal class HybridViewProxy(
     val hydratedContents = hydrateItems(dynamoPage.contents)
 
     // Return a new Page with hydrated items
-    return try {
-      Page::class.java.getDeclaredConstructor(
-        List::class.java,
-        Offset::class.java,
-        Int::class.java,
-        Any::class.java
-      ).newInstance(
-        hydratedContents,
-        dynamoPage.offset,
-        dynamoPage.scannedCount,
-        dynamoPage.consumedCapacity
-      )
-    } catch (e: Exception) {
-      // Fallback for different Page constructor signatures
-      Page::class.java.getDeclaredConstructor(
-        List::class.java,
-        Offset::class.java,
-        Any::class.java
-      ).newInstance(
-        hydratedContents,
-        dynamoPage.offset,
-        dynamoPage.consumedCapacity
-      )
-    }
+    // Use the copy mechanism to create a new Page with updated contents
+    return Page(
+      contents = hydratedContents,
+      offset = dynamoPage.offset,
+      scannedCount = dynamoPage.scannedCount,
+      consumedCapacity = dynamoPage.consumedCapacity
+    )
   }
 
   private fun handleScan(method: Method, args: Array<out Any>?): Any? {
@@ -199,30 +197,12 @@ internal class HybridViewProxy(
     val hydratedContents = hydrateItems(dynamoPage.contents)
 
     // Return a new Page with hydrated items
-    return try {
-      Page::class.java.getDeclaredConstructor(
-        List::class.java,
-        Offset::class.java,
-        Int::class.java,
-        Any::class.java
-      ).newInstance(
-        hydratedContents,
-        dynamoPage.offset,
-        dynamoPage.scannedCount,
-        dynamoPage.consumedCapacity
-      )
-    } catch (e: Exception) {
-      // Fallback for different Page constructor signatures
-      Page::class.java.getDeclaredConstructor(
-        List::class.java,
-        Offset::class.java,
-        Any::class.java
-      ).newInstance(
-        hydratedContents,
-        dynamoPage.offset,
-        dynamoPage.consumedCapacity
-      )
-    }
+    return Page(
+      contents = hydratedContents,
+      offset = dynamoPage.offset,
+      scannedCount = dynamoPage.scannedCount,
+      consumedCapacity = dynamoPage.consumedCapacity
+    )
   }
 
   private fun hydrateItems(items: List<*>): List<Any> {
@@ -242,7 +222,7 @@ internal class HybridViewProxy(
     val futures = pointers.map { (index, pointer) ->
       CompletableFuture.supplyAsync({
         index to loadFromS3WithRetry(pointer!!)
-      }, executor)
+      }, executorService)
     }
 
     // Wait for all futures to complete

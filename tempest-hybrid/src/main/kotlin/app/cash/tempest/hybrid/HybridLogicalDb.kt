@@ -1,13 +1,32 @@
+/*
+ * Copyright 2024 Square Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package app.cash.tempest.hybrid
 
 import app.cash.tempest.LogicalDb
 import app.cash.tempest.LogicalTable
+import java.io.Closeable
 import kotlin.reflect.KClass
 
 /**
  * Hybrid LogicalDb that supports pointer-based S3 storage
+ *
+ * IMPORTANT: This interface extends Closeable. You must call close() when done
+ * to properly shut down the executor service used for parallel S3 operations.
  */
-interface HybridLogicalDb : LogicalDb {
+interface HybridLogicalDb : LogicalDb, Closeable {
 
   val hybridConfig: HybridConfig
 

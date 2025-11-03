@@ -1,3 +1,18 @@
+/*
+ * Copyright 2024 Square Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package app.cash.tempest.hybrid
 
 import app.cash.tempest.LogicalDb
@@ -279,36 +294,115 @@ internal class ArchivalService(
 
     logger.debug("Generated S3 key: $fullS3Key")
 
-    // 2. Compress and save to S3
-    val json = objectMapper.writeValueAsString(item)
-    val compressed = compressGzip(json.toByteArray())
-
-    val metadata = ObjectMetadata().apply {
-      contentType = "application/json"
-      contentEncoding = "gzip"
-      contentLength = compressed.size.toLong()
-      addUserMetadata("archived_at", Instant.now().toString())
-      addUserMetadata("table_name", tableInfo.tableName)
-    }
-
-    val putRequest = PutObjectRequest(
-      hybridConfig.s3Config.bucketName,
-      fullS3Key,
-      ByteArrayInputStream(compressed),
-      metadata
-    )
-
-    s3Client.putObject(putRequest)
-    logger.debug("Saved item to S3: $fullS3Key")
-
-    // 3. Create pointer item (keep keys + s3Key, remove large fields)
+    // 2. Create pointer item FIRST (keep keys + s3Key, remove large fields)
     val pointerItem = createPointerItem(item, fullS3Key, tableInfo)
 
-    // 4. Save pointer to DynamoDB (replaces full item)
-    if (table is InlineView<*, *>) {
-      val saveMethod = table::class.java.methods.find { it.name == "save" && it.parameterCount >= 1 }
-      saveMethod?.invoke(table, pointerItem)
-      logger.debug("Replaced DynamoDB item with pointer")
+    // 3. Save pointer to DynamoDB with conditional expression
+    // This ensures we don't overwrite an item that was modified after we read it
+    var savedPointer = false
+    try {
+      if (table is InlineView<*, *>) {
+        // Extract the timestamp value for conditional check
+        val timestampValue = extractTimestamp(item, tableInfo.timestampProperty)
+
+        // Create a conditional expression to ensure the item hasn't changed
+        val saveExpression = if (timestampValue != null && tableInfo.timestampProperty != null) {
+          // Only update if the timestamp hasn't changed
+          val expression = DynamoDBSaveExpression()
+          expression.withExpectedEntry(
+            tableInfo.timestampProperty.name,
+            ExpectedAttributeValue()
+              .withValue(AttributeValue().withS(timestampValue.toString()))
+          )
+          expression
+        } else {
+          null
+        }
+
+        // Try to save with conditional expression
+        val saveMethod = if (saveExpression != null) {
+          // Use save method with expression
+          table::class.java.methods.find {
+            it.name == "save" && it.parameterCount == 2 &&
+            it.parameterTypes[1] == DynamoDBSaveExpression::class.java
+          }
+        } else {
+          // Use regular save method
+          table::class.java.methods.find {
+            it.name == "save" && it.parameterCount == 1
+          }
+        }
+
+        if (saveMethod != null) {
+          if (saveExpression != null && saveMethod.parameterCount == 2) {
+            saveMethod.invoke(table, pointerItem, saveExpression)
+          } else {
+            saveMethod.invoke(table, pointerItem)
+          }
+          savedPointer = true
+          logger.debug("Replaced DynamoDB item with pointer using conditional expression")
+        } else {
+          throw IllegalStateException("Could not find save method on table")
+        }
+      }
+    } catch (e: Exception) {
+      // If conditional check failed, it means the item was modified
+      if (e.cause?.message?.contains("ConditionalCheckFailedException") == true) {
+        logger.warn("Item was modified since read, skipping archival: $fullS3Key")
+        return@withContext // Skip this item
+      }
+      throw e // Re-throw other exceptions
+    }
+
+    // 4. Only write to S3 AFTER successfully updating DynamoDB
+    if (savedPointer) {
+      try {
+        // Compress and save to S3
+        val json = objectMapper.writeValueAsString(item)
+        val compressed = compressGzip(json.toByteArray())
+
+        val metadata = ObjectMetadata().apply {
+          contentType = "application/json"
+          contentEncoding = "gzip"
+          contentLength = compressed.size.toLong()
+          addUserMetadata("archived_at", Instant.now().toString())
+          addUserMetadata("table_name", tableInfo.tableName)
+          addUserMetadata("original_size", json.length.toString())
+        }
+
+        val putRequest = PutObjectRequest(
+          hybridConfig.s3Config.bucketName,
+          fullS3Key,
+          ByteArrayInputStream(compressed),
+          metadata
+        )
+
+        s3Client.putObject(putRequest)
+        logger.info("Successfully archived item to S3: $fullS3Key")
+
+      } catch (s3Error: Exception) {
+        // S3 write failed - need to rollback DynamoDB
+        logger.error("Failed to write to S3, attempting to rollback DynamoDB pointer", s3Error)
+
+        try {
+          // Restore original item in DynamoDB
+          if (table is InlineView<*, *>) {
+            val saveMethod = table::class.java.methods.find {
+              it.name == "save" && it.parameterCount == 1
+            }
+            saveMethod?.invoke(table, item) // Restore original
+            logger.info("Successfully rolled back DynamoDB pointer")
+          }
+        } catch (rollbackError: Exception) {
+          logger.error("CRITICAL: Failed to rollback DynamoDB after S3 failure. Data may be inconsistent!", rollbackError)
+          throw IllegalStateException(
+            "Failed to archive item and rollback failed. S3Key: $fullS3Key",
+            s3Error
+          )
+        }
+
+        throw s3Error // Re-throw the original S3 error
+      }
     }
   }
 
@@ -331,7 +425,8 @@ internal class ArchivalService(
           val property = itemClass.memberProperties.find { it.name == param.name }
           property?.isAccessible = true
 
-          if (isKeyField(param.name) || isTimestampField(property)) {
+          // Use S3KeyGenerator's improved key detection
+          if (property != null && (S3KeyGenerator.isKeyField(property) || isTimestampField(property))) {
             (property as? KProperty1<Any, *>)?.get(fullItem)
           } else {
             null // Clear large data fields
@@ -341,14 +436,6 @@ internal class ArchivalService(
     }
 
     return constructor.callBy(params)
-  }
-
-  private fun isKeyField(name: String?): Boolean {
-    if (name == null) return false
-    return name.contains("id", ignoreCase = true) ||
-           name.contains("key", ignoreCase = true) ||
-           name.contains("pk", ignoreCase = true) ||
-           name.contains("sk", ignoreCase = true)
   }
 
   private fun isTimestampField(property: KProperty1<*, *>?): Boolean {

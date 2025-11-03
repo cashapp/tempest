@@ -1,6 +1,25 @@
+/*
+ * Copyright 2024 Square Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package app.cash.tempest.hybrid
 
+import app.cash.tempest.Attribute
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey
 import kotlin.reflect.KProperty1
+import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 
@@ -8,52 +27,68 @@ import kotlin.reflect.jvm.isAccessible
  * Generates S3 keys based on item data and template
  */
 internal object S3KeyGenerator {
-  
+
   fun generateS3Key(
     item: Any,
     template: String,
     tableName: String
   ): String {
-    
-    val partitionKey = extractPartitionKey(item)
-    val sortKey = extractSortKey(item)
-    
+
+    val (partitionKey, sortKey) = extractKeys(item)
+
     return template
       .replace("{table}", tableName)
       .replace("{pk}", partitionKey)
       .replace("{sk}", sortKey ?: "")
       .replace("//", "/") // Clean up double slashes
   }
-  
-  private fun extractPartitionKey(item: Any): String {
-    val properties = item::class.memberProperties
-    
-    // Look for userId property first (common pattern)
-    val pkProperty = properties.find { prop ->
-      prop.name.equals("userId", ignoreCase = true) ||
-      prop.name.contains("partition", ignoreCase = true) ||
-      prop.name.contains("pk", ignoreCase = true)
-    } ?: properties.firstOrNull()
-    
-    return pkProperty?.let { prop ->
+
+  /**
+   * Extract partition and sort keys using annotations, not heuristics
+   */
+  fun extractKeys(item: Any): Pair<String, String?> {
+    val itemClass = item::class
+    val properties = itemClass.memberProperties
+
+    // Find partition key using annotations
+    val partitionKeyProp = properties.find { prop ->
+      // Check for DynamoDB annotations
+      prop.findAnnotation<DynamoDBHashKey>() != null ||
+      // Check for Tempest Attribute annotation with partition_key name
+      prop.findAnnotation<Attribute>()?.name == "partition_key"
+    }
+
+    // Find sort key using annotations
+    val sortKeyProp = properties.find { prop ->
+      // Check for DynamoDB annotations
+      prop.findAnnotation<DynamoDBRangeKey>() != null ||
+      // Check for Tempest Attribute annotation with sort_key name
+      prop.findAnnotation<Attribute>()?.name == "sort_key"
+    }
+
+    // Extract values
+    val partitionKey = partitionKeyProp?.let { prop ->
       prop.isAccessible = true
       (prop as KProperty1<Any, *>).get(item)?.toString()
-    } ?: "unknown"
+    } ?: throw IllegalStateException(
+      "Could not find partition key for item of type ${itemClass.simpleName}. " +
+      "Ensure field has @DynamoDBHashKey or @Attribute(name=\"partition_key\")"
+    )
+
+    val sortKey = sortKeyProp?.let { prop ->
+      prop.isAccessible = true
+      (prop as KProperty1<Any, *>).get(item)?.toString()
+    }
+
+    return partitionKey to sortKey
   }
-  
-  private fun extractSortKey(item: Any): String? {
-    val properties = item::class.memberProperties
-    
-    // Look for sessionId property first (common pattern)
-    val skProperty = properties.find { prop ->
-      prop.name.equals("sessionId", ignoreCase = true) ||
-      prop.name.contains("sort", ignoreCase = true) ||
-      prop.name.contains("sk", ignoreCase = true)
-    }
-    
-    return skProperty?.let { prop ->
-      prop.isAccessible = true
-      (prop as KProperty1<Any, *>).get(item)?.toString()
-    }
+
+  /**
+   * Check if a property is a DynamoDB key field
+   */
+  fun isKeyField(property: KProperty1<*, *>): Boolean {
+    return property.findAnnotation<DynamoDBHashKey>() != null ||
+           property.findAnnotation<DynamoDBRangeKey>() != null ||
+           property.findAnnotation<Attribute>()?.name in listOf("partition_key", "sort_key")
   }
 }

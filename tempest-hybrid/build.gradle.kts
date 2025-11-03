@@ -20,8 +20,13 @@ dependencies {
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.3")
   implementation("com.fasterxml.jackson.core:jackson-core:2.14.3")
 
+  testImplementation(project(":tempest-testing-jvm"))
+  testImplementation(project(":tempest-testing-junit5"))
   testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
   testImplementation("org.assertj:assertj-core:3.21.0")
+  testImplementation("io.mockk:mockk:1.13.8") // Temporary for S3 mocking until we add LocalStack
+  testImplementation("org.slf4j:slf4j-simple:2.0.7") // For test logging
+  testRuntimeOnly(libs.junitLauncher)
 }
 
 configure<MavenPublishBaseExtension> {
