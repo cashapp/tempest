@@ -32,21 +32,35 @@ interface HybridLogicalDb : LogicalDb, Closeable {
 
   /**
    * Archive old data to S3 based on configured age threshold
+   * @param dryRun If true, simulates archival without making changes
    */
-  suspend fun archiveOldData(): ArchivalResult
-
-  /**
-   * Run archival in dry-run mode to see what would be archived without making changes
-   */
-  suspend fun archiveOldDataDryRun(): ArchivalResult
+  suspend fun archiveOldData(dryRun: Boolean = false): ArchivalResult
   
   companion object {
+    /**
+     * Create a HybridLogicalDb with user-provided S3Client and ObjectMapper
+     * This is the recommended approach for production use.
+     */
+    fun create(
+      regularDb: LogicalDb,
+      s3Client: com.amazonaws.services.s3.AmazonS3,
+      hybridConfig: HybridConfig,
+      objectMapper: com.fasterxml.jackson.databind.ObjectMapper = com.fasterxml.jackson.databind.ObjectMapper()
+    ): HybridLogicalDb {
+      return HybridLogicalDbImpl.create(regularDb, s3Client, hybridConfig, objectMapper)
+    }
+
+    /**
+     * Create a typed HybridLogicalDb (for advanced use)
+     */
     fun <DB : HybridLogicalDb> create(
       dbType: KClass<DB>,
       regularDb: LogicalDb,
-      hybridConfig: HybridConfig
+      s3Client: com.amazonaws.services.s3.AmazonS3,
+      hybridConfig: HybridConfig,
+      objectMapper: com.fasterxml.jackson.databind.ObjectMapper = com.fasterxml.jackson.databind.ObjectMapper()
     ): DB {
-      return HybridLogicalDbImpl.create(dbType, regularDb, hybridConfig)
+      return HybridLogicalDbImpl.create(dbType, regularDb, s3Client, hybridConfig, objectMapper)
     }
   }
 }

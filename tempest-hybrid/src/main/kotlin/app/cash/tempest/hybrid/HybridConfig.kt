@@ -28,39 +28,20 @@ data class HybridConfig(
 
   data class S3Config(
     val bucketName: String,
-    val region: String,
     val keyPrefix: String = "",
-    val accessKey: String? = null,
-    val secretKey: String? = null
+    val region: String? = null  // Optional - only needed if creating S3Client internally
   )
 
   data class ArchivalConfig(
     val enabled: Boolean = true,
-    val archiveAfterDuration: Duration = Duration.ofDays(365),
-    val deleteFromDynamoAfterArchival: Boolean = false // Keep pointers by default
+    val batchSize: Int? = 25,  // Number of items to archive in parallel
+    val scheduleExpression: String? = null  // For future scheduling support
   )
 
   data class PerformanceConfig(
-    val parallelS3Reads: Int = 10,
+    val parallelS3Reads: Int = 1,  // Default to 1 for Phase 1 (no parallelism)
     val s3ReadTimeoutMs: Long = 30000,
     val maxRetries: Int = 3,
     val retryDelayMs: Long = 100
   )
 }
-
-/**
- * Annotation to mark a table for hybrid storage
- */
-@Target(AnnotationTarget.CLASS)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class HybridTable(
-  val archiveAfterDays: Int = 365,
-  val s3KeyTemplate: String = "{table}/{pk}/{sk}.json"
-)
-
-/**
- * Annotation to mark the field used for archival age determination
- */
-@Target(AnnotationTarget.PROPERTY)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class ArchivalTimestamp

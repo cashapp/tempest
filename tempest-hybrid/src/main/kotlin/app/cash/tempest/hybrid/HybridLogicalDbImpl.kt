@@ -42,12 +42,8 @@ internal class HybridLogicalDbImpl(
 
   private val archivalService = ArchivalService(delegate, s3Client, objectMapper, hybridConfig)
 
-  override suspend fun archiveOldData(): ArchivalResult {
-    return archivalService.archiveOldData(dryRun = false)
-  }
-
-  override suspend fun archiveOldDataDryRun(): ArchivalResult {
-    return archivalService.archiveOldData(dryRun = true)
+  override suspend fun archiveOldData(dryRun: Boolean): ArchivalResult {
+    return archivalService.archiveOldData(dryRun)
   }
 
   override fun close() {
@@ -59,29 +55,50 @@ internal class HybridLogicalDbImpl(
   }
   
   companion object {
+    /**
+     * Create a HybridLogicalDb with user-provided S3Client and ObjectMapper
+     */
+    fun create(
+      regularDb: LogicalDb,
+      s3Client: AmazonS3,
+      hybridConfig: HybridConfig,
+      objectMapper: ObjectMapper
+    ): HybridLogicalDb {
+      // Create executor service for parallel S3 operations
+      val executorService = Executors.newFixedThreadPool(
+        hybridConfig.performanceConfig.parallelS3Reads.coerceAtLeast(1)
+      )
+
+      val hybridDb = HybridLogicalDbImpl(
+        regularDb,
+        hybridConfig,
+        s3Client,
+        objectMapper,
+        executorService
+      )
+
+      // Create proxy that wraps table methods to return hybrid tables
+      return Proxy.newProxyInstance(
+        HybridLogicalDb::class.java.classLoader,
+        arrayOf(HybridLogicalDb::class.java, LogicalDb::class.java),
+        HybridDbProxy(hybridDb, regularDb, s3Client, objectMapper, hybridConfig, executorService)
+      ) as HybridLogicalDb
+    }
+
+    /**
+     * Create a typed HybridLogicalDb with user-provided S3Client and ObjectMapper
+     */
     fun <DB : HybridLogicalDb> create(
       dbType: KClass<DB>,
       regularDb: LogicalDb,
-      hybridConfig: HybridConfig
+      s3Client: AmazonS3,
+      hybridConfig: HybridConfig,
+      objectMapper: ObjectMapper
     ): DB {
-
-      // Create S3 client
-      val s3ClientBuilder = AmazonS3ClientBuilder.standard()
-        .withRegion(hybridConfig.s3Config.region)
-
-      if (hybridConfig.s3Config.accessKey != null && hybridConfig.s3Config.secretKey != null) {
-        val credentials = BasicAWSCredentials(
-          hybridConfig.s3Config.accessKey,
-          hybridConfig.s3Config.secretKey
-        )
-        s3ClientBuilder.withCredentials(AWSStaticCredentialsProvider(credentials))
-      }
-
-      val s3Client = s3ClientBuilder.build()
-      val objectMapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
-
       // Create executor service for parallel S3 operations
-      val executorService = Executors.newFixedThreadPool(hybridConfig.performanceConfig.parallelS3Reads)
+      val executorService = Executors.newFixedThreadPool(
+        hybridConfig.performanceConfig.parallelS3Reads.coerceAtLeast(1)
+      )
 
       val hybridDb = HybridLogicalDbImpl(
         regularDb,
@@ -94,7 +111,7 @@ internal class HybridLogicalDbImpl(
       // Create proxy that wraps table methods to return hybrid tables
       return Proxy.newProxyInstance(
         dbType.java.classLoader,
-        arrayOf(dbType.java),
+        arrayOf(dbType.java, HybridLogicalDb::class.java),
         HybridDbProxy(hybridDb, regularDb, s3Client, objectMapper, hybridConfig, executorService)
       ) as DB
     }

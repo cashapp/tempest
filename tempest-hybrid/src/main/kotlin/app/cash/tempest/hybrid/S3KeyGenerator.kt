@@ -24,7 +24,10 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 
 /**
- * Generates S3 keys based on item data and template
+ * Generates deterministic S3 keys based solely on DynamoDB keys.
+ *
+ * IMPORTANT: S3 keys are stored as pointers in DynamoDB and must be recreatable
+ * from the item's keys alone. Never include timestamps or mutable fields.
  */
 internal object S3KeyGenerator {
 
@@ -36,11 +39,45 @@ internal object S3KeyGenerator {
 
     val (partitionKey, sortKey) = extractKeys(item)
 
-    return template
+    // Sanitize keys to be S3-safe (remove special characters that could cause issues)
+    val safePartitionKey = sanitizeForS3(partitionKey)
+    val safeSortKey = sortKey?.let { sanitizeForS3(it) } ?: ""
+
+    val s3Key = template
+      .replace("{tableName}", tableName)
+      .replace("{partitionKey}", safePartitionKey)
+      .replace("{sortKey}", safeSortKey)
+      // Legacy support for abbreviated variables
       .replace("{table}", tableName)
-      .replace("{pk}", partitionKey)
-      .replace("{sk}", sortKey ?: "")
-      .replace("//", "/") // Clean up double slashes
+      .replace("{pk}", safePartitionKey)
+      .replace("{sk}", safeSortKey)
+      // Clean up any double slashes or trailing slashes
+      .replace(Regex("/+"), "/")
+      .trimEnd('/')
+
+    // Add .json.gz extension if not present
+    return if (s3Key.endsWith(".json.gz") || s3Key.endsWith(".json")) {
+      s3Key
+    } else {
+      "$s3Key.json.gz"
+    }
+  }
+
+  /**
+   * Sanitize a string to be safe for use in S3 keys.
+   * S3 keys can contain most characters, but we want to avoid issues with:
+   * - URL encoding problems
+   * - File system incompatibilities
+   * - Special characters that might cause issues
+   */
+  private fun sanitizeForS3(value: String): String {
+    return value
+      // Replace problematic characters with underscores
+      .replace(Regex("[<>:\"|?*\\\\]"), "_")
+      // Replace multiple underscores with single
+      .replace(Regex("_+"), "_")
+      // Trim underscores from ends
+      .trim('_')
   }
 
   /**
