@@ -31,10 +31,19 @@ class JvmDynamoDbServer private constructor(
 
   override fun startUp() {
     onBeforeStartup()
-    server = ServerRunner.createServerFromCommandLineArgs(
-      arrayOf("-inMemory", "-disableTelemetry", "-port", port.toString())
-    )
-    server.start()
+    try {
+      server = ServerRunner.createServerFromCommandLineArgs(
+        arrayOf("-inMemory", "-disableTelemetry", "-port", port.toString())
+      )
+      server.start()
+    } catch (e: Exception) {
+      log.error(e) { "Failed to start DynamoDB Local server on port $port" }
+      throw e
+    }
+  }
+
+  companion object {
+    private val log = app.cash.tempest2.testing.internal.getLogger<JvmDynamoDbServer>()
   }
 
   override fun shutDown() {

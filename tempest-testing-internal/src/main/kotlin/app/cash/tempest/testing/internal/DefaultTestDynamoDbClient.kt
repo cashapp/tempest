@@ -30,6 +30,8 @@ class DefaultTestDynamoDbClient(
   override val dynamoDb = buildDynamoDb(hostName, port)
   override val dynamoDbStreams = buildDynamoDbStreams(hostName, port)
 
+  private val log = getLogger<DefaultTestDynamoDbClient>()
+
   override fun startUp() {
     reset()
   }
@@ -41,11 +43,19 @@ class DefaultTestDynamoDbClient(
 
   override fun reset() {
     // Cleans up the tables before each run.
-    for (tableName in dynamoDb.listTables().tableNames) {
-      dynamoDb.deleteTable(tableName)
-    }
-    for (table in tables) {
-      dynamoDb.createTable(table)
+    try {
+      log.info { "Connecting to DynamoDB Local at $hostName:${dynamoDb.endpoint}" }
+      val tableNames = dynamoDb.listTables().tableNames
+      log.info { "Successfully connected to DynamoDB Local. Found ${tableNames.size} existing tables" }
+      for (tableName in tableNames) {
+        dynamoDb.deleteTable(tableName)
+      }
+      for (table in tables) {
+        dynamoDb.createTable(table)
+      }
+    } catch (e: Exception) {
+      log.error(e) { "Failed to connect to or initialize DynamoDB Local at $hostName. Ensure the server is running and accessible." }
+      throw e
     }
   }
 }
