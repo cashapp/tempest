@@ -9,23 +9,28 @@ plugins {
 }
 
 dependencies {
-  api(project(":tempest"))
-  api(libs.awsDynamodb)
-  api(libs.findbugsJsr305)
-  
-  implementation(project(":tempest-internal"))
-  implementation(libs.kotlinStdLib)
-  implementation(libs.kotlinxCoroutines)
-  implementation("com.amazonaws:aws-java-sdk-s3:1.12.782")
-  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.3")
-  implementation("com.fasterxml.jackson.core:jackson-core:2.14.3")
+  api(project(":tempest2"))
 
-  testImplementation(project(":tempest-testing-jvm"))
-  testImplementation(project(":tempest-testing-junit5"))
-  testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
-  testImplementation("org.assertj:assertj-core:3.21.0")
-  testImplementation("io.mockk:mockk:1.13.8") // Temporary for S3 mocking until we add LocalStack
-  testImplementation("org.slf4j:slf4j-simple:2.0.7") // For test logging
+  // AWS SDK for DynamoDB and S3
+  api(libs.awsDynamodb)
+  api("com.amazonaws:aws-java-sdk-s3:1.12.791")
+
+  // Jackson for JSON serialization
+  api(libs.jacksonDatabind)
+  api("com.fasterxml.jackson.module:jackson-module-kotlin:2.20.0")
+
+  // Logging
+  api(libs.slf4jApi)
+
+  // Kotlin
+  implementation(libs.kotlinReflection)
+  implementation(libs.kotlinStdLib)
+
+  // Testing
+  testImplementation(libs.assertj)
+  testImplementation(libs.junitEngine)
+  testImplementation(project(":tempest2-testing-jvm"))
+  testImplementation(project(":tempest2-testing-junit5"))
   testRuntimeOnly(libs.junitLauncher)
 }
 

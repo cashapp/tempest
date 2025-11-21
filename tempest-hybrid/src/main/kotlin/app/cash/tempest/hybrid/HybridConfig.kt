@@ -15,33 +15,14 @@
  */
 package app.cash.tempest.hybrid
 
-import java.time.Duration
-
-/**
- * Configuration for pointer-based hybrid storage
- */
+/** Configuration for pointer-based hybrid storage */
 data class HybridConfig(
   val s3Config: S3Config,
-  val archivalConfig: ArchivalConfig,
-  val performanceConfig: PerformanceConfig = PerformanceConfig()
 ) {
 
   data class S3Config(
     val bucketName: String,
-    val keyPrefix: String = "",
-    val region: String? = null  // Optional - only needed if creating S3Client internally
-  )
-
-  data class ArchivalConfig(
-    val enabled: Boolean = true,
-    val batchSize: Int? = 25,  // Number of items to archive in parallel
-    val scheduleExpression: String? = null  // For future scheduling support
-  )
-
-  data class PerformanceConfig(
-    val parallelS3Reads: Int = 1,  // Default to 1 for Phase 1 (no parallelism)
-    val s3ReadTimeoutMs: Long = 30000,
-    val maxRetries: Int = 3,
-    val retryDelayMs: Long = 100
+    val keyPrefix: String = "", // Currently unused - could be used for S3 key generation
+    val region: String? = null, // Currently only used for logging
   )
 }
