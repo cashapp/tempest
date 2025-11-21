@@ -2,6 +2,8 @@ package app.cash.tempest.hybrid
 
 import com.amazonaws.services.s3.AmazonS3
 import com.fasterxml.jackson.databind.ObjectMapper
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executors
 import java.util.zip.GZIPInputStream
 import org.slf4j.LoggerFactory
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
@@ -28,6 +30,13 @@ class S3AwareDynamoDbClient(
     private val logger = LoggerFactory.getLogger(S3AwareDynamoDbClient::class.java)
   }
 
+  // Create executor for parallel S3 reads if configured
+  private val s3Executor = if (hybridConfig.performanceConfig.maxConcurrentS3Reads > 0) {
+    Executors.newFixedThreadPool(hybridConfig.performanceConfig.maxConcurrentS3Reads)
+  } else {
+    null // Sequential mode
+  }
+
   override fun query(request: QueryRequest): QueryResponse {
     logger.warn("🔍 Intercepting DynamoDB query for table: ${request.tableName()}")
 
@@ -35,24 +44,11 @@ class S3AwareDynamoDbClient(
     val response = delegate.query(request)
     logger.warn("  Original query returned ${response.items().size} items")
 
-    // Check if any items need S3 hydration
-    var hasS3Pointers = false
-    val hydratedItems =
-      response.items().map { item ->
-        if (isS3Pointer(item)) {
-          logger.warn("  🔗 Found S3 pointer item with ${item.size} fields, loading from S3...")
-          hasS3Pointers = true
-          val hydrated = loadFromS3AndReplaceItem(item)
-          logger.warn("  ✅ After S3 hydration: ${hydrated.size} fields")
-          hydrated
-        } else {
-          // Pass through regular items unmodified
-          item
-        }
-      }
+    // Hydrate items (either in parallel or sequentially based on config)
+    val hydratedItems = hydrateItems(response.items())
 
     // Only rebuild response if we actually hydrated S3 items
-    return if (hasS3Pointers) {
+    return if (hydratedItems !== response.items()) {
       val newResponse = response.toBuilder().items(hydratedItems).build()
       logger.warn("  ✅ Query completed WITH S3 hydration, returning ${newResponse.items().size} items")
       newResponse
@@ -68,20 +64,11 @@ class S3AwareDynamoDbClient(
     // Execute the original scan
     val response = delegate.scan(request)
 
-    // Check if any items have S3 pointers
-    var hasS3Pointers = false
-    val hydratedItems =
-      response.items().map { item ->
-        if (isS3Pointer(item)) {
-          hasS3Pointers = true
-          loadFromS3AndReplaceItem(item)
-        } else {
-          item
-        }
-      }
+    // Hydrate items (either in parallel or sequentially based on config)
+    val hydratedItems = hydrateItems(response.items())
 
     // Only rebuild response if we actually hydrated S3 items
-    return if (hasS3Pointers) {
+    return if (hydratedItems !== response.items()) {
       response.toBuilder().items(hydratedItems).build()
     } else {
       response
@@ -295,6 +282,54 @@ class S3AwareDynamoDbClient(
         AttributeValue.builder().s(node.toString()).build()
       }
       else -> AttributeValue.builder().s(node.toString()).build()
+    }
+  }
+
+  /**
+   * Hydrates a list of items, fetching from S3 either in parallel or sequentially based on configuration
+   */
+  private fun hydrateItems(items: List<Map<String, AttributeValue>>): List<Map<String, AttributeValue>> {
+    // First, identify which items need hydration
+    val itemsWithIndices = items.mapIndexedNotNull { index, item ->
+      if (isS3Pointer(item)) {
+        index to item
+      } else {
+        null
+      }
+    }
+
+    // If no items need hydration, return original list
+    if (itemsWithIndices.isEmpty()) {
+      return items
+    }
+
+    logger.info("Found ${itemsWithIndices.size} items needing S3 hydration")
+
+    // Hydrate items either in parallel or sequentially
+    val hydratedMap = if (s3Executor != null && itemsWithIndices.size > 1) {
+      // Parallel mode
+      logger.info("Hydrating ${itemsWithIndices.size} items in parallel with max concurrency: ${hybridConfig.performanceConfig.maxConcurrentS3Reads}")
+
+      val futures = itemsWithIndices.map { (index, item) ->
+        CompletableFuture.supplyAsync({
+          index to loadFromS3AndReplaceItem(item)
+        }, s3Executor)
+      }
+
+      // Wait for all futures to complete and collect results
+      CompletableFuture.allOf(*futures.toTypedArray()).join()
+      futures.associate { it.get() }
+    } else {
+      // Sequential mode
+      logger.info("Hydrating ${itemsWithIndices.size} items sequentially")
+      itemsWithIndices.associate { (index, item) ->
+        index to loadFromS3AndReplaceItem(item)
+      }
+    }
+
+    // Build the result list with hydrated items in their original positions
+    return items.mapIndexed { index, item ->
+      hydratedMap[index] ?: item
     }
   }
 
