@@ -18,11 +18,16 @@ package app.cash.tempest.hybrid
 /** Configuration for pointer-based hybrid storage */
 data class HybridConfig(
   val s3Config: S3Config,
+  val performanceConfig: PerformanceConfig = PerformanceConfig(),
 ) {
 
   data class S3Config(
     val bucketName: String,
     val keyPrefix: String = "", // Currently unused - could be used for S3 key generation
     val region: String? = null, // Currently only used for logging
+  )
+
+  data class PerformanceConfig(
+    val maxConcurrentS3Reads: Int = 10, // Maximum concurrent S3 reads (0 = sequential)
   )
 }
