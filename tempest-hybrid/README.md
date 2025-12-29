@@ -254,15 +254,86 @@ The library implements graceful degradation:
 
 ## Monitoring
 
-### Key Metrics to Track
+The library includes an optional metrics interface for tracking S3 hydration performance. Metrics are disabled by default for zero overhead.
+
+### Basic Metrics Setup
 
 ```kotlin
-// Expose these metrics in your application
-- S3 hydration success rate
-- S3 read latency (P50, P99)
-- Number of items hydrated per query
-- Executor queue depth
-- Thread pool utilization
+// Use the built-in counting metrics for testing
+val metrics = CountingMetrics()
+
+val hybridConfig = HybridConfig(
+    s3Config = HybridConfig.S3Config(bucketName = "my-bucket"),
+    metrics = metrics  // Enable metrics collection
+)
+
+// Later, check the metrics
+println("Total hydrations: ${metrics.hydrationCount()}")
+println("Success rate: ${metrics.successCount() / metrics.hydrationCount()}")
+```
+
+### Custom Metrics Implementation
+
+Integrate with your existing metrics system:
+
+```kotlin
+class DatadogMetrics(private val statsd: StatsDClient) : HybridMetrics {
+    override fun record(event: MetricEvent) {
+        when (event) {
+            is MetricEvent.Hydration -> {
+                statsd.incrementCounter("tempest.hybrid.hydration.${event.operation}")
+                statsd.recordExecutionTime("tempest.hybrid.latency.${event.operation}", event.latencyMs)
+                if (!event.success) {
+                    statsd.incrementCounter("tempest.hybrid.errors.${event.operation}")
+                }
+            }
+            is MetricEvent.BatchComplete -> {
+                statsd.recordHistogramValue("tempest.hybrid.batch_size.${event.operation}", event.itemCount)
+                statsd.recordGaugeValue("tempest.hybrid.success_rate.${event.operation}",
+                    event.successCount.toDouble() / event.itemCount)
+            }
+        }
+    }
+}
+```
+
+### Conditional Metrics
+
+Enable metrics based on runtime conditions:
+
+```kotlin
+// Only record metrics for 10% of requests (sampling)
+val sampledMetrics = ConditionalMetrics(actualMetrics) {
+    Random.nextDouble() < 0.1
+}
+
+// Or enable based on feature flag
+val flaggedMetrics = ConditionalMetrics(actualMetrics) {
+    featureFlags.isEnabled("tempest-hybrid-metrics")
+}
+```
+
+### Available Metrics
+
+The library tracks these low-cardinality metrics:
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `Hydration.operation` | String | DynamoDB operation (query, scan, getItem, etc.) |
+| `Hydration.success` | Boolean | Whether S3 fetch succeeded |
+| `Hydration.latencyMs` | Long | Time taken for S3 operation |
+| `BatchComplete.itemCount` | Int | Number of items needing hydration |
+| `BatchComplete.successCount` | Int | Number successfully hydrated |
+
+### Disabling Metrics
+
+To completely disable metrics (default behavior):
+
+```kotlin
+val hybridConfig = HybridConfig(
+    s3Config = HybridConfig.S3Config(bucketName = "my-bucket"),
+    metrics = null  // No metrics overhead
+)
 ```
 
 ### Logging

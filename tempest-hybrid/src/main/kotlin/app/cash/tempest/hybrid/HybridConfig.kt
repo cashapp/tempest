@@ -19,6 +19,7 @@ package app.cash.tempest.hybrid
 data class HybridConfig(
   val s3Config: S3Config,
   val errorStrategy: ErrorStrategy = ErrorStrategy.FAIL_FAST,
+  val metrics: HybridMetrics? = null, // Optional metrics collection - null means no metrics
 ) {
 
   data class S3Config(

@@ -78,6 +78,15 @@ class S3AwareDynamoDbClient(
     }
   }
 
+  /**
+   * Records a metric event if metrics are configured.
+   * No-op if metrics is null.
+   */
+  private fun recordMetric(event: MetricEvent) {
+    hybridConfig.metrics?.record(event)
+  }
+
+
   override fun query(request: QueryRequest): QueryResponse {
     logger.debug("Intercepting DynamoDB query for table: ${request.tableName()}")
 
@@ -86,7 +95,7 @@ class S3AwareDynamoDbClient(
     logger.debug("Original query returned ${response.items().size} items")
 
     // Hydrate items (either in parallel or sequentially based on config)
-    val hydratedItems = hydrateItems(response.items())
+    val hydratedItems = hydrateItems(response.items(), "query")
 
     // Only rebuild response if we actually hydrated S3 items
     return if (hydratedItems !== response.items()) {
@@ -106,7 +115,7 @@ class S3AwareDynamoDbClient(
     val response = delegate.scan(request)
 
     // Hydrate items (either in parallel or sequentially based on config)
-    val hydratedItems = hydrateItems(response.items())
+    val hydratedItems = hydrateItems(response.items(), "scan")
 
     // Only rebuild response if we actually hydrated S3 items
     return if (hydratedItems !== response.items()) {
@@ -127,7 +136,7 @@ class S3AwareDynamoDbClient(
 
       // Check if the item has an S3 pointer
       if (isS3Pointer(item)) {
-        val hydratedItem = loadFromS3AndReplaceItem(item)
+        val hydratedItem = loadFromS3AndReplaceItem(item, "getItem")
         return if (hydratedItem != null) {
           response.toBuilder().item(hydratedItem).build()
         } else {
@@ -151,7 +160,7 @@ class S3AwareDynamoDbClient(
     var anyHydrated = false
 
     response.responses().forEach { (tableName, items) ->
-      val hydratedItems = hydrateItems(items)
+      val hydratedItems = hydrateItems(items, "batchGetItem")
       hydratedResponses[tableName] = hydratedItems
       if (hydratedItems !== items) {
         anyHydrated = true
@@ -179,7 +188,7 @@ class S3AwareDynamoDbClient(
     response.responses().forEach { itemResponse ->
       val item = itemResponse.item()
       if (item != null && item.isNotEmpty() && isS3Pointer(item)) {
-        val hydratedItem = loadFromS3AndReplaceItem(item)
+        val hydratedItem = loadFromS3AndReplaceItem(item, "transactGetItems")
         if (hydratedItem != null) {
           hydratedResponses.add(itemResponse.toBuilder().item(hydratedItem).build())
         } else {
@@ -211,10 +220,16 @@ class S3AwareDynamoDbClient(
     return s3PointerValue?.startsWith("s3://") == true
   }
 
-  private fun loadFromS3AndReplaceItem(pointerItem: Map<String, AttributeValue>): Map<String, AttributeValue>? {
+  private fun loadFromS3AndReplaceItem(
+    pointerItem: Map<String, AttributeValue>,
+    operation: String = "unknown"
+  ): Map<String, AttributeValue>? {
     val s3Pointer = pointerItem["_s3_pointer"]?.s() ?: return pointerItem
 
-    try {
+    val metrics = hybridConfig.metrics
+    val start = if (metrics != null) System.currentTimeMillis() else 0L
+
+    return try {
       // Extract bucket and key from S3 pointer
       // S3 pointers are in format: s3://path/to/key where path is relative to the bucket
       val s3Uri = s3Pointer.removePrefix("s3://")
@@ -254,8 +269,18 @@ class S3AwareDynamoDbClient(
 
       logger.debug("Successfully hydrated item from S3 (${fullItem.size} total fields)")
 
-      return fullItem
+      // Record success metric
+      if (metrics != null) {
+        recordMetric(MetricEvent.Hydration(operation, true, System.currentTimeMillis() - start))
+      }
+
+      fullItem
     } catch (e: Exception) {
+      // Record failure metric
+      if (metrics != null) {
+        recordMetric(MetricEvent.Hydration(operation, false, System.currentTimeMillis() - start))
+      }
+
       // Handle based on error strategy
       when (hybridConfig.errorStrategy) {
         HybridConfig.ErrorStrategy.FAIL_FAST -> {
@@ -264,11 +289,11 @@ class S3AwareDynamoDbClient(
         }
         HybridConfig.ErrorStrategy.RETURN_POINTER -> {
           logger.warn("S3 hydration failed for $s3Pointer - returning pointer item", e)
-          return pointerItem
+          pointerItem
         }
         HybridConfig.ErrorStrategy.SKIP_FAILED -> {
           logger.warn("S3 hydration failed for $s3Pointer - skipping item", e)
-          return null // Signal to skip this item
+          null
         }
       }
     }
@@ -437,7 +462,10 @@ class S3AwareDynamoDbClient(
   /**
    * Hydrates a list of items, fetching from S3 either in parallel or sequentially based on the provided executor
    */
-  private fun hydrateItems(items: List<Map<String, AttributeValue>>): List<Map<String, AttributeValue>> {
+  private fun hydrateItems(
+    items: List<Map<String, AttributeValue>>,
+    operation: String
+  ): List<Map<String, AttributeValue>> {
     // First, identify which items need hydration
     val itemsWithIndices = items.mapIndexedNotNull { index, item ->
       if (isS3Pointer(item)) {
@@ -461,7 +489,7 @@ class S3AwareDynamoDbClient(
 
       val futures = itemsWithIndices.map { (index, item) ->
         CompletableFuture.supplyAsync({
-          index to loadFromS3AndReplaceItem(item)
+          index to loadFromS3AndReplaceItem(item, operation)
         }, s3Executor)
       }
 
@@ -473,8 +501,16 @@ class S3AwareDynamoDbClient(
       val mode = if (s3Executor == null) "sequentially (no executor provided)" else "sequentially (single item)"
       logger.debug("Hydrating ${itemsWithIndices.size} items $mode")
       itemsWithIndices.associate { (index, item) ->
-        index to loadFromS3AndReplaceItem(item)
+        index to loadFromS3AndReplaceItem(item, operation)
       }
+    }
+
+    // Count successful hydrations for batch metrics
+    val successCount = hydratedMap.values.count { it != null }
+
+    // Record batch completion metric if we have metrics enabled
+    if (hybridConfig.metrics != null && itemsWithIndices.isNotEmpty()) {
+      recordMetric(MetricEvent.BatchComplete(operation, itemsWithIndices.size, successCount))
     }
 
     // Build the result list with hydrated items in their original positions
@@ -482,7 +518,7 @@ class S3AwareDynamoDbClient(
     return items.mapIndexedNotNull { index, item ->
       val hydratedItem = hydratedMap[index]
       when {
-        hydratedItem != null -> hydratedItem // Item was hydrated (could still be null for SKIP_FAILED)
+        hydratedItem != null -> hydratedItem // Item was hydrated
         hydratedMap.containsKey(index) -> null // Key exists but value is null (SKIP_FAILED)
         else -> item // Item didn't need hydration
       }
