@@ -31,6 +31,8 @@ dependencies {
   testImplementation(libs.junitEngine)
   testImplementation(project(":tempest2-testing-jvm"))
   testImplementation(project(":tempest2-testing-junit5"))
+  testImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
+  testImplementation("org.mockito:mockito-junit-jupiter:5.5.0")
   testRuntimeOnly(libs.junitLauncher)
 }
 

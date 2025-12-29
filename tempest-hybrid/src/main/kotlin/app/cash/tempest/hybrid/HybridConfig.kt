@@ -18,7 +18,7 @@ package app.cash.tempest.hybrid
 /** Configuration for pointer-based hybrid storage */
 data class HybridConfig(
   val s3Config: S3Config,
-  val performanceConfig: PerformanceConfig = PerformanceConfig(),
+  val errorStrategy: ErrorStrategy = ErrorStrategy.FAIL_FAST,
 ) {
 
   data class S3Config(
@@ -27,7 +27,27 @@ data class HybridConfig(
     val region: String? = null, // Currently only used for logging
   )
 
-  data class PerformanceConfig(
-    val maxConcurrentS3Reads: Int = 10, // Maximum concurrent S3 reads (0 = sequential)
-  )
+  /**
+   * Defines how to handle S3 hydration failures.
+   */
+  enum class ErrorStrategy {
+    /**
+     * Throw an exception when S3 hydration fails.
+     * This is the safest option as it prevents corrupted data from propagating.
+     */
+    FAIL_FAST,
+
+    /**
+     * Return the original pointer item when S3 hydration fails.
+     * WARNING: This will likely cause deserialization errors downstream.
+     * Only use if you have error handling at the application level.
+     */
+    RETURN_POINTER,
+
+    /**
+     * Skip items that fail to hydrate (return null for single items, exclude from collections).
+     * WARNING: This silently drops data and may cause unexpected behavior.
+     */
+    SKIP_FAILED
+  }
 }

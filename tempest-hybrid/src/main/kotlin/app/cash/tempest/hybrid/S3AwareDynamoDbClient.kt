@@ -2,8 +2,11 @@ package app.cash.tempest.hybrid
 
 import com.amazonaws.services.s3.AmazonS3
 import com.fasterxml.jackson.databind.ObjectMapper
+import java.lang.ref.WeakReference
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executors
+import java.util.concurrent.Executor
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.ThreadPoolExecutor
 import java.util.zip.GZIPInputStream
 import org.slf4j.LoggerFactory
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
@@ -18,31 +21,69 @@ import software.amazon.awssdk.services.dynamodb.model.*
  * 1. Load the full data from S3
  * 2. Replace the minimal pointer item with the full item
  * 3. Pass the full item to Tempest for normal deserialization
+ *
+ * @param delegate The underlying DynamoDB client to wrap
+ * @param s3Client The S3 client for fetching stored objects
+ * @param objectMapper The JSON object mapper for deserializing S3 data
+ * @param hybridConfig Configuration for S3 storage and performance
+ * @param s3Executor Optional executor for parallel S3 reads. If null, reads will be sequential.
+ *                   The caller is responsible for managing the lifecycle of this executor.
  */
 class S3AwareDynamoDbClient(
   private val delegate: DynamoDbClient,
   private val s3Client: AmazonS3,
   private val objectMapper: ObjectMapper,
   private val hybridConfig: HybridConfig,
+  private val s3Executor: Executor? = null,
 ) : DynamoDbClient by delegate {
 
   companion object {
     private val logger = LoggerFactory.getLogger(S3AwareDynamoDbClient::class.java)
+
+    // Track active executors to warn about lifecycle issues
+    private val activeExecutors = mutableSetOf<WeakReference<Executor>>()
   }
 
-  // Create executor for parallel S3 reads if configured
-  private val s3Executor = if (hybridConfig.performanceConfig.maxConcurrentS3Reads > 0) {
-    Executors.newFixedThreadPool(hybridConfig.performanceConfig.maxConcurrentS3Reads)
-  } else {
-    null // Sequential mode
+  init {
+    // Add a shutdown hook to warn about executor lifecycle issues
+    s3Executor?.let { executor ->
+      val executorRef = WeakReference(executor)
+      activeExecutors.add(executorRef)
+
+      // Only add one shutdown hook for all instances
+      if (activeExecutors.size == 1) {
+        Runtime.getRuntime().addShutdownHook(Thread {
+          val stillActive = activeExecutors.mapNotNull { ref ->
+            ref.get()?.let { exec ->
+              when (exec) {
+                is ExecutorService -> if (!exec.isShutdown) exec else null
+                is ThreadPoolExecutor -> if (!exec.isShutdown) exec else null
+                else -> null // Can't check other executor types
+              }
+            }
+          }
+
+          if (stillActive.isNotEmpty()) {
+            logger.warn(
+              "⚠️ WARNING: ${stillActive.size} executor(s) provided to S3AwareDynamoDbClient were not " +
+              "properly shutdown. This may cause thread leaks and prevent JVM shutdown. " +
+              "Please ensure you call shutdown() on your executor when done."
+            )
+          }
+
+          // Clean up references
+          activeExecutors.clear()
+        })
+      }
+    }
   }
 
   override fun query(request: QueryRequest): QueryResponse {
-    logger.warn("🔍 Intercepting DynamoDB query for table: ${request.tableName()}")
+    logger.debug("Intercepting DynamoDB query for table: ${request.tableName()}")
 
     // Execute the original query
     val response = delegate.query(request)
-    logger.warn("  Original query returned ${response.items().size} items")
+    logger.debug("Original query returned ${response.items().size} items")
 
     // Hydrate items (either in parallel or sequentially based on config)
     val hydratedItems = hydrateItems(response.items())
@@ -50,10 +91,10 @@ class S3AwareDynamoDbClient(
     // Only rebuild response if we actually hydrated S3 items
     return if (hydratedItems !== response.items()) {
       val newResponse = response.toBuilder().items(hydratedItems).build()
-      logger.warn("  ✅ Query completed WITH S3 hydration, returning ${newResponse.items().size} items")
+      logger.debug("Query completed with S3 hydration")
       newResponse
     } else {
-      logger.warn("  ✅ Query completed WITHOUT S3 hydration, returning ${response.items().size} items")
+      logger.debug("Query completed without S3 hydration")
       response
     }
   }
@@ -87,11 +128,76 @@ class S3AwareDynamoDbClient(
       // Check if the item has an S3 pointer
       if (isS3Pointer(item)) {
         val hydratedItem = loadFromS3AndReplaceItem(item)
-        return response.toBuilder().item(hydratedItem).build()
+        return if (hydratedItem != null) {
+          response.toBuilder().item(hydratedItem).build()
+        } else {
+          // SKIP_FAILED strategy - return empty response
+          response.toBuilder().item(emptyMap()).build()
+        }
       }
     }
 
     return response
+  }
+
+  override fun batchGetItem(request: BatchGetItemRequest): BatchGetItemResponse {
+    logger.debug("Intercepting DynamoDB batchGetItem")
+
+    // Execute the original batchGetItem
+    val response = delegate.batchGetItem(request)
+
+    // Process each table's results
+    val hydratedResponses = mutableMapOf<String, List<Map<String, AttributeValue>>>()
+    var anyHydrated = false
+
+    response.responses().forEach { (tableName, items) ->
+      val hydratedItems = hydrateItems(items)
+      hydratedResponses[tableName] = hydratedItems
+      if (hydratedItems !== items) {
+        anyHydrated = true
+      }
+    }
+
+    // Only rebuild response if we actually hydrated S3 items
+    return if (anyHydrated) {
+      response.toBuilder().responses(hydratedResponses).build()
+    } else {
+      response
+    }
+  }
+
+  override fun transactGetItems(request: TransactGetItemsRequest): TransactGetItemsResponse {
+    logger.debug("Intercepting DynamoDB transactGetItems")
+
+    // Execute the original transactGetItems
+    val response = delegate.transactGetItems(request)
+
+    // Process each response item
+    val hydratedResponses = mutableListOf<ItemResponse>()
+    var anyHydrated = false
+
+    response.responses().forEach { itemResponse ->
+      val item = itemResponse.item()
+      if (item != null && item.isNotEmpty() && isS3Pointer(item)) {
+        val hydratedItem = loadFromS3AndReplaceItem(item)
+        if (hydratedItem != null) {
+          hydratedResponses.add(itemResponse.toBuilder().item(hydratedItem).build())
+        } else {
+          // SKIP_FAILED strategy - add empty item response
+          hydratedResponses.add(itemResponse.toBuilder().item(emptyMap()).build())
+        }
+        anyHydrated = true
+      } else {
+        hydratedResponses.add(itemResponse)
+      }
+    }
+
+    // Only rebuild response if we actually hydrated S3 items
+    return if (anyHydrated) {
+      response.toBuilder().responses(hydratedResponses).build()
+    } else {
+      response
+    }
   }
 
   override fun putItem(request: PutItemRequest): PutItemResponse {
@@ -105,7 +211,7 @@ class S3AwareDynamoDbClient(
     return s3PointerValue?.startsWith("s3://") == true
   }
 
-  private fun loadFromS3AndReplaceItem(pointerItem: Map<String, AttributeValue>): Map<String, AttributeValue> {
+  private fun loadFromS3AndReplaceItem(pointerItem: Map<String, AttributeValue>): Map<String, AttributeValue>? {
     val s3Pointer = pointerItem["_s3_pointer"]?.s() ?: return pointerItem
 
     try {
@@ -146,139 +252,107 @@ class S3AwareDynamoDbClient(
       // Keep the S3 pointer for reference
       fullItem["_s3_pointer"] = pointerItem["_s3_pointer"]!!
 
-      logger.warn("Successfully hydrated item from S3 (${fullItem.size} total fields)")
-      logger.warn("  Hydrated fields: ${fullItem.keys.sorted().joinToString()}")
-
-      // Log some key values for debugging
-      fullItem["customer_token"]?.s()?.let { logger.warn("  customer_token: $it") }
-      fullItem["account_token"]?.s()?.let { logger.warn("  account_token: $it") }
-      fullItem["transaction_token"]?.s()?.let { logger.warn("  transaction_token: $it") }
-      fullItem["year"]?.n()?.let { logger.warn("  year: $it") }
-      fullItem["month"]?.n()?.let { logger.warn("  month: $it") }
+      logger.debug("Successfully hydrated item from S3 (${fullItem.size} total fields)")
 
       return fullItem
-    } catch (e: com.fasterxml.jackson.core.JsonParseException) {
-      logger.error("JSON Parse Error in S3 file at ${e.location}: ${e.message}")
-      logger.error("S3 URI: ${pointerItem["_s3_pointer"]?.s()}")
-      logger.error("This usually means the JSON has unescaped special characters like newlines")
-      logger.error("Check line ${e.location?.lineNr} column ${e.location?.columnNr} in your S3 JSON file")
-      // Return the original pointer item - Tempest will likely fail to deserialize it
-      return pointerItem
     } catch (e: Exception) {
-      logger.error("Failed to load from S3: ${e.message}", e)
-      logger.error("S3 URI: ${pointerItem["_s3_pointer"]?.s()}")
-      // Return the original pointer item - Tempest will likely fail to deserialize it
-      return pointerItem
-    }
-  }
-
-  private fun jsonToAttributeValue(fieldName: String, node: com.fasterxml.jackson.databind.JsonNode): AttributeValue {
-    // Check if this is a DynamoDB-formatted JSON with type indicators
-    if (node.isObject && node.size() == 1) {
-      val field = node.fields().next()
-      val type = field.key
-      val value = field.value
-
-      return when (type) {
-        "S" -> AttributeValue.builder().s(value.asText()).build()
-        "N" -> AttributeValue.builder().n(value.asText()).build()
-        "B" ->
-          AttributeValue.builder()
-            .b(software.amazon.awssdk.core.SdkBytes.fromByteArray(java.util.Base64.getDecoder().decode(value.asText())))
-            .build()
-        "BOOL" -> AttributeValue.builder().bool(value.asBoolean()).build()
-        "NULL" -> AttributeValue.builder().nul(true).build()
-        "SS" -> AttributeValue.builder().ss(value.map { it.asText() }.toSet()).build()
-        "NS" -> AttributeValue.builder().ns(value.map { it.asText() }.toSet()).build()
-        "BS" ->
-          AttributeValue.builder()
-            .bs(
-              value.map {
-                software.amazon.awssdk.core.SdkBytes.fromByteArray(java.util.Base64.getDecoder().decode(it.asText()))
-              }
-            )
-            .build()
-        "L" -> AttributeValue.builder().l(value.map { jsonToAttributeValue("", it) }).build()
-        "M" -> {
-          // For empty maps, some converters expect JSON strings like "{}" instead of Map types
-          // This handles cases where fields were stored as JSON strings but exported as empty Maps
-          if (value.size() == 0) {
-            // Return empty JSON string for empty maps - converters that expect strings will work
-            // and converters that expect maps will fail, but empty maps are edge cases
-            AttributeValue.builder().s("{}").build()
-          } else {
-            // Check if this looks like a simple JSON object that should be a string
-            // If all values are primitives, it's likely meant to be a JSON string
-            val shouldBeJsonString =
-              value.fields().asSequence().all { (_, v) -> v.isTextual || v.isNumber || v.isBoolean || v.isNull }
-
-            if (shouldBeJsonString) {
-              // Convert to JSON string for simple objects
-              val jsonMap = mutableMapOf<String, Any?>()
-              value.fields().forEach { (k, v) ->
-                jsonMap[k] =
-                  when {
-                    v.isNull -> null
-                    v.isBoolean -> v.asBoolean()
-                    v.isNumber -> if (v.isIntegralNumber) v.asLong() else v.asDouble()
-                    v.isTextual -> v.asText()
-                    else -> v.toString()
-                  }
-              }
-              AttributeValue.builder().s(objectMapper.writeValueAsString(jsonMap)).build()
-            } else {
-              // Complex nested structure - keep as Map
-              val map = mutableMapOf<String, AttributeValue>()
-              value.fields().forEach { (k, v) -> map[k] = jsonToAttributeValue(k, v) }
-              AttributeValue.builder().m(map).build()
-            }
-          }
+      // Handle based on error strategy
+      when (hybridConfig.errorStrategy) {
+        HybridConfig.ErrorStrategy.FAIL_FAST -> {
+          logger.error("S3 hydration failed for $s3Pointer - failing fast", e)
+          throw S3HydrationException(s3Pointer, e)
         }
-        else -> {
-          // Unknown type, try to handle as regular JSON
-          handleRegularJson(node)
+        HybridConfig.ErrorStrategy.RETURN_POINTER -> {
+          logger.warn("S3 hydration failed for $s3Pointer - returning pointer item", e)
+          return pointerItem
+        }
+        HybridConfig.ErrorStrategy.SKIP_FAILED -> {
+          logger.warn("S3 hydration failed for $s3Pointer - skipping item", e)
+          return null // Signal to skip this item
         }
       }
-    } else {
-      // Not DynamoDB-formatted, handle as regular JSON
-      return handleRegularJson(node)
     }
   }
 
-  private fun handleRegularJson(node: com.fasterxml.jackson.databind.JsonNode): AttributeValue {
+
+  /**
+   * Converts JSON data from S3 into DynamoDB AttributeValues.
+   *
+   * This handles two JSON formats:
+   * 1. DynamoDB JSON format: Objects with type indicators like {"S": "value"} or {"N": "123"}
+   * 2. Regular JSON format: Plain JSON that needs conversion to DynamoDB types
+   *
+   * @param fieldName The field name (unused but kept for backwards compatibility)
+   * @param node The JSON node to convert
+   * @return The corresponding DynamoDB AttributeValue
+   */
+  private fun jsonToAttributeValue(fieldName: String, node: com.fasterxml.jackson.databind.JsonNode): AttributeValue {
+    // Check if this is DynamoDB-formatted JSON (single-field object with type indicator)
+    if (isDynamoDbFormat(node)) {
+      return convertDynamoDbFormat(node)
+    } else {
+      // Regular JSON format
+      return convertRegularJson(node)
+    }
+  }
+
+  /**
+   * Checks if a JSON node is in DynamoDB format (e.g., {"S": "value"})
+   */
+  private fun isDynamoDbFormat(node: com.fasterxml.jackson.databind.JsonNode): Boolean {
+    if (!node.isObject || node.size() != 1) return false
+
+    val fieldName = node.fieldNames().next()
+    return fieldName in setOf("S", "N", "B", "BOOL", "NULL", "SS", "NS", "BS", "L", "M")
+  }
+
+  /**
+   * Converts DynamoDB-formatted JSON to AttributeValue.
+   * Format: {"TypeIndicator": value} where TypeIndicator is S, N, B, BOOL, NULL, SS, NS, BS, L, or M
+   */
+  private fun convertDynamoDbFormat(node: com.fasterxml.jackson.databind.JsonNode): AttributeValue {
+    val field = node.fields().next()
+    val type = field.key
+    val value = field.value
+
+    return when (type) {
+      "S" -> AttributeValue.builder().s(value.asText()).build()
+      "N" -> AttributeValue.builder().n(value.asText()).build()
+      "B" -> convertBinary(value.asText())
+      "BOOL" -> AttributeValue.builder().bool(value.asBoolean()).build()
+      "NULL" -> AttributeValue.builder().nul(true).build()
+      "SS" -> AttributeValue.builder().ss(value.map { it.asText() }.toSet()).build()
+      "NS" -> AttributeValue.builder().ns(value.map { it.asText() }.toSet()).build()
+      "BS" -> convertBinarySet(value)
+      "L" -> convertList(value)
+      "M" -> convertMap(value)
+      else -> {
+        // Unknown type - treat as regular JSON
+        logger.debug("Unknown DynamoDB type indicator: $type")
+        convertRegularJson(node)
+      }
+    }
+  }
+
+  /**
+   * Converts regular JSON to DynamoDB AttributeValue.
+   * Rules:
+   * - Primitives (string, number, boolean, null) map directly
+   * - Arrays of strings become String Sets (SS)
+   * - Mixed arrays become Lists (L)
+   * - Objects ALWAYS become JSON strings (for Tempest compatibility)
+   */
+  private fun convertRegularJson(node: com.fasterxml.jackson.databind.JsonNode): AttributeValue {
     return when {
       node.isNull -> AttributeValue.builder().nul(true).build()
       node.isBoolean -> AttributeValue.builder().bool(node.asBoolean()).build()
-      node.isNumber -> {
-        // All numbers stored as DynamoDB numbers
-        if (node.isIntegralNumber) {
-          AttributeValue.builder().n(node.asLong().toString()).build()
-        } else {
-          AttributeValue.builder().n(node.asDouble().toString()).build()
-        }
-      }
+      node.isNumber -> convertNumber(node)
       node.isTextual -> AttributeValue.builder().s(node.asText()).build()
-      node.isArray -> {
-        // Special handling for arrays: if it's a Set<String>, convert to DynamoDB String Set
-        if (node.all { it.isTextual }) {
-          val stringSet = node.map { it.asText() }.toSet()
-          if (stringSet.isNotEmpty()) {
-            AttributeValue.builder().ss(stringSet).build()
-          } else {
-            AttributeValue.builder().nul(true).build()
-          }
-        } else {
-          // For mixed arrays, use LIST
-          val list = node.map { jsonToAttributeValue("", it) }
-          AttributeValue.builder().l(list).build()
-        }
-      }
+      node.isArray -> convertArray(node)
       node.isObject -> {
-        // CRITICAL: Tempest stores all complex objects as JSON strings, not as DynamoDB MAPs
-        // This includes Money, GlobalAddress, Metadata, and all other custom types
-
-        // Money objects need to be stored as JSON strings with amountCents field
-        // DynamoDB format: {"amountCents":-450,"currency":"USD"}
+        // IMPORTANT: Tempest stores all complex objects as JSON strings.
+        // This includes custom types like Money, GlobalAddress, Metadata, etc.
+        // Example: Money stored as {"amountCents":100,"currency":"USD"}
         AttributeValue.builder().s(node.toString()).build()
       }
       else -> AttributeValue.builder().s(node.toString()).build()
@@ -286,7 +360,82 @@ class S3AwareDynamoDbClient(
   }
 
   /**
-   * Hydrates a list of items, fetching from S3 either in parallel or sequentially based on configuration
+   * Converts a JSON number to DynamoDB number format
+   */
+  private fun convertNumber(node: com.fasterxml.jackson.databind.JsonNode): AttributeValue {
+    val numberString = if (node.isIntegralNumber) {
+      node.asLong().toString()
+    } else {
+      node.asDouble().toString()
+    }
+    return AttributeValue.builder().n(numberString).build()
+  }
+
+  /**
+   * Converts a JSON array to either a String Set or List
+   */
+  private fun convertArray(node: com.fasterxml.jackson.databind.JsonNode): AttributeValue {
+    // If all elements are strings, convert to String Set
+    if (node.all { it.isTextual }) {
+      val stringSet = node.map { it.asText() }.toSet()
+      return if (stringSet.isNotEmpty()) {
+        AttributeValue.builder().ss(stringSet).build()
+      } else {
+        AttributeValue.builder().nul(true).build()
+      }
+    }
+
+    // Mixed types - convert to List
+    val list = node.map { jsonToAttributeValue("", it) }
+    return AttributeValue.builder().l(list).build()
+  }
+
+  /**
+   * Converts a base64-encoded binary string to DynamoDB binary
+   */
+  private fun convertBinary(base64String: String): AttributeValue {
+    val bytes = java.util.Base64.getDecoder().decode(base64String)
+    return AttributeValue.builder()
+      .b(software.amazon.awssdk.core.SdkBytes.fromByteArray(bytes))
+      .build()
+  }
+
+  /**
+   * Converts a JSON array of base64 strings to DynamoDB binary set
+   */
+  private fun convertBinarySet(value: com.fasterxml.jackson.databind.JsonNode): AttributeValue {
+    val binarySet = value.map { element ->
+      val bytes = java.util.Base64.getDecoder().decode(element.asText())
+      software.amazon.awssdk.core.SdkBytes.fromByteArray(bytes)
+    }
+    return AttributeValue.builder().bs(binarySet).build()
+  }
+
+  /**
+   * Converts a DynamoDB List type from JSON
+   */
+  private fun convertList(value: com.fasterxml.jackson.databind.JsonNode): AttributeValue {
+    val list = value.map { jsonToAttributeValue("", it) }
+    return AttributeValue.builder().l(list).build()
+  }
+
+  /**
+   * Converts a DynamoDB Map type from JSON.
+   *
+   * When the source is DynamoDB-formatted JSON (with "M" type indicator),
+   * we preserve it as a proper DynamoDB Map with nested AttributeValues.
+   */
+  private fun convertMap(value: com.fasterxml.jackson.databind.JsonNode): AttributeValue {
+    // DynamoDB-formatted Maps stay as Maps with proper AttributeValues
+    val map = mutableMapOf<String, AttributeValue>()
+    value.fields().forEach { (key, nestedValue) ->
+      map[key] = jsonToAttributeValue(key, nestedValue)
+    }
+    return AttributeValue.builder().m(map).build()
+  }
+
+  /**
+   * Hydrates a list of items, fetching from S3 either in parallel or sequentially based on the provided executor
    */
   private fun hydrateItems(items: List<Map<String, AttributeValue>>): List<Map<String, AttributeValue>> {
     // First, identify which items need hydration
@@ -303,12 +452,12 @@ class S3AwareDynamoDbClient(
       return items
     }
 
-    logger.info("Found ${itemsWithIndices.size} items needing S3 hydration")
+    logger.debug("Found ${itemsWithIndices.size} items needing S3 hydration")
 
     // Hydrate items either in parallel or sequentially
     val hydratedMap = if (s3Executor != null && itemsWithIndices.size > 1) {
-      // Parallel mode
-      logger.info("Hydrating ${itemsWithIndices.size} items in parallel with max concurrency: ${hybridConfig.performanceConfig.maxConcurrentS3Reads}")
+      // Parallel mode using provided executor
+      logger.debug("Hydrating ${itemsWithIndices.size} items in parallel")
 
       val futures = itemsWithIndices.map { (index, item) ->
         CompletableFuture.supplyAsync({
@@ -320,16 +469,23 @@ class S3AwareDynamoDbClient(
       CompletableFuture.allOf(*futures.toTypedArray()).join()
       futures.associate { it.get() }
     } else {
-      // Sequential mode
-      logger.info("Hydrating ${itemsWithIndices.size} items sequentially")
+      // Sequential mode (either no executor provided or single item)
+      val mode = if (s3Executor == null) "sequentially (no executor provided)" else "sequentially (single item)"
+      logger.debug("Hydrating ${itemsWithIndices.size} items $mode")
       itemsWithIndices.associate { (index, item) ->
         index to loadFromS3AndReplaceItem(item)
       }
     }
 
     // Build the result list with hydrated items in their original positions
-    return items.mapIndexed { index, item ->
-      hydratedMap[index] ?: item
+    // Filter out null entries (SKIP_FAILED strategy)
+    return items.mapIndexedNotNull { index, item ->
+      val hydratedItem = hydratedMap[index]
+      when {
+        hydratedItem != null -> hydratedItem // Item was hydrated (could still be null for SKIP_FAILED)
+        hydratedMap.containsKey(index) -> null // Key exists but value is null (SKIP_FAILED)
+        else -> item // Item didn't need hydration
+      }
     }
   }
 

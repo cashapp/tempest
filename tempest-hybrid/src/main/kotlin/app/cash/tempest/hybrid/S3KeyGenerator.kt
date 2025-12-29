@@ -22,6 +22,7 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.jvm.javaField
 
 /**
  * Generates deterministic S3 keys based solely on DynamoDB keys.
@@ -80,50 +81,75 @@ object S3KeyGenerator {
   /** Extract partition and sort keys using annotations, not heuristics */
   fun extractKeys(item: Any): Pair<String, String?> {
     val itemClass = item::class
-    val properties = itemClass.memberProperties
+    val javaClass = item.javaClass
 
-    // Find partition key using annotations
-    val partitionKeyProp =
-      properties.find { prop ->
-        // Check for DynamoDB annotations
-        prop.findAnnotation<DynamoDBHashKey>() != null ||
-          // Check for Tempest Attribute annotation with partition_key name
-          prop.findAnnotation<Attribute>()?.name == "partition_key"
+    // Try using Java reflection for DynamoDB annotations first, since they're Java annotations
+    var partitionKeyValue: String? = null
+    var sortKeyValue: String? = null
+
+    // Check fields with Java reflection
+    for (field in javaClass.declaredFields) {
+      field.isAccessible = true
+
+      if (field.isAnnotationPresent(DynamoDBHashKey::class.java)) {
+        partitionKeyValue = field.get(item)?.toString()
+      }
+      if (field.isAnnotationPresent(DynamoDBRangeKey::class.java)) {
+        sortKeyValue = field.get(item)?.toString()
+      }
+    }
+
+    // If not found via fields, try Kotlin properties for Tempest annotations
+    if (partitionKeyValue == null) {
+      val properties = itemClass.memberProperties
+      val partitionKeyProp = properties.find { prop ->
+        prop.findAnnotation<Attribute>()?.name == "partition_key"
       }
 
-    // Find sort key using annotations
-    val sortKeyProp =
-      properties.find { prop ->
-        // Check for DynamoDB annotations
-        prop.findAnnotation<DynamoDBRangeKey>() != null ||
-          // Check for Tempest Attribute annotation with sort_key name
-          prop.findAnnotation<Attribute>()?.name == "sort_key"
-      }
-
-    // Extract values
-    val partitionKey =
-      partitionKeyProp?.let { prop ->
+      partitionKeyValue = partitionKeyProp?.let { prop ->
         prop.isAccessible = true
         (prop as KProperty1<Any, *>).get(item)?.toString()
       }
-        ?: throw IllegalStateException(
-          "Could not find partition key for item of type ${itemClass.simpleName}. " +
-            "Ensure field has @DynamoDBHashKey or @Attribute(name=\"partition_key\")"
-        )
+    }
 
-    val sortKey =
-      sortKeyProp?.let { prop ->
+    if (sortKeyValue == null) {
+      val properties = itemClass.memberProperties
+      val sortKeyProp = properties.find { prop ->
+        prop.findAnnotation<Attribute>()?.name == "sort_key"
+      }
+
+      sortKeyValue = sortKeyProp?.let { prop ->
         prop.isAccessible = true
         (prop as KProperty1<Any, *>).get(item)?.toString()
       }
+    }
 
-    return partitionKey to sortKey
+    // Validate we found the partition key
+    if (partitionKeyValue == null) {
+      throw IllegalStateException(
+        "Could not find partition key for item of type ${itemClass.simpleName}. " +
+          "Ensure field has @DynamoDBHashKey or @Attribute(name=\"partition_key\")"
+      )
+    }
+
+    return partitionKeyValue to sortKeyValue
   }
 
   /** Check if a property is a DynamoDB key field */
   fun isKeyField(property: KProperty1<*, *>): Boolean {
-    return property.findAnnotation<DynamoDBHashKey>() != null ||
-      property.findAnnotation<DynamoDBRangeKey>() != null ||
+    // Try to find the corresponding Java field for DynamoDB annotations
+    val javaField = try {
+      property.javaField
+    } catch (e: Exception) {
+      null
+    }
+
+    val hasJavaAnnotation = javaField?.let {
+      it.isAnnotationPresent(DynamoDBHashKey::class.java) ||
+        it.isAnnotationPresent(DynamoDBRangeKey::class.java)
+    } ?: false
+
+    return hasJavaAnnotation ||
       property.findAnnotation<Attribute>()?.name in listOf("partition_key", "sort_key")
   }
 }
