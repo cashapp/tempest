@@ -85,6 +85,7 @@ data class BatchWriteResult(
 
 data class TransactionWriteSet(
   val itemsToSave: ItemSet,
+  val itemsToPut: ItemSet,
   val keysToDelete: KeySet,
   val keysToCheck: KeySet,
   val writeExpressions: Map<Any, Expression>,
@@ -92,21 +93,26 @@ data class TransactionWriteSet(
 ) {
 
   val sizeDynamoDbTable
-    get() = itemsToSave.size + keysToDelete.size + keysToCheck.size
+    get() = itemsToSave.size + itemsToPut.size + keysToDelete.size + keysToCheck.size
 
   class Builder {
     private val itemsToSave = mutableSetOf<Any>()
+    private val itemsToPut = mutableSetOf<Any>()
     private val keysToDelete = mutableSetOf<Any>()
     private val keysToCheck = mutableSetOf<Any>()
     private val writeExpressions = mutableMapOf<Any, Expression>()
     private var idempotencyToken: String? = null
 
     val size
-      get() = itemsToSave.size + keysToDelete.size + keysToCheck.size
+      get() = itemsToSave.size + itemsToPut.size + keysToDelete.size + keysToCheck.size
 
     /**
-     * This adds a put operation to clear and replace all attributes, including unmodeled ones.
-     * Partial update is not supported.
+     * Saves an item using DynamoDB's UpdateItem operation. This supports `@DynamoDbVersionAttribute`
+     * for optimistic locking, but generates an UpdateExpression which is subject to a 4KB size limit.
+     *
+     * For items with many attributes that may exceed the 4KB UpdateExpression limit, use [put] instead.
+     *
+     * Note: Versioning annotations cannot be used in conjunction with condition expressions.
      */
     @JvmOverloads
     fun save(
@@ -114,6 +120,26 @@ data class TransactionWriteSet(
       expression: Expression? = null
     ) = apply {
       val added = itemsToSave.add(item)
+      require(added) {
+        "Duplicate items are not allowed"
+      }
+      if (expression != null) {
+        writeExpressions[item] = expression
+      }
+    }
+
+    /**
+     * Puts an item using DynamoDB's PutItem operation. This replaces all attributes and avoids
+     * the 4KB UpdateExpression size limit that [save] is subject to.
+     *
+     * Supports `@DynamoDbVersionAttribute` for optimistic locking with or without condition expression
+     */
+    @JvmOverloads
+    fun put(
+      item: Any,
+      expression: Expression? = null
+    ) = apply {
+      val added = itemsToPut.add(item)
       require(added) {
         "Duplicate items are not allowed"
       }
@@ -161,6 +187,9 @@ data class TransactionWriteSet(
       for (item in builder.itemsToSave) {
         save(item)
       }
+      for (item in builder.itemsToPut) {
+        put(item)
+      }
       for (item in builder.keysToDelete) {
         delete(item)
       }
@@ -174,6 +203,7 @@ data class TransactionWriteSet(
     fun build(): TransactionWriteSet {
       return TransactionWriteSet(
         ItemSet(itemsToSave),
+        ItemSet(itemsToPut),
         KeySet(keysToDelete),
         KeySet(keysToCheck),
         writeExpressions.toMap(),

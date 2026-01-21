@@ -43,6 +43,7 @@ import software.amazon.awssdk.enhanced.dynamodb.MappedTableResource
 import software.amazon.awssdk.enhanced.dynamodb.TableMetadata
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema
 import software.amazon.awssdk.enhanced.dynamodb.internal.EnhancedClientUtils
+import software.amazon.awssdk.enhanced.dynamodb.extensions.annotations.DynamoDbVersionAttribute
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchGetItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchGetResultPage
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteItemEnhancedRequest
@@ -50,12 +51,15 @@ import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteResult
 import software.amazon.awssdk.enhanced.dynamodb.model.ConditionCheck
 import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest
+import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.ReadBatch
 import software.amazon.awssdk.enhanced.dynamodb.model.TransactGetItemsEnhancedRequest
+import software.amazon.awssdk.enhanced.dynamodb.model.TransactPutItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.TransactWriteItemsEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+import java.lang.reflect.Method
 import software.amazon.awssdk.services.dynamodb.model.ConsumedCapacity
 import software.amazon.awssdk.services.dynamodb.model.ReturnConsumedCapacity
 import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException
@@ -344,6 +348,17 @@ internal class DynamoDbLogicalDb(
         for (itemToSave in writeSet.itemsToSave) {
           addUpdateItem(itemToSave.encodeAsItem(), writeSet.writeExpressions[itemToSave])
         }
+        for (itemToPut in writeSet.itemsToPut) {
+          val userExpression = writeSet.writeExpressions[itemToPut]
+          val encodedItem = itemToPut.encodeAsItem()
+          if (userExpression != null) {
+            // Manual versioning: merge version check with user expression
+            addPutItemWithManualVersioning(encodedItem, userExpression)
+          } else {
+            // Let SDK handle versioning automatically
+            addPutItem(encodedItem, null)
+          }
+        }
         for (keyToDelete in writeSet.keysToDelete) {
           addDeleteItem(keyToDelete.encodeAsKey(), writeSet.writeExpressions[keyToDelete])
         }
@@ -429,6 +444,10 @@ internal class DynamoDbLogicalDb(
       val rawItemKey = itemToSave.encodeAsItem().rawItemKey()
       descriptions.add("Save item (non-key attributes omitted) $rawItemKey")
     }
+    for (itemToPut in itemsToPut) {
+      val rawItemKey = itemToPut.encodeAsItem().rawItemKey()
+      descriptions.add("Put item (non-key attributes omitted) $rawItemKey")
+    }
     for (keyToDelete in keysToDelete) {
       val rawItemKey = keyToDelete.encodeAsKey().rawItemKey()
       descriptions.add("Delete key $rawItemKey")
@@ -458,6 +477,108 @@ internal class DynamoDbLogicalDb(
       .conditionExpression(expression)
       .build()
   )
+
+  private fun <T : Any> TransactWriteItemsEnhancedRequest.Builder.addPutItem(
+    item: T,
+    expression: Expression?
+  ) = addPutItem(
+    mappedTableResource<T>(item::class),
+    TransactPutItemEnhancedRequest.builder(item.javaClass)
+      .item(item)
+      .conditionExpression(expression)
+      .build()
+  )
+
+  /**
+   * Adds a PutItem with manual versioning support. This allows combining version checks
+   * with user-provided condition expressions.
+   *
+   * If the item has a @DynamoDbVersionAttribute field:
+   * - Adds a version condition check merged with the user expression
+   * - The SDK's VersionedRecordExtension will handle incrementing the version
+   *
+   * If no version attribute exists, just uses the user expression as-is.
+   */
+  private fun <T : Any> TransactWriteItemsEnhancedRequest.Builder.addPutItemWithManualVersioning(
+    item: T,
+    userExpression: Expression
+  ) {
+    val versionInfo = findVersionAttribute(item)
+
+    val finalExpression = if (versionInfo != null) {
+      val (getter, _, currentVersion) = versionInfo
+
+      // Build version condition expression based on current version
+      // The SDK's VersionedRecordExtension will handle incrementing the version
+      val versionCondition = if (currentVersion == null) {
+        // New item: version attribute should not exist
+        Expression.builder()
+          .expression("attribute_not_exists(#tempest_version)")
+          .expressionNames(mapOf("#tempest_version" to getter.name.removePrefix("get").replaceFirstChar { it.lowercase() }))
+          .build()
+      } else {
+        // Existing item: version must match
+        Expression.builder()
+          .expression("#tempest_version = :tempest_expected_version")
+          .expressionNames(mapOf("#tempest_version" to getter.name.removePrefix("get").replaceFirstChar { it.lowercase() }))
+          .expressionValues(mapOf(":tempest_expected_version" to AttributeValue.builder().n(currentVersion.toString()).build()))
+          .build()
+      }
+
+      // Merge with user expression
+      mergeExpressions(versionCondition, userExpression)
+    } else {
+      userExpression
+    }
+
+    addPutItem(
+      mappedTableResource<T>(item::class),
+      TransactPutItemEnhancedRequest.builder(item.javaClass)
+        .item(item)
+        .conditionExpression(finalExpression)
+        .build()
+    )
+  }
+
+  /**
+   * Finds the version attribute on an item using reflection.
+   * Returns a triple of (getter, setter, currentValue) or null if no version attribute.
+   */
+  private fun <T : Any> findVersionAttribute(item: T): Triple<Method, Method, Long?>? {
+    val clazz = item.javaClass
+    for (method in clazz.methods) {
+      if (method.isAnnotationPresent(DynamoDbVersionAttribute::class.java)) {
+        val propertyName = method.name.removePrefix("get").removePrefix("is")
+        val setterName = "set$propertyName"
+        val setter = clazz.methods.find { it.name == setterName }
+          ?: continue
+
+        val currentValue = method.invoke(item) as? Long
+        return Triple(method, setter, currentValue)
+      }
+    }
+    return null
+  }
+
+  /**
+   * Merges two expressions using AND.
+   */
+  private fun mergeExpressions(expr1: Expression, expr2: Expression): Expression {
+    val combinedExpression = "(${expr1.expression()}) AND (${expr2.expression()})"
+    val combinedNames = mutableMapOf<String, String>()
+    val combinedValues = mutableMapOf<String, AttributeValue>()
+
+    expr1.expressionNames()?.let { combinedNames.putAll(it) }
+    expr2.expressionNames()?.let { combinedNames.putAll(it) }
+    expr1.expressionValues()?.let { combinedValues.putAll(it) }
+    expr2.expressionValues()?.let { combinedValues.putAll(it) }
+
+    return Expression.builder()
+      .expression(combinedExpression)
+      .expressionNames(combinedNames.takeIf { it.isNotEmpty() })
+      .expressionValues(combinedValues.takeIf { it.isNotEmpty() })
+      .build()
+  }
 
   private fun <T : Any> TransactWriteItemsEnhancedRequest.Builder.addDeleteItem(
     item: T,

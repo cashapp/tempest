@@ -374,4 +374,216 @@ class LogicalDbTransactionTest {
       .expression("attribute_exists(track_title)")
       .build()
   }
+
+  @Test
+  fun transactionWriteWithPut() {
+    // Basic put without expression - SDK handles versioning automatically
+    val items = listOf(
+      VersionedAttribute(
+        partition_key = "put_test_1",
+        description = "first item",
+      ),
+      VersionedAttribute(
+        partition_key = "put_test_2",
+        description = "second item",
+      )
+    )
+
+    val writeTransaction = TransactionWriteSet.Builder()
+      .put(items[0])
+      .put(items[1])
+      .build()
+    versionedAttributeDb.transactionWrite(writeTransaction)
+
+    val loadedItems = versionedAttributeDb.transactionLoad(
+      VersionedAttribute.Key("put_test_1"),
+      VersionedAttribute.Key("put_test_2")
+    )
+    val loaded = loadedItems.getItems<VersionedAttribute>()
+    assertThat(loaded).hasSize(2)
+    // SDK should have set version to 1 for new items
+    loaded.forEach { item ->
+      assertThat(item.version).isEqualTo(1L)
+    }
+  }
+
+  @Test
+  fun transactionWriteWithPutAndExpression() {
+    // Put with custom expression - uses manual versioning
+    // Create initial item using save() so SDK sets version=1
+    val initialItem = VersionedAttribute(
+      partition_key = "put_expr_test",
+      description = "initial",
+    )
+    versionedAttributeDb.transactionWrite(
+      TransactionWriteSet.Builder()
+        .save(initialItem)
+        .build()
+    )
+
+    val loadedV1 = versionedAttributeDb.transactionLoad(
+      VersionedAttribute.Key("put_expr_test")
+    ).getItems<VersionedAttribute>().first()
+    assertThat(loadedV1.version).isEqualTo(1L)
+
+    // Update using put() with a custom expression - manual versioning should increment version
+    val updatedItem = loadedV1.copy(description = "updated")
+    val customCondition = Expression.builder()
+      .expression("description = :expected_desc")
+      .expressionValues(
+        mapOf(":expected_desc" to AttributeValue.builder().s("initial").build())
+      )
+      .build()
+
+    versionedAttributeDb.transactionWrite(
+      TransactionWriteSet.Builder()
+        .put(updatedItem, customCondition)
+        .build()
+    )
+
+    val loadedV2 = versionedAttributeDb.transactionLoad(
+      VersionedAttribute.Key("put_expr_test")
+    ).getItems<VersionedAttribute>().first()
+    assertThat(loadedV2.description).isEqualTo("updated")
+    // Manual versioning should have incremented version to 2
+    assertThat(loadedV2.version).isEqualTo(2L)
+  }
+
+  @Test
+  fun transactionWriteWithPutAndExpressionFailure() {
+    // Put with custom expression fails when condition not met
+    val initialItem = VersionedAttribute(
+      partition_key = "put_expr_fail_test",
+      description = "initial",
+    )
+    versionedAttributeDb.transactionWrite(
+      TransactionWriteSet.Builder()
+        .save(initialItem)
+        .build()
+    )
+
+    val loadedV1 = versionedAttributeDb.transactionLoad(
+      VersionedAttribute.Key("put_expr_fail_test")
+    ).getItems<VersionedAttribute>().first()
+
+    // Introduce a race condition - update before transaction
+    val concurrentUpdate = loadedV1.copy(description = "concurrent update")
+    versionedAttributeDb.transactionWrite(
+      TransactionWriteSet.Builder()
+        .save(concurrentUpdate)
+        .build()
+    )
+
+    // Now try to put with a condition that checks for old description
+    val staleUpdate = loadedV1.copy(description = "stale update")
+    val customCondition = Expression.builder()
+      .expression("description = :expected_desc")
+      .expressionValues(
+        mapOf(":expected_desc" to AttributeValue.builder().s("initial").build())
+      )
+      .build()
+
+    assertThatExceptionOfType(TransactionCanceledException::class.java)
+      .isThrownBy {
+        versionedAttributeDb.transactionWrite(
+          TransactionWriteSet.Builder()
+            .put(staleUpdate, customCondition)
+            .build()
+        )
+      }
+      .withMessageContaining("Put item (non-key attributes omitted)")
+  }
+
+  @Test
+  fun transactionWriteWithPutVersionedAttributeAndExpression() {
+    // Put with versioned attribute AND custom expression - uses manual versioning
+    // This is the main use case: combining version checks with user expressions
+
+    // Create initial item
+    versionedAttributeDb.transactionWrite(
+      TransactionWriteSet.Builder()
+        .save(
+          VersionedAttribute(
+            partition_key = "put_versioned_test",
+            description = "initial",
+          )
+        )
+        .build()
+    )
+
+    val loadedItems = versionedAttributeDb.transactionLoad(
+      VersionedAttribute.Key("put_versioned_test")
+    )
+    val loadedItem = loadedItems.getItems<VersionedAttribute>().first()
+    assertThat(loadedItem.version).isEqualTo(1L)
+
+    // Update using put() with a custom expression AND versioning
+    val updatedItem = loadedItem.copy(description = "updated with put")
+
+    val customCondition = Expression.builder()
+      .expression("description = :expected_desc")
+      .expressionValues(
+        mapOf(":expected_desc" to AttributeValue.builder().s("initial").build())
+      )
+      .build()
+
+    versionedAttributeDb.transactionWrite(
+      TransactionWriteSet.Builder()
+        .put(updatedItem, customCondition)
+        .build()
+    )
+
+    val reloadedItems = versionedAttributeDb.transactionLoad(
+      VersionedAttribute.Key("put_versioned_test")
+    )
+    val reloadedItem = reloadedItems.getItems<VersionedAttribute>().first()
+    assertThat(reloadedItem.description).isEqualTo("updated with put")
+    // Version should be incremented by manual versioning
+    assertThat(reloadedItem.version).isEqualTo(2L)
+  }
+
+  @Test
+  fun transactionWriteWithPutVersionedAttributeRaceCondition() {
+    // Test that manual versioning correctly rejects stale updates
+
+    // Create initial item
+    versionedAttributeDb.transactionWrite(
+      TransactionWriteSet.Builder()
+        .save(
+          VersionedAttribute(
+            partition_key = "put_race_test",
+            description = "initial",
+          )
+        )
+        .build()
+    )
+
+    val loadedItems = versionedAttributeDb.transactionLoad(
+      VersionedAttribute.Key("put_race_test")
+    )
+    val loadedItem = loadedItems.getItems<VersionedAttribute>().first()
+
+    // Simulate another process updating the item
+    val concurrentUpdate = loadedItem.copy(description = "concurrent update")
+    versionedAttributeDb.transactionWrite(
+      TransactionWriteSet.Builder()
+        .save(concurrentUpdate)
+        .build()
+    )
+
+    // Now try to update with stale version using put()
+    val staleUpdate = loadedItem.copy(description = "stale update")
+    val customCondition = Expression.builder()
+      .expression("attribute_exists(partition_key)")
+      .build()
+
+    assertThatExceptionOfType(TransactionCanceledException::class.java)
+      .isThrownBy {
+        versionedAttributeDb.transactionWrite(
+          TransactionWriteSet.Builder()
+            .put(staleUpdate, customCondition)
+            .build()
+        )
+      }
+  }
 }
