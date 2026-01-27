@@ -240,8 +240,10 @@ class S3AwareDynamoDbClient(
 
       logger.debug("Loading from S3: bucket=$bucket, key=$key")
 
-      // Load from S3
-      val s3Object = s3Client.getObject(bucket, key)
+      // Load from S3 with retry logic if configured
+      val s3Object = executeWithRetry(operation, s3Uri) {
+        s3Client.getObject(bucket, key)
+      }
       val bytes = s3Object.objectContent.readAllBytes()
 
       // Decompress if GZIP
@@ -299,6 +301,80 @@ class S3AwareDynamoDbClient(
     }
   }
 
+  /**
+   * Executes an S3 operation with retry logic if configured.
+   */
+  private fun <T> executeWithRetry(
+    operation: String,
+    s3Key: String,
+    block: () -> T
+  ): T {
+    if (!hybridConfig.retryConfig.enabled) {
+      return block()
+    }
+
+    val config = hybridConfig.retryConfig
+    var lastException: Exception? = null
+
+    repeat(config.maxAttempts) { attempt ->
+      try {
+        val result = block()
+
+        // Log and record metric for successful retry if it wasn't the first attempt
+        if (attempt > 0) {
+          logger.info("S3 operation succeeded after ${attempt + 1} attempts for key: $s3Key")
+
+          if (hybridConfig.metrics != null) {
+            recordMetric(MetricEvent.RetryAttempt(
+              operation = operation,
+              attempt = attempt + 1,
+              maxAttempts = config.maxAttempts,
+              delayMs = 0, // No delay recorded for successful attempt
+              succeeded = true
+            ))
+          }
+        }
+
+        return result
+      } catch (e: Exception) {
+        lastException = e
+
+        // Check if exception is retryable
+        val isRetryable = config.retryableExceptions.any { it.isInstance(e) }
+
+        if (!isRetryable || attempt == config.maxAttempts - 1) {
+          // Not retryable or last attempt - throw immediately
+          throw e
+        }
+
+        // Calculate delay with exponential backoff and jitter
+        val baseDelay = config.initialDelayMs * (1 shl attempt) // 2^attempt
+        val jitter = (Math.random() * 0.2 * baseDelay).toLong() // ±20% jitter
+        val delay = (baseDelay + jitter).coerceAtMost(config.maxDelayMs)
+
+        logger.warn(
+            "S3 operation failed for key: $s3Key (attempt ${attempt + 1}/${config.maxAttempts}), " +
+            "retrying in ${delay}ms",
+            e
+        )
+
+        // Record retry attempt metric
+        if (hybridConfig.metrics != null) {
+          recordMetric(MetricEvent.RetryAttempt(
+            operation = operation,
+            attempt = attempt + 1,
+            maxAttempts = config.maxAttempts,
+            delayMs = delay,
+            succeeded = false
+          ))
+        }
+
+        Thread.sleep(delay)
+      }
+    }
+
+    throw lastException!! // Should never reach here, but satisfy compiler
+  }
 
   /**
    * Converts JSON data from S3 into DynamoDB AttributeValues.

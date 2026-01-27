@@ -188,6 +188,87 @@ class S3KeyGeneratorTest {
     // Then
     assertThat(s3Key).isEqualTo("users/USER#789.json.gz")
   }
+
+  @Test
+  fun `generateS3Key with config applies keyPrefix`() {
+    // Given
+    val item = TestItemWithBothKeys(
+      partitionKey = "USER#123",
+      sortKey = "TX#456"
+    )
+
+    val config = HybridConfig(
+      s3Config = HybridConfig.S3Config(
+        bucketName = "test-bucket",
+        keyPrefix = "dynamodb/archive"
+      )
+    )
+
+    val s3Key = S3KeyGenerator.generateS3Key(
+      item,
+      "{tableName}/{partitionKey}/{sortKey}",
+      "transactions",
+      config
+    )
+
+    // Then
+    assertThat(s3Key).isEqualTo("dynamodb/archive/transactions/USER#123/TX#456.json.gz")
+  }
+
+  @Test
+  fun `generateS3Key with config handles trailing slash in prefix`() {
+    // Given
+    val item = TestItemWithBothKeys(
+      partitionKey = "USER#123",
+      sortKey = "TX#456"
+    )
+
+    val config = HybridConfig(
+      s3Config = HybridConfig.S3Config(
+        bucketName = "test-bucket",
+        keyPrefix = "dynamodb/archive/"  // With trailing slash
+      )
+    )
+
+    // When
+    val s3Key = S3KeyGenerator.generateS3Key(
+      item,
+      "{tableName}/{partitionKey}/{sortKey}",
+      "transactions",
+      config
+    )
+
+    // Then - Should not create double slash
+    assertThat(s3Key).doesNotContain("//")
+    assertThat(s3Key).isEqualTo("dynamodb/archive/transactions/USER#123/TX#456.json.gz")
+  }
+
+  @Test
+  fun `generateS3Key with config handles empty prefix`() {
+    // Given
+    val item = TestItemWithBothKeys(
+      partitionKey = "USER#123",
+      sortKey = "TX#456"
+    )
+
+    val config = HybridConfig(
+      s3Config = HybridConfig.S3Config(
+        bucketName = "test-bucket",
+        keyPrefix = ""  // Empty prefix
+      )
+    )
+
+    // When
+    val s3Key = S3KeyGenerator.generateS3Key(
+      item,
+      "{tableName}/{partitionKey}/{sortKey}",
+      "transactions",
+      config
+    )
+
+    // Then - Should work same as without config
+    assertThat(s3Key).isEqualTo("transactions/USER#123/TX#456.json.gz")
+  }
 }
 
 // Test data classes moved outside to be top-level classes for proper reflection

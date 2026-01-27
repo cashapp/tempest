@@ -43,6 +43,23 @@ sealed class MetricEvent {
     val itemCount: Int,
     val successCount: Int
   ) : MetricEvent()
+
+  /**
+   * Records a retry attempt for an S3 operation
+   *
+   * @param operation The DynamoDB operation type
+   * @param attempt The attempt number (1-based)
+   * @param maxAttempts Maximum number of attempts configured
+   * @param delayMs Delay in milliseconds before this retry
+   * @param succeeded Whether this retry attempt succeeded
+   */
+  data class RetryAttempt(
+    val operation: String,
+    val attempt: Int,
+    val maxAttempts: Int,
+    val delayMs: Long,
+    val succeeded: Boolean
+  ) : MetricEvent()
 }
 
 /**

@@ -100,8 +100,13 @@ class HybridStorageConfig {
                 bucketName = "my-archive-bucket",
                 keyPrefix = "dynamodb/",
                 region = "us-east-1"
+            ),
+            retryConfig = HybridConfig.RetryConfig(
+                enabled = true,
+                maxAttempts = 3,
+                initialDelayMs = 100,
+                maxDelayMs = 5000
             )
-        )
 
         val factory = HybridDynamoDbFactory(
             s3Client = s3Client,
@@ -218,9 +223,19 @@ class S3ArchivalJob(
     }
 
     private fun generateS3Key(item: Map<String, AttributeValue>): String {
-        val pk = item["pk"]?.s() ?: throw IllegalStateException("Missing pk")
-        val sk = item["sk"]?.s() ?: throw IllegalStateException("Missing sk")
-        return "dynamodb/transactions/$pk/$sk.json.gz"
+        // Option 1: Use S3KeyGenerator with config (recommended)
+        return S3KeyGenerator.generateS3Key(
+            item,
+            "{tableName}/{partitionKey}/{sortKey}",
+            "transactions",
+            hybridConfig  // Uses keyPrefix from config
+        )
+
+        // Option 2: Manual generation (legacy)
+        // val pk = item["pk"]?.s() ?: throw IllegalStateException("Missing pk")
+        // val sk = item["sk"]?.s() ?: throw IllegalStateException("Missing sk")
+        // val prefix = hybridConfig.s3Config.keyPrefix
+        // return "${prefix}transactions/$pk/$sk.json.gz"
     }
 }
 ```
@@ -424,7 +439,7 @@ archiveInfrequentlyAccessedItems(90)
 1. Check IAM permissions
 2. Verify S3 bucket policy
 3. Monitor S3 throttling metrics
-4. Implement retry logic
+4. Enable retry logic via `RetryConfig` if not already enabled
 
 ### Issue: Higher Than Expected Costs
 

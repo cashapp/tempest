@@ -99,13 +99,22 @@ class DynamoDbHybridConfig {
     @Bean
     fun hybridConfig(
         @Value("\${aws.s3.bucket}") bucketName: String,
-        @Value("\${aws.s3.prefix:dynamodb/}") prefix: String
+        @Value("\${aws.s3.prefix:dynamodb/}") prefix: String,
+        @Value("\${aws.region}") region: String,
+        @Value("\${hybrid.retry.enabled:true}") retryEnabled: Boolean,
+        @Value("\${hybrid.retry.maxAttempts:3}") maxAttempts: Int
     ): HybridConfig {
         return HybridConfig(
             s3Config = HybridConfig.S3Config(
                 bucketName = bucketName,
                 keyPrefix = prefix,
-                region = null
+                region = region
+            ),
+            retryConfig = HybridConfig.RetryConfig(
+                enabled = retryEnabled,
+                maxAttempts = maxAttempts,
+                initialDelayMs = 100,
+                maxDelayMs = 5000
             )
         )
     }
@@ -195,11 +204,14 @@ class TransactionRepository(
 ### Scheduled Archival Service
 
 ```kotlin
+import app.cash.tempest.hybrid.S3KeyGenerator
+
 @Service
 class S3ArchivalService(
     private val dynamoDbClient: DynamoDbClient,
     private val s3Client: AmazonS3,
     private val objectMapper: ObjectMapper,
+    private val hybridConfig: HybridConfig,
     @Value("\${archival.bucket}") private val bucketName: String,
     @Value("\${archival.days-to-archive:30}") private val daysToArchive: Int
 ) {
@@ -256,8 +268,13 @@ class S3ArchivalService(
         val pk = item["pk"]?.s() ?: throw IllegalStateException("Missing pk")
         val sk = item["sk"]?.s() ?: throw IllegalStateException("Missing sk")
 
-        // 1. Generate S3 key
-        val s3Key = "dynamodb/archive/${pk}/${sk}.json.gz"
+        // 1. Generate S3 key using configured prefix
+        val s3Key = S3KeyGenerator.generateS3Key(
+            item,
+            "archive/{partitionKey}/{sortKey}",
+            "transactions",
+            hybridConfig  // Automatically prepends keyPrefix
+        )
 
         // 2. Convert to JSON
         val json = convertToJson(item)
@@ -638,6 +655,29 @@ class HybridStorageMetrics(
             "table", tableName,
             "status", if (success) "success" else "failure"
         ).increment()
+    }
+
+    fun recordRetry(
+        operation: String,
+        attempt: Int,
+        succeeded: Boolean,
+        delayMs: Long
+    ) {
+        // Track retry attempts
+        meterRegistry.counter(
+            "hybrid.s3.retry",
+            "operation", operation,
+            "attempt", attempt.toString(),
+            "status", if (succeeded) "success" else "retry"
+        ).increment()
+
+        // Track retry delays
+        if (delayMs > 0) {
+            meterRegistry.timer(
+                "hybrid.s3.retry.delay",
+                "operation", operation
+            ).record(delayMs, TimeUnit.MILLISECONDS)
+        }
     }
 
     fun getStats(): HybridStats {

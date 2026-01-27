@@ -71,7 +71,31 @@ When items are stored in S3 (by your external archival process), represent them 
 
 The library will automatically detect these pointers and hydrate the full data from S3.
 
-### 3. Executor Lifecycle Management
+### 3. Using keyPrefix in Archival Jobs
+
+The `keyPrefix` configuration allows you to organize S3 objects with a common prefix:
+
+```kotlin
+val config = HybridConfig(
+    s3Config = HybridConfig.S3Config(
+        bucketName = "my-archive-bucket",
+        keyPrefix = "dynamodb/production/2024/"
+    )
+)
+
+// Use the new S3KeyGenerator method that incorporates keyPrefix
+val s3Key = S3KeyGenerator.generateS3Key(
+    item,
+    "{tableName}/{partitionKey}/{sortKey}",
+    "transactions",
+    config  // Pass config to use keyPrefix
+)
+// Result: "dynamodb/production/2024/transactions/USER#123/TX#456.json.gz"
+```
+
+This helps organize S3 data by environment, date, or any other scheme you prefer.
+
+### 4. Executor Lifecycle Management
 
 The library provides two options for executor management:
 
@@ -144,6 +168,36 @@ val s3Executor = null  // Pass null for sequential execution
 | Heavy (> 50 items/query) | 20 | Maximize parallelism |
 | Batch Operations | 30-50 | High throughput for migrations |
 
+### Retry Configuration
+
+Enable automatic retry for transient S3 failures:
+
+```kotlin
+val config = HybridConfig(
+    s3Config = HybridConfig.S3Config(bucketName = "my-bucket"),
+    retryConfig = HybridConfig.RetryConfig(
+        enabled = true,                    // Enable retry logic
+        maxAttempts = 3,                   // Maximum attempts including initial
+        initialDelayMs = 100,              // Initial delay before first retry
+        maxDelayMs = 5000,                 // Maximum delay between retries
+        retryableExceptions = setOf(       // Exception types to retry
+            IOException::class.java,
+            SocketTimeoutException::class.java,
+            ConnectException::class.java
+        )
+    )
+)
+```
+
+By default, retry logic is disabled for backward compatibility. When enabled, it uses exponential backoff with jitter to prevent thundering herd problems.
+
+#### Retry Behavior
+
+- **Exponential Backoff**: Delay doubles with each attempt (100ms → 200ms → 400ms → ...)
+- **Jitter**: ±20% randomization to spread out retry attempts
+- **Max Delay Cap**: Delays are capped at `maxDelayMs` to prevent excessive wait times
+- **Smart Exception Handling**: Only retries transient network errors, not permission or data errors
+
 ## Performance
 
 ### Parallel vs Sequential Hydration
@@ -185,7 +239,14 @@ class DynamoDbConfig {
         s3Executor: ExecutorService
     ): DynamoDbClient {
         val config = HybridConfig(
-            s3Config = HybridConfig.S3Config(bucketName = bucketName)
+            s3Config = HybridConfig.S3Config(
+                bucketName = bucketName,
+                keyPrefix = "dynamodb/${environment}/"
+            ),
+            retryConfig = HybridConfig.RetryConfig(
+                enabled = true,
+                maxAttempts = 3
+            )
         )
 
         val factory = HybridDynamoDbFactory(
@@ -292,6 +353,13 @@ class DatadogMetrics(private val statsd: StatsDClient) : HybridMetrics {
                 statsd.recordGaugeValue("tempest.hybrid.success_rate.${event.operation}",
                     event.successCount.toDouble() / event.itemCount)
             }
+            is MetricEvent.RetryAttempt -> {
+                statsd.incrementCounter("tempest.hybrid.retry.${event.operation}.attempt${event.attempt}")
+                if (event.succeeded) {
+                    statsd.incrementCounter("tempest.hybrid.retry.${event.operation}.success")
+                }
+                statsd.recordExecutionTime("tempest.hybrid.retry.delay", event.delayMs)
+            }
         }
     }
 }
@@ -324,6 +392,11 @@ The library tracks these low-cardinality metrics:
 | `Hydration.latencyMs` | Long | Time taken for S3 operation |
 | `BatchComplete.itemCount` | Int | Number of items needing hydration |
 | `BatchComplete.successCount` | Int | Number successfully hydrated |
+| `RetryAttempt.operation` | String | DynamoDB operation being retried |
+| `RetryAttempt.attempt` | Int | Attempt number (1-based) |
+| `RetryAttempt.maxAttempts` | Int | Maximum attempts configured |
+| `RetryAttempt.delayMs` | Long | Delay before this retry attempt |
+| `RetryAttempt.succeeded` | Boolean | Whether this retry succeeded |
 
 ### Disabling Metrics
 
@@ -349,7 +422,7 @@ The library uses SLF4J for logging:
 
 1. **Read-Only Hydration**: This library only handles the read path. Writing to S3 and creating pointers must be done separately.
 2. **No Caching**: Does not cache hydrated items (add application-level caching if needed)
-3. **No Retry Logic**: S3 failures are not retried (implement at application level)
+3. ~~**No Retry Logic**~~: **Optional retry logic now available** - configure via `RetryConfig`
 4. **Size Limits**: S3 objects should be reasonable size for in-memory processing
 
 ## Security Considerations

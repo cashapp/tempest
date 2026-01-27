@@ -32,6 +32,37 @@ import kotlin.reflect.jvm.javaField
  */
 object S3KeyGenerator {
 
+  /**
+   * Generates an S3 key for the given item using the provided template and configuration.
+   * The keyPrefix from config will be prepended to the generated key.
+   *
+   * @param item The DynamoDB item to generate a key for
+   * @param template The template string with placeholders like {tableName}, {partitionKey}, {sortKey}
+   * @param tableName The DynamoDB table name
+   * @param config The HybridConfig containing S3 configuration including keyPrefix
+   * @return The generated S3 key with prefix applied
+   */
+  @JvmStatic
+  fun generateS3Key(
+      item: Any,
+      template: String,
+      tableName: String,
+      config: HybridConfig
+  ): String {
+    // Generate base key using existing method
+    val baseKey = generateS3Key(item, template, tableName)
+
+    // Apply prefix if configured
+    val prefix = config.s3Config.keyPrefix
+    return if (prefix.isNotEmpty()) {
+      // Ensure single slash between prefix and key
+      val normalizedPrefix = if (prefix.endsWith("/")) prefix else "$prefix/"
+      "$normalizedPrefix$baseKey"
+    } else {
+      baseKey
+    }
+  }
+
   fun generateS3Key(item: Any, template: String, tableName: String): String {
 
     val (partitionKey, sortKey) = extractKeys(item)
