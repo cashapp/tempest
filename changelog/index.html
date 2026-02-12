@@ -1,0 +1,3129 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Tempest - Typesafe DynamoDB in Kotlin">
+      
+      
+        <meta name="author" content="Square, Inc.">
+      
+      
+        <link rel="canonical" href="https://cashapp.github.io/tempest/changelog/">
+      
+      
+        <link rel="prev" href="../guide/v2_upgrade_guide/">
+      
+      
+        <link rel="next" href="../contributing/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Changelog - Tempest</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../css/app.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="green">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#change-log" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Tempest" class="md-header__button md-logo" aria-label="Tempest" data-md-component="logo">
+      
+  <img src="../img/cashapp.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tempest
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Changelog
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/cashapp/tempest" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cashapp/tempest
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Tempest" class="md-nav__button md-logo" aria-label="Tempest" data-md-component="logo">
+      
+  <img src="../img/cashapp.png" alt="logo">
+
+    </a>
+    Tempest
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/cashapp/tempest" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cashapp/tempest
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/data_modeling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Modeling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/crud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CRUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/optimistic_locking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Optimistic Locking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/batch_read_write/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Batch Read & Write
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/query_scan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Query & Scan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/transaction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transaction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/asynchronous_programming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Asynchronous Programming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/dynamodb_resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DynamoDB Resources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/v2_upgrade_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    v2 Migration Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    For AWS SDK 1.x
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    For AWS SDK 1.x
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../1.x/tempest/app.cash.tempest/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../1.x/tempest-testing/app.cash.tempest.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest-testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../1.x/tempest-testing-jvm/app.cash.tempest.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest-testing-jvm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../1.x/tempest-testing-docker/app.cash.tempest.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest-testing-docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../1.x/tempest-testing-junit5/app.cash.tempest.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest-testing-junit5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../1.x/tempest-testing-junit4/app.cash.tempest.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest-testing-junit4
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    For AWS SDK 2.x
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    For AWS SDK 2.x
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../1.x/tempest2/app.cash.tempest2/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../1.x/tempest2-testing/app.cash.tempest2.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest2-testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../1.x/tempest2-testing-jvm/app.cash.tempest2.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest2-testing-jvm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../1.x/tempest2-testing-docker/app.cash.tempest2.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest2-testing-docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../1.x/tempest2-testing-junit5/app.cash.tempest2.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest2-testing-junit5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../1.x/tempest2-testing-junit4/app.cash.tempest2.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest2-testing-junit4
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#v20260121182711-d04106f-2026-01-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2026.01.21.182711-d04106f] - 2026-01-21
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20251104000323-3c7c6c2-2025-11-04" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.11.04.000323-3c7c6c2] - 2025-11-04
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20251027160126-16a22a2-2025-10-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.10.27.160126-16a22a2] - 2025-10-27
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20251023165355-269d2e7-2025-10-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.10.23.165355-269d2e7] - 2025-10-23
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20251021114346-63954e1-2025-10-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.10.21.114346-63954e1] - 2025-10-21
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250918063705-9bd8953-2025-09-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.09.18.063705-9bd8953] - 2025-09-18
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250717171007-3fc2a07-2025-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.07.17.171007-3fc2a07] - 2025-07-17
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250715155806-c1415e3-2025-07-15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.07.15.155806-c1415e3] - 2025-07-15
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250708171526-e297588-2025-07-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.07.08.171526-e297588] - 2025-07-08
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250611195708-6267180-2025-06-11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.06.11.195708-6267180] - 2025-06-11
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250603162437-8f485e7-2025-06-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.06.03.162437-8f485e7] - 2025-06-03
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250508201657-53a060d-2025-05-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.05.08.201657-53a060d] - 2025-05-08
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250506204520-5d19a8b-2025-05-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.05.06.204520-5d19a8b] - 2025-05-06
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250502195945-d393c44-2025-05-02" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.05.02.195945-d393c44] - 2025-05-02
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250501210208-8bac78f-2025-05-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.05.01.210208-8bac78f] - 2025-05-01
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250430143145-e1d5ea6-2025-04-30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.04.30.143145-e1d5ea6] - 2025-04-30
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250429222809-664e313-2025-04-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.04.29.222809-664e313] - 2025-04-29
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250429195656-416a281-2025-04-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.04.29.195656-416a281] - 2025-04-29
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250429173320-b9a022f-2025-04-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.04.29.173320-b9a022f] - 2025-04-29
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250429013352-ef84c17-2025-04-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.04.29.013352-ef84c17] - 2025-04-29
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250417121601-f8f94b6-2025-04-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.04.17.121601-f8f94b6] - 2025-04-17
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250317133301-6c83654-2025-03-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.03.17.133301-6c83654] - 2025-03-17
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20241217173224-cec84f6-2024-12-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.12.17.173224-cec84f6] - 2024-12-17
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20241121183936-989ef8d-2024-11-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.11.21.183936-989ef8d] - 2024-11-21
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20241121183107-0022dfb-2024-11-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.11.21.183107-0022dfb] - 2024-11-21
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20241121173322-f191626-2024-11-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.11.21.173322-f191626] - 2024-11-21
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20241105180436-5071a87-2024-11-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.11.05.180436-5071a87] - 2024-11-05
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240904165019-8430cf3-2024-09-04" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.09.04.165019-8430cf3] - 2024-09-04
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240903221103-9c4094e-2024-09-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.09.03.221103-9c4094e] - 2024-09-03
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240807002316-64f40ef-2024-08-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.08.07.002316-64f40ef] - 2024-08-07
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240709154025-e7197de-2024-07-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.07.09.154025-e7197de] - 2024-07-09
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240606210244-397e6af-2024-06-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.06.06.210244-397e6af] - 2024-06-06
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240603153616-2a33625-2024-06-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.06.03.153616-2a33625] - 2024-06-03
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240531162126-4b6b047-2024-05-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.05.31.162126-4b6b047] - 2024-05-31
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240530154311-38c0913-2024-05-30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.05.30.154311-38c0913] - 2024-05-30
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240502220037-0c53a3f-2024-05-02" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.05.02.220037-0c53a3f] - 2024-05-02
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240502204603-057472e-2024-05-02" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.05.02.204603-057472e] - 2024-05-02
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240403173818-899f19f-2024-04-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.04.03.173818-899f19f] - 2024-04-03
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240402213403-4170185-2024-04-02" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.04.02.213403-4170185] - 2024-04-02
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240402174633-95a97b2-2024-04-02" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.04.02.174633-95a97b2] - 2024-04-02
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240325180845-91fd675-2024-03-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.03.25.180845-91fd675] - 2024-03-25
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240322175754-781d9c5-2024-03-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.03.22.175754-781d9c5] - 2024-03-22
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240307210049-c13b682-2024-03-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.03.07.210049-c13b682] - 2024-03-07
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240131165844-7907db0-2024-01-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.01.31.165844-7907db0] - 2024-01-31
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240125185541-59169c5-2024-01-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.01.25.185541-59169c5] - 2024-01-25
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1103-2023-12-15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.10.3] - 2023-12-15
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1102-2023-08-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.10.2] - 2023-08-16
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1101-2023-08-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.10.1] - 2023-08-16
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1100-2023-06-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.10.0] - 2023-06-06
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#190-2023-06-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.9.0] - 2023-06-06
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#180-2023-05-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.8.0] - 2023-05-31
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#170-2023-05-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.7.0] - 2023-05-03
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#162-2022-04-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.6.2] - 2022-04-01
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#161-2022-04-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.6.1] - 2022-04-01
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#160-2022-03-30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.6.0] - 2022-03-30
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#152-2021-05-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.5.2] - 2021-05-31
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#151-2021-05-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.5.1] - 2021-05-31
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#150-2021-05-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.5.0] - 2021-05-28
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#141-2021-04-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.4.1] - 2021-04-22
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#140-2021-03-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.4.0] - 2021-03-08
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#130-2021-01-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.3.0] - 2021-01-22
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#121-2020-12-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.2.1] - 2020-12-09
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#120-2020-11-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.2.0] - 2020-11-20
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#110-2020-11-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.1.0] - 2020-11-18
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#101-2020-09-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.1] - 2020-09-18
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#100-2020-08-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.0] - 2020-08-21
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#010-2020-07-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.1.0] - 2020-07-06
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../code_of_conduct/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code of Conduct
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#v20260121182711-d04106f-2026-01-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2026.01.21.182711-d04106f] - 2026-01-21
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20251104000323-3c7c6c2-2025-11-04" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.11.04.000323-3c7c6c2] - 2025-11-04
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20251027160126-16a22a2-2025-10-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.10.27.160126-16a22a2] - 2025-10-27
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20251023165355-269d2e7-2025-10-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.10.23.165355-269d2e7] - 2025-10-23
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20251021114346-63954e1-2025-10-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.10.21.114346-63954e1] - 2025-10-21
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250918063705-9bd8953-2025-09-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.09.18.063705-9bd8953] - 2025-09-18
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250717171007-3fc2a07-2025-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.07.17.171007-3fc2a07] - 2025-07-17
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250715155806-c1415e3-2025-07-15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.07.15.155806-c1415e3] - 2025-07-15
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250708171526-e297588-2025-07-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.07.08.171526-e297588] - 2025-07-08
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250611195708-6267180-2025-06-11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.06.11.195708-6267180] - 2025-06-11
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250603162437-8f485e7-2025-06-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.06.03.162437-8f485e7] - 2025-06-03
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250508201657-53a060d-2025-05-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.05.08.201657-53a060d] - 2025-05-08
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250506204520-5d19a8b-2025-05-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.05.06.204520-5d19a8b] - 2025-05-06
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250502195945-d393c44-2025-05-02" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.05.02.195945-d393c44] - 2025-05-02
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250501210208-8bac78f-2025-05-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.05.01.210208-8bac78f] - 2025-05-01
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250430143145-e1d5ea6-2025-04-30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.04.30.143145-e1d5ea6] - 2025-04-30
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250429222809-664e313-2025-04-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.04.29.222809-664e313] - 2025-04-29
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250429195656-416a281-2025-04-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.04.29.195656-416a281] - 2025-04-29
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250429173320-b9a022f-2025-04-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.04.29.173320-b9a022f] - 2025-04-29
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250429013352-ef84c17-2025-04-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.04.29.013352-ef84c17] - 2025-04-29
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250417121601-f8f94b6-2025-04-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.04.17.121601-f8f94b6] - 2025-04-17
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20250317133301-6c83654-2025-03-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2025.03.17.133301-6c83654] - 2025-03-17
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20241217173224-cec84f6-2024-12-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.12.17.173224-cec84f6] - 2024-12-17
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20241121183936-989ef8d-2024-11-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.11.21.183936-989ef8d] - 2024-11-21
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20241121183107-0022dfb-2024-11-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.11.21.183107-0022dfb] - 2024-11-21
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20241121173322-f191626-2024-11-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.11.21.173322-f191626] - 2024-11-21
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20241105180436-5071a87-2024-11-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.11.05.180436-5071a87] - 2024-11-05
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240904165019-8430cf3-2024-09-04" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.09.04.165019-8430cf3] - 2024-09-04
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240903221103-9c4094e-2024-09-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.09.03.221103-9c4094e] - 2024-09-03
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240807002316-64f40ef-2024-08-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.08.07.002316-64f40ef] - 2024-08-07
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240709154025-e7197de-2024-07-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.07.09.154025-e7197de] - 2024-07-09
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240606210244-397e6af-2024-06-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.06.06.210244-397e6af] - 2024-06-06
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240603153616-2a33625-2024-06-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.06.03.153616-2a33625] - 2024-06-03
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240531162126-4b6b047-2024-05-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.05.31.162126-4b6b047] - 2024-05-31
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240530154311-38c0913-2024-05-30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.05.30.154311-38c0913] - 2024-05-30
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240502220037-0c53a3f-2024-05-02" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.05.02.220037-0c53a3f] - 2024-05-02
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240502204603-057472e-2024-05-02" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.05.02.204603-057472e] - 2024-05-02
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240403173818-899f19f-2024-04-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.04.03.173818-899f19f] - 2024-04-03
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240402213403-4170185-2024-04-02" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.04.02.213403-4170185] - 2024-04-02
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240402174633-95a97b2-2024-04-02" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.04.02.174633-95a97b2] - 2024-04-02
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240325180845-91fd675-2024-03-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.03.25.180845-91fd675] - 2024-03-25
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240322175754-781d9c5-2024-03-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.03.22.175754-781d9c5] - 2024-03-22
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240307210049-c13b682-2024-03-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.03.07.210049-c13b682] - 2024-03-07
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240131165844-7907db0-2024-01-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.01.31.165844-7907db0] - 2024-01-31
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v20240125185541-59169c5-2024-01-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [v2024.01.25.185541-59169c5] - 2024-01-25
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1103-2023-12-15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.10.3] - 2023-12-15
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1102-2023-08-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.10.2] - 2023-08-16
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1101-2023-08-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.10.1] - 2023-08-16
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1100-2023-06-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.10.0] - 2023-06-06
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#190-2023-06-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.9.0] - 2023-06-06
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#180-2023-05-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.8.0] - 2023-05-31
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#170-2023-05-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.7.0] - 2023-05-03
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#162-2022-04-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.6.2] - 2022-04-01
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#161-2022-04-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.6.1] - 2022-04-01
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#160-2022-03-30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.6.0] - 2022-03-30
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#152-2021-05-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.5.2] - 2021-05-31
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#151-2021-05-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.5.1] - 2021-05-31
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#150-2021-05-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.5.0] - 2021-05-28
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#141-2021-04-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.4.1] - 2021-04-22
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#140-2021-03-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.4.0] - 2021-03-08
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#130-2021-01-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.3.0] - 2021-01-22
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#121-2020-12-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.2.1] - 2020-12-09
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#120-2020-11-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.2.0] - 2020-11-20
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#110-2020-11-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.1.0] - 2020-11-18
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#101-2020-09-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.1] - 2020-09-18
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#100-2020-08-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.0] - 2020-08-21
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#010-2020-07-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.1.0] - 2020-07-06
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Starting in 2024, releases use a date-based version format
+(<code>vYYYY.MM.DD.HHMMSS-&lt;sha&gt;</code>) instead of semantic versioning. Each merge to
+main is automatically published as a new release.</p>
+</blockquote>
+<h2 id="v20260121182711-d04106f-2026-01-21">[v2026.01.21.182711-d04106f] - 2026-01-21<a class="headerlink" href="#v20260121182711-d04106f-2026-01-21" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: Add <code>put()</code> method to <code>TransactionWriteSet</code> (#246)</li>
+</ul>
+<h2 id="v20251104000323-3c7c6c2-2025-11-04">[v2025.11.04.000323-3c7c6c2] - 2025-11-04<a class="headerlink" href="#v20251104000323-3c7c6c2-2025-11-04" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Only create lookup if consistency level is different (#243)</li>
+</ul>
+<h2 id="v20251027160126-16a22a2-2025-10-27">[v2025.10.27.160126-16a22a2] - 2025-10-27<a class="headerlink" href="#v20251027160126-16a22a2-2025-10-27" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: <code>MethodHandle</code> creation should use table class (#242)</li>
+</ul>
+<h2 id="v20251023165355-269d2e7-2025-10-23">[v2025.10.23.165355-269d2e7] - 2025-10-23<a class="headerlink" href="#v20251023165355-269d2e7-2025-10-23" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Update amazon/dynamodb-local images to match embedded version (#241)</li>
+</ul>
+<h2 id="v20251021114346-63954e1-2025-10-21">[v2025.10.21.114346-63954e1] - 2025-10-21<a class="headerlink" href="#v20251021114346-63954e1-2025-10-21" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Use <code>BeanTableSchemaParams</code> in <code>TableSchemaFactory</code> (#240)</li>
+</ul>
+<h2 id="v20250918063705-9bd8953-2025-09-18">[v2025.09.18.063705-9bd8953] - 2025-09-18<a class="headerlink" href="#v20250918063705-9bd8953-2025-09-18" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Upgrade most dependencies (#239)</li>
+</ul>
+<h2 id="v20250717171007-3fc2a07-2025-07-17">[v2025.07.17.171007-3fc2a07] - 2025-07-17<a class="headerlink" href="#v20250717171007-3fc2a07-2025-07-17" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: Extend <code>WritingPager</code> to work with <code>AsyncLogicalDb</code> (#236)</li>
+</ul>
+<h2 id="v20250715155806-c1415e3-2025-07-15">[v2025.07.15.155806-c1415e3] - 2025-07-15<a class="headerlink" href="#v20250715155806-c1415e3-2025-07-15" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: <code>TempestDateAttributeConverter</code> dropping millisecond precision (#237)</li>
+</ul>
+<h2 id="v20250708171526-e297588-2025-07-08">[v2025.07.08.171526-e297588] - 2025-07-08<a class="headerlink" href="#v20250708171526-e297588-2025-07-08" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Null <code>AttributeValue</code> preventing <code>CreatedAt</code> timestamps during <code>UpdateItem</code> (#235)</li>
+</ul>
+<h2 id="v20250611195708-6267180-2025-06-11">[v2025.06.11.195708-6267180] - 2025-06-11<a class="headerlink" href="#v20250611195708-6267180-2025-06-11" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Migrate to Sonatype Central Portal (#233)</li>
+</ul>
+<h2 id="v20250603162437-8f485e7-2025-06-03">[v2025.06.03.162437-8f485e7] - 2025-06-03<a class="headerlink" href="#v20250603162437-8f485e7-2025-06-03" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: Support <code>UpdatedAt</code> and <code>CreatedAt</code> timestamps (#234)</li>
+</ul>
+<h2 id="v20250508201657-53a060d-2025-05-08">[v2025.05.08.201657-53a060d] - 2025-05-08<a class="headerlink" href="#v20250508201657-53a060d-2025-05-08" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: Support updated item on save with custom <code>WithResultExtension</code> (#221)</li>
+</ul>
+<h2 id="v20250506204520-5d19a8b-2025-05-06">[v2025.05.06.204520-5d19a8b] - 2025-05-06<a class="headerlink" href="#v20250506204520-5d19a8b-2025-05-06" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Relocate the remaining two packages from the dynamodb local jar (#231)</li>
+</ul>
+<h2 id="v20250502195945-d393c44-2025-05-02">[v2025.05.02.195945-d393c44] - 2025-05-02<a class="headerlink" href="#v20250502195945-d393c44-2025-05-02" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Update docker-java version to latest available (#224)</li>
+</ul>
+<h2 id="v20250501210208-8bac78f-2025-05-01">[v2025.05.01.210208-8bac78f] - 2025-05-01<a class="headerlink" href="#v20250501210208-8bac78f-2025-05-01" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Simplify shadowJar publishing (#230)</li>
+</ul>
+<h2 id="v20250430143145-e1d5ea6-2025-04-30">[v2025.04.30.143145-e1d5ea6] - 2025-04-30<a class="headerlink" href="#v20250430143145-e1d5ea6-2025-04-30" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Upgrade Gradle to v8.14 (#229)</li>
+</ul>
+<h2 id="v20250429222809-664e313-2025-04-29">[v2025.04.29.222809-664e313] - 2025-04-29<a class="headerlink" href="#v20250429222809-664e313-2025-04-29" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Shade ANTLR in tempest-dynamodb-local (#228)</li>
+</ul>
+<h2 id="v20250429195656-416a281-2025-04-29">[v2025.04.29.195656-416a281] - 2025-04-29<a class="headerlink" href="#v20250429195656-416a281-2025-04-29" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Switch from org.json to Jackson to preserve property ordering (#227)</li>
+</ul>
+<h2 id="v20250429173320-b9a022f-2025-04-29">[v2025.04.29.173320-b9a022f] - 2025-04-29<a class="headerlink" href="#v20250429173320-b9a022f-2025-04-29" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Post-process the Gradle module metadata to use the shadow jar deps (#226)</li>
+</ul>
+<h2 id="v20250429013352-ef84c17-2025-04-29">[v2025.04.29.013352-ef84c17] - 2025-04-29<a class="headerlink" href="#v20250429013352-ef84c17-2025-04-29" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Use the shadow plugin to shade Jetty (#225)</li>
+</ul>
+<h2 id="v20250417121601-f8f94b6-2025-04-17">[v2025.04.17.121601-f8f94b6] - 2025-04-17<a class="headerlink" href="#v20250417121601-f8f94b6-2025-04-17" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Upgrade AWS DynamoDB Local to v2.6.0 (#222)</li>
+</ul>
+<h2 id="v20250317133301-6c83654-2025-03-17">[v2025.03.17.133301-6c83654] - 2025-03-17<a class="headerlink" href="#v20250317133301-6c83654-2025-03-17" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: Add helper class to fetch docker registry credentials (#220)</li>
+</ul>
+<h2 id="v20241217173224-cec84f6-2024-12-17">[v2024.12.17.173224-cec84f6] - 2024-12-17<a class="headerlink" href="#v20241217173224-cec84f6-2024-12-17" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Bump org.junit.jupiter:junit-jupiter-engine from 5.8.2 to 5.11.4 (#204)</li>
+</ul>
+<h2 id="v20241121183936-989ef8d-2024-11-21">[v2024.11.21.183936-989ef8d] - 2024-11-21<a class="headerlink" href="#v20241121183936-989ef8d-2024-11-21" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Docs: Remove absolute path</li>
+</ul>
+<h2 id="v20241121183107-0022dfb-2024-11-21">[v2024.11.21.183107-0022dfb] - 2024-11-21<a class="headerlink" href="#v20241121183107-0022dfb-2024-11-21" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Docs: Fix upgrade guide links (#194)</li>
+</ul>
+<h2 id="v20241121173322-f191626-2024-11-21">[v2024.11.21.173322-f191626] - 2024-11-21<a class="headerlink" href="#v20241121173322-f191626-2024-11-21" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Docs: Fix broken docs sidebar links (#193)</li>
+</ul>
+<h2 id="v20241105180436-5071a87-2024-11-05">[v2024.11.05.180436-5071a87] - 2024-11-05<a class="headerlink" href="#v20241105180436-5071a87-2024-11-05" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Make the aarch64 lib dependency unconditional (#192)</li>
+</ul>
+<h2 id="v20240904165019-8430cf3-2024-09-04">[v2024.09.04.165019-8430cf3] - 2024-09-04<a class="headerlink" href="#v20240904165019-8430cf3-2024-09-04" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: Introduce support for parallel scans into tempest2 (#190)</li>
+</ul>
+<h2 id="v20240903221103-9c4094e-2024-09-03">[v2024.09.03.221103-9c4094e] - 2024-09-03<a class="headerlink" href="#v20240903221103-9c4094e-2024-09-03" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Pass <code>consistentReads</code> through overload (#191)</li>
+</ul>
+<h2 id="v20240807002316-64f40ef-2024-08-07">[v2024.08.07.002316-64f40ef] - 2024-08-07<a class="headerlink" href="#v20240807002316-64f40ef-2024-08-07" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: Add method to test DDB clients for resetting tables in between tests (#189)</li>
+</ul>
+<h2 id="v20240709154025-e7197de-2024-07-09">[v2024.07.09.154025-e7197de] - 2024-07-09<a class="headerlink" href="#v20240709154025-e7197de-2024-07-09" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Handle network removal gracefully (#188)</li>
+</ul>
+<h2 id="v20240606210244-397e6af-2024-06-06">[v2024.06.06.210244-397e6af] - 2024-06-06<a class="headerlink" href="#v20240606210244-397e6af-2024-06-06" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Handle unprocessed deletes without throwing an <code>IllegalArgumentException</code> (#187)</li>
+</ul>
+<h2 id="v20240603153616-2a33625-2024-06-03">[v2024.06.03.153616-2a33625] - 2024-06-03<a class="headerlink" href="#v20240603153616-2a33625-2024-06-03" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Try to close reused sockets in <code>TestDynamoDbService</code> (#185)</li>
+</ul>
+<h2 id="v20240531162126-4b6b047-2024-05-31">[v2024.05.31.162126-4b6b047] - 2024-05-31<a class="headerlink" href="#v20240531162126-4b6b047-2024-05-31" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Hold onto allocated ports to avoid port conflicts in concurrent tests (tempest2) (#184)</li>
+</ul>
+<h2 id="v20240530154311-38c0913-2024-05-30">[v2024.05.30.154311-38c0913] - 2024-05-30<a class="headerlink" href="#v20240530154311-38c0913-2024-05-30" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Hold onto randomly allocated ports to avoid port conflicts in concurrent tests (#182)</li>
+</ul>
+<h2 id="v20240502220037-0c53a3f-2024-05-02">[v2024.05.02.220037-0c53a3f] - 2024-05-02<a class="headerlink" href="#v20240502220037-0c53a3f-2024-05-02" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: Add support for query all and scan all (#180)</li>
+</ul>
+<h2 id="v20240502204603-057472e-2024-05-02">[v2024.05.02.204603-057472e] - 2024-05-02<a class="headerlink" href="#v20240502204603-057472e-2024-05-02" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: Add <code>TableNameResolver</code> to tempest2 (#179)</li>
+</ul>
+<h2 id="v20240403173818-899f19f-2024-04-03">[v2024.04.03.173818-899f19f] - 2024-04-03<a class="headerlink" href="#v20240403173818-899f19f-2024-04-03" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Set <code>-Xjvm-default=all-compatibility</code> compiler arg (#178)</li>
+</ul>
+<h2 id="v20240402213403-4170185-2024-04-02">[v2024.04.02.213403-4170185] - 2024-04-02<a class="headerlink" href="#v20240402213403-4170185-2024-04-02" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Bump to Java 11 (#177)</li>
+</ul>
+<h2 id="v20240402174633-95a97b2-2024-04-02">[v2024.04.02.174633-95a97b2] - 2024-04-02<a class="headerlink" href="#v20240402174633-95a97b2-2024-04-02" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Consume all result pages in <code>DynamoDbLogicalDb.batchLoad</code> (#176)</li>
+</ul>
+<h2 id="v20240325180845-91fd675-2024-03-25">[v2024.03.25.180845-91fd675] - 2024-03-25<a class="headerlink" href="#v20240325180845-91fd675-2024-03-25" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Bump to Kotlin 1.9.23, Dokka 1.9.20 (#175)</li>
+</ul>
+<h2 id="v20240322175754-781d9c5-2024-03-22">[v2024.03.22.175754-781d9c5] - 2024-03-22<a class="headerlink" href="#v20240322175754-781d9c5-2024-03-22" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: Add APIs to execute batch, query and load requests along with consumed capacity (#173)</li>
+<li>Chore: Rollback Kotlin to 1.8.22 (#174)</li>
+</ul>
+<h2 id="v20240307210049-c13b682-2024-03-07">[v2024.03.07.210049-c13b682] - 2024-03-07<a class="headerlink" href="#v20240307210049-c13b682-2024-03-07" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: Make the secondary index range key nullable (#170)</li>
+</ul>
+<h2 id="v20240131165844-7907db0-2024-01-31">[v2024.01.31.165844-7907db0] - 2024-01-31<a class="headerlink" href="#v20240131165844-7907db0-2024-01-31" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Cleanup old CI and docs (#169)</li>
+</ul>
+<h2 id="v20240125185541-59169c5-2024-01-25">[v2024.01.25.185541-59169c5] - 2024-01-25<a class="headerlink" href="#v20240125185541-59169c5-2024-01-25" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Migrate to <code>libs.versions.toml</code> (#165)</li>
+<li>Chore: Copy CI publish auto-release from Misk (#166)</li>
+<li>Chore: Fix CI (#167, #168)</li>
+</ul>
+<h2 id="1103-2023-12-15">[1.10.3] - 2023-12-15<a class="headerlink" href="#1103-2023-12-15" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Pin DynamoDB Docker image to 2.1.0 to avoid breaking issue with latest</li>
+</ul>
+<h2 id="1102-2023-08-16">[1.10.2] - 2023-08-16<a class="headerlink" href="#1102-2023-08-16" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Creating new tag for publication</li>
+</ul>
+<h2 id="1101-2023-08-16">[1.10.1] - 2023-08-16<a class="headerlink" href="#1101-2023-08-16" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Initialize the dynamodb clients immediately to avoid DI issues in consumers</li>
+</ul>
+<h2 id="1100-2023-06-06">[1.10.0] - 2023-06-06<a class="headerlink" href="#1100-2023-06-06" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Async Batch support for multiple pages</li>
+</ul>
+<h2 id="190-2023-06-06">[1.9.0] - 2023-06-06<a class="headerlink" href="#190-2023-06-06" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: add BOM</li>
+</ul>
+<h2 id="180-2023-05-31">[1.8.0] - 2023-05-31<a class="headerlink" href="#180-2023-05-31" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New(tempest2): Adds <code>Attribute.allowEmpty</code> to support nullable, prefixed fields</li>
+</ul>
+<h2 id="170-2023-05-03">[1.7.0] - 2023-05-03<a class="headerlink" href="#170-2023-05-03" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New(gradle): Add Hermit</li>
+<li>New: Add <code>pageWritten</code> hook to <code>WritingPager.Handler</code></li>
+<li>New: Add paging to <code>batchLoad</code> and <code>batchWrite</code> (sync only)</li>
+<li>Docs: Migration guide for v1 -&gt; v2</li>
+<li>Test: Shorter timeout on test dynamo server</li>
+<li>Chore(deps): Upgrade OpenJDK to 17</li>
+<li>Chore(gradle): Upgrade to 7.6.1</li>
+<li>Chore(deps): Upgrade to Kotlin 1.7</li>
+<li>Chore(gradle): Swap out kotlin-dsl for kotlin-jvm</li>
+</ul>
+<h2 id="162-2022-04-01">[1.6.2] - 2022-04-01<a class="headerlink" href="#162-2022-04-01" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fixed: Fixing release, making sure we run the publication logic (#100)</li>
+</ul>
+<h2 id="161-2022-04-01">[1.6.1] - 2022-04-01<a class="headerlink" href="#161-2022-04-01" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fixed: Fixing release logic (#99)</li>
+</ul>
+<h2 id="160-2022-03-30">[1.6.0] - 2022-03-30<a class="headerlink" href="#160-2022-03-30" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: Adds the correct sqlite4java dep when running on M1 Macs (#96).</li>
+<li>Fixed: unit test to be able to run in docker bridge environment (#97).</li>
+<li>Fixed: need to allow m1 arch (#94).</li>
+<li>Fixed: can&rsquo;t do enforce of the platform (#93)</li>
+<li>Fixed: Improve error message about property names starting with is (#71)</li>
+<li>Fixed: syntax formatting in README.md (#69)</li>
+<li>Fixed: typo &lsquo;album_artiest&rsquo; =&gt; &lsquo;album_artist&rsquo; (#68)</li>
+<li>Fixed: Improve performance for cache reflection results (#65)</li>
+<li>Chore: Upgrade to kotlin 1.6; gradle 7.3.2; fix docker usage (#92)</li>
+<li>Chore: Bump actions/checkout from 2.3.4 to 3 dependencies github_actions (#90)</li>
+<li>Chore: Update log4j version to 2.16.0. (#85)</li>
+<li>Chore: Upgrade spotless to a 5.x version (#84)</li>
+<li>Chore: Upgrade log4j version to avoid potential RCE vuln (#83)</li>
+<li>Chore: Bump junixsocket-common from 2.3.4 to 2.4.0  dependencies java (#67)</li>
+<li>Chore: Bump junixsocket-native-common from 2.3.4 to 2.4.0  dependencies java (#66)</li>
+</ul>
+<h2 id="152-2021-05-31">[1.5.2] - 2021-05-31<a class="headerlink" href="#152-2021-05-31" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fixed: Make it easy to integrate with other testing frameworks (#58).</li>
+</ul>
+<h2 id="151-2021-05-31">[1.5.1] - 2021-05-31<a class="headerlink" href="#151-2021-05-31" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fixed: To share one test server with multiple tests (#57).</li>
+</ul>
+<h2 id="150-2021-05-28">[1.5.0] - 2021-05-28<a class="headerlink" href="#150-2021-05-28" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: Add async and suspending APIs for SDK 2.x (#48)</li>
+<li>New: In SDK 1.x, save now returns a copy of locally updated attributes (#55).</li>
+</ul>
+<h2 id="141-2021-04-22">[1.4.1] - 2021-04-22<a class="headerlink" href="#141-2021-04-22" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fixed: Improve error message (#44)</li>
+<li>Fixed: Improve documentation (#43, #46).</li>
+</ul>
+<h2 id="140-2021-03-08">[1.4.0] - 2021-03-08<a class="headerlink" href="#140-2021-03-08" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: <code>tempest-testing</code> APIs for testing DynamoDB clients using DynamoDBLocal (#33).</li>
+<li>New: Support for Java Record (#27).</li>
+</ul>
+<h2 id="130-2021-01-22">[1.3.0] - 2021-01-22<a class="headerlink" href="#130-2021-01-22" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: <code>app.cash.tempest:tempest2:1.3.0</code> supports AWS SDK 2.x (#23).</li>
+</ul>
+<h2 id="121-2020-12-09">[1.2.1] - 2020-12-09<a class="headerlink" href="#121-2020-12-09" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fixed: Automatically handle reserved words (#20).</li>
+</ul>
+<h2 id="120-2020-11-20">[1.2.0] - 2020-11-20<a class="headerlink" href="#120-2020-11-20" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fixed: Remove <code>IllegalStateException</code> wrapping of <code>TransactionCanceledException</code> (#18).</li>
+</ul>
+<h2 id="110-2020-11-18">[1.1.0] - 2020-11-18<a class="headerlink" href="#110-2020-11-18" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: <code>LogicalTable.codec</code> makes it easy to interoperate with <code>DynamoDBMapper</code> APIs.</li>
+</ul>
+<h2 id="101-2020-09-18">[1.0.1] - 2020-09-18<a class="headerlink" href="#101-2020-09-18" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: Make <code>Offset</code>&rsquo;s constructor public.</li>
+</ul>
+<h2 id="100-2020-08-21">[1.0.0] - 2020-08-21<a class="headerlink" href="#100-2020-08-21" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New: Add Java friendly APIs.</li>
+<li>New: Support item types and key types declared in Java.</li>
+<li>New: Ignore transient properties in item types and key types.</li>
+</ul>
+<h2 id="010-2020-07-06">[0.1.0] - 2020-07-06<a class="headerlink" href="#010-2020-07-06" title="Permanent link">&para;</a></h2>
+<p>Initial release.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2021 Square, Inc.
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

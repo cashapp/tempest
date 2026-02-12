@@ -1,0 +1,2636 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Tempest - Typesafe DynamoDB in Kotlin">
+      
+      
+        <meta name="author" content="Square, Inc.">
+      
+      
+        <link rel="canonical" href="https://cashapp.github.io/tempest/guide/data_modeling/">
+      
+      
+        <link rel="prev" href="../getting_started/">
+      
+      
+        <link rel="next" href="../crud/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Data Modeling - Tempest</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../css/app.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="green">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#dynamodb-approach" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Tempest" class="md-header__button md-logo" aria-label="Tempest" data-md-component="logo">
+      
+  <img src="../../img/cashapp.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tempest
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Data Modeling
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/cashapp/tempest" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cashapp/tempest
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Tempest" class="md-nav__button md-logo" aria-label="Tempest" data-md-component="logo">
+      
+  <img src="../../img/cashapp.png" alt="logo">
+
+    </a>
+    Tempest
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/cashapp/tempest" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cashapp/tempest
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Modeling
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Modeling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#dynamodb-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DynamoDB Approach
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DynamoDB Approach">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#access-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Access Patterns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#efficient-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Efficient Schema
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tempest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tempest
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tempest">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logical-db" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logical DB
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logical DB">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#optional-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logical-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logical Table
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logical Table">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inline-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inline View
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secondary-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secondary Index
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-attribute-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom Attribute Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../crud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CRUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../optimistic_locking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Optimistic Locking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../batch_read_write/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Batch Read & Write
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_scan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Query & Scan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../transaction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transaction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../asynchronous_programming/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Asynchronous Programming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dynamodb_resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DynamoDB Resources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../v2_upgrade_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    v2 Migration Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    For AWS SDK 1.x
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    For AWS SDK 1.x
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest/app.cash.tempest/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest-testing/app.cash.tempest.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest-testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest-testing-jvm/app.cash.tempest.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest-testing-jvm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest-testing-docker/app.cash.tempest.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest-testing-docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest-testing-junit5/app.cash.tempest.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest-testing-junit5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest-testing-junit4/app.cash.tempest.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest-testing-junit4
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    For AWS SDK 2.x
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    For AWS SDK 2.x
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest2/app.cash.tempest2/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest2-testing/app.cash.tempest2.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest2-testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest2-testing-jvm/app.cash.tempest2.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest2-testing-jvm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest2-testing-docker/app.cash.tempest2.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest2-testing-docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest2-testing-junit5/app.cash.tempest2.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest2-testing-junit5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1.x/tempest2-testing-junit4/app.cash.tempest2.testing/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tempest2-testing-junit4
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../code_of_conduct/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code of Conduct
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#dynamodb-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DynamoDB Approach
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DynamoDB Approach">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#access-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Access Patterns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#efficient-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Efficient Schema
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tempest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tempest
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tempest">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logical-db" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logical DB
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logical DB">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#optional-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logical-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logical Table
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logical Table">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inline-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inline View
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secondary-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secondary Index
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-attribute-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom Attribute Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+  <h1>Data Modeling</h1>
+
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>For an RDBMS, you can create a normalized data model without thinking about access patterns. You can then extend it later when new questions and query requirements arise. By contrast, in Amazon DynamoDB, you shouldn&rsquo;t start designing your schema until you know the questions that it needs to answer. Understanding the business problems and the application use cases up front is absolutely essential.</p>
+</div>
+<h2 id="dynamodb-approach">DynamoDB Approach<a class="headerlink" href="#dynamodb-approach" title="Permanent link">&para;</a></h2>
+<p>As explained in the <a href="../../">project overview</a>, DynamoDB approaches data modeling differently from relational databases. </p>
+<h3 id="access-patterns">Access Patterns<a class="headerlink" href="#access-patterns" title="Permanent link">&para;</a></h3>
+<p>In each DynamoDB table, data is organized for locality of expected access patterns.
+This gives you excellent performance if the structure of the data and access patterns agree 
+and terrible performance otherwise.</p>
+<p>To design a DynamoDB table that scales efficiently, you must first identify the access patterns required by the business logic.</p>
+<p>Suppose we are building a music library with this entity model.</p>
+<p><img alt="Data Model" src="../../img/data-model-mermaid.jpg" /></p>
+<p>This music library needs to support the following access patterns.</p>
+<table>
+  <tbody>
+    <tr>
+      <th colspan=2 align="center">The Most Common Access Patterns</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>Load album and its tracks by album token</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Load track by track token</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>List tracks in a playlist</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>List albums by artist name</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>Find album by album title</td>
+    </tr>     
+    <tr>
+      <td>6</td>
+      <td>Find track by track title</td>
+    </tr>     
+    <tr>
+      <td colspan=2>...</td>
+    </tr>    
+  </tbody>
+</table>
+
+<h3 id="efficient-schema">Efficient Schema<a class="headerlink" href="#efficient-schema" title="Permanent link">&para;</a></h3>
+<p>An efficient schema that keeps related data in close proximity has a major impact on cost and performance. 
+Instead of distributing related data items across multiple tables, you should keep related items in your table as close together as possible.
+Typically, this means storing related rows in the same table, and with the same partition key.
+Within a partition key, related rows should share a prefix of the sort key.</p>
+<p>We can design an efficient schema using these patterns:</p>
+<ul>
+<li><strong>Denormalization</strong>: Schema flexibility lets DynamoDB store structured data, such as lists, sets, and nested objects, in a single item.</li>
+<li><strong>Composite key aggregation</strong>: Deliberate key design puts related entities close together.</li>
+<li><strong>Sort order</strong>: Related items can be grouped together and queried efficiently if their key design causes them to sort together.</li>
+<li><strong>Global secondary indexes</strong>: By creating specific global secondary indexes, you can enable different queries than your main table can support, and that are still fast and inexpensive.</li>
+<li><strong>Adjacency list</strong>: <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-adjacency-graphs.html">Adjacency lists</a> are a design pattern that is useful for modeling many-to-many relationships. More generally, they provide a way to represent graph data (nodes and edges).</li>
+</ul>
+<table>
+  <tbody>
+    <tr>
+      <td colspan=2 align="center">Primary Key</td>
+      <td rowspan=2 colspan=4 align="center" valign="top">Attributes</td>
+    </tr>
+    <tr>
+      <td><strong>partition_key</strong></td>
+      <td><strong>sort_key</strong></td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_1</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">INFO</td>
+      <td><strong>album_title</strong></td>
+      <td><strong>album_artist</strong></td>
+      <td><strong>release_date</strong></td>
+      <td><strong>genre</strong></td>
+    </tr>
+    <tr>
+      <td>The Dark Side of the Moon</td>
+      <td>Pink Floyd</td>
+      <td>1973-03-01</td>
+      <td>Progressive rock</td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_1</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">TRACK_1</td>
+      <td><strong>track_title</strong></td>
+      <td><strong>run_length</strong></td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td>Speak to Me</td>
+      <td>PT1M13S</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_1</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">TRACK_2</td>
+      <td><strong>track_title</strong></td>
+      <td><strong>run_length</strong></td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td>Breathe</td>
+      <td>PT2M43S</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_1</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">TRACK_3</td>
+      <td><strong>track_title</strong></td>
+      <td><strong>run_length</strong></td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td>On the Run</td>
+      <td>PT3M36S</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan=6>...</td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_2</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">INFO</td>
+      <td><strong>album_title</strong></td>
+      <td><strong>album_artist</strong></td>
+      <td><strong>release_date</strong></td>
+      <td><strong>genre</strong></td>
+    </tr>
+    <tr>
+      <td>The Wall</td>
+      <td>Pink Floyd</td>
+      <td>1979-11-30</td>
+      <td>Progressive rock</td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_2</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">TRACK_1</td>
+      <td><strong>track_title</strong></td>
+      <td><strong>run_length</strong></td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td>In the Flesh?</td>
+      <td>PT3M20S</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan=6>...</td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">PLAYLIST_1</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">INFO</td>
+      <td><strong>playlist_name</strong></td>
+      <td><strong>playlist_size</strong></td>
+      <td><strong>playlist_tracks</strong></td>
+      <td><strong>playlist_version</strong></td>
+    </tr>
+    <tr>
+      <td>Psychedelic Rock Essentials</td>
+      <td>100</td>
+      <td>ALBUM_1/TRACK_1, ALBUM_1322/TRACK_9, ALBUM_3423/TRACK_3, ALBUM_84/TRACK_10, ALBUM_2/TRACK_5, <br/>...</td>
+      <td>12</td>
+    </tr>
+    <tr>
+      <td colspan=6>...</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This table uses a <a href="https://aws.amazon.com/blogs/database/choosing-the-right-dynamodb-partition-key/">composite primary key</a>, <code>(parition_key, sort_key)</code>, to identify each item.</p>
+<ul>
+<li>The key <code>("ALBUM_1", "INFO")</code> identifies <code>ALBUM_1</code>&rsquo;s metadata.</li>
+<li>The key <code>("ALBUM_1", "TRACK_1")</code> identifies <code>ALBUM_1</code>&rsquo;s first track.</li>
+<li>The key <code>("PLAYLIST_1", "INFO")</code> identifies <code>PLAYLIST_1</code>&rsquo;s content.</li>
+</ul>
+<p>It uses secondary indexes to answer additional queries.</p>
+<table>
+  <tbody>
+    <tr>
+      <td colspan=2 align="center">GSI Primary Key</td>
+      <td rowspan=2 colspan=4 align="center" valign="top">Projected Attributes</td>
+    </tr>
+    <tr>
+      <td><strong>artist_name</strong></td>
+      <td><strong>partition_key</strong></td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">Pink Floyd</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_1</td>
+      <td><strong>album_title</strong></td>
+      <td><strong>sort_key</strong></td>
+      <td><strong>release_date</strong></td>
+      <td><strong>genre</strong></td>
+    </tr>
+    <tr>
+      <td>The Dark Side of the Moon</td>
+      <td>INFO</td>
+      <td>1973-03-01</td>
+      <td>Progressive rock</td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">Pink Floyd</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_2</td>
+      <td><strong>album_title</strong></td>
+      <td><strong>sort_key</strong></td>
+      <td><strong>release_date</strong></td>
+      <td><strong>genre</strong></td>
+    </tr>
+    <tr>
+      <td>The Wall</td>
+      <td>INFO</td>
+      <td>1979-11-30</td>
+      <td>Progressive rock</td>
+    </tr>   
+    <tr>
+      <td colspan=6>...</td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">The Beatles</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_232</td>
+      <td><strong>album_title</strong></td>
+      <td><strong>sort_key</strong></td>
+      <td><strong>release_date</strong></td>
+      <td><strong>genre</strong></td>
+    </tr>
+    <tr>
+      <td>Revolver</td>
+      <td>INFO</td>
+      <td>1966-06-21</td>
+      <td>Rock</td>
+    </tr>   
+    <tr>
+      <td colspan=6>...</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GSI.html">global secondary index</a> groups <code>AlbumInfo</code> by <code>artist_name</code> and sorts them by the primary index <code>parition_key</code>. </p>
+<h2 id="tempest">Tempest<a class="headerlink" href="#tempest" title="Permanent link">&para;</a></h2>
+<p>Tempest lets you define strongly typed data models on top of your <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.html"><code>DynamoDBMapper</code></a> classes.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:4"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><input id="__tabbed_1_4" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Kotlin - SDK 2.x</label><label for="__tabbed_1_2">Java - SDK 2.x</label><label for="__tabbed_1_3">Kotlin - SDK 1.x</label><label for="__tabbed_1_4">Java - SDK 1.x</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nc">MusicDb</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">LogicalDb</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="nd">@TableName</span><span class="p">(</span><span class="s">&quot;music_items&quot;</span><span class="p">)</span>
+<span class="w">   </span><span class="kd">val</span><span class="w"> </span><span class="nv">music</span><span class="p">:</span><span class="w"> </span><span class="n">MusicTable</span>
+<span class="p">}</span>
+
+<span class="kd">interface</span><span class="w"> </span><span class="nc">MusicTable</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">LogicalTable</span><span class="o">&lt;</span><span class="n">MusicItem</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">albumInfo</span><span class="p">:</span><span class="w"> </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">albumTracks</span><span class="p">:</span><span class="w"> </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumTrack</span><span class="o">&gt;</span>
+
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">playlistInfo</span><span class="p">:</span><span class="w"> </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">PlaylistInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">PlaylistInfo</span><span class="o">&gt;</span>
+
+<span class="w">  </span><span class="c1">// Global Secondary Indexes.</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">albumInfoByGenre</span><span class="p">:</span><span class="w"> </span><span class="n">SecondaryIndex</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">GenreIndexOffset</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">albumInfoByArtist</span><span class="p">:</span><span class="w"> </span><span class="n">SecondaryIndex</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">ArtistIndexOffset</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span>
+
+<span class="w">  </span><span class="c1">// Local Secondary Indexes.</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">albumTracksByTitle</span><span class="p">:</span><span class="w"> </span><span class="n">SecondaryIndex</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">TitleIndexOffset</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumTrack</span><span class="o">&gt;</span>
+<span class="p">}</span>
+
+<span class="nd">@DynamoDbBean</span>
+<span class="kd">class</span><span class="w"> </span><span class="nc">MusicItem</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// Primary key.</span>
+<span class="w">  </span><span class="nd">@get</span><span class="p">:</span><span class="n">DynamoDbPartitionKey</span>
+<span class="w">  </span><span class="nd">@get</span><span class="p">:</span><span class="n">DynamoDbSecondarySortKey</span><span class="p">(</span><span class="n">indexNames</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span><span class="s">&quot;genre_album_index&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;artist_album_index&quot;</span><span class="o">]</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">var</span><span class="w"> </span><span class="nv">partition_key</span><span class="p">:</span><span class="w"> </span><span class="kt">String?</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="nd">@get</span><span class="p">:</span><span class="n">DynamoDbSortKey</span>
+<span class="w">  </span><span class="kd">var</span><span class="w"> </span><span class="nv">sort_key</span><span class="p">:</span><span class="w"> </span><span class="kt">String?</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="c1">// Attributes...</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">MusicDb</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">LogicalDb</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nd">@TableName</span><span class="p">(</span><span class="s">&quot;music_items&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="n">MusicTable</span><span class="w"> </span><span class="nf">music</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">MusicTable</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">LogicalTable</span><span class="o">&lt;</span><span class="n">MusicItem</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">albumInfo</span><span class="p">();</span>
+<span class="w">  </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumTrack</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">albumTracks</span><span class="p">();</span>
+
+<span class="w">  </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">PlaylistInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">PlaylistInfo</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">playlistInfo</span><span class="p">();</span>
+
+<span class="w">  </span><span class="c1">// Global Secondary Indexes.</span>
+<span class="w">  </span><span class="n">SecondaryIndex</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">GenreIndexOffset</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">albumInfoByGenre</span><span class="p">();</span>
+<span class="w">  </span><span class="n">SecondaryIndex</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">ArtistIndexOffset</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">albumInfoByArtist</span><span class="p">();</span>
+
+<span class="w">  </span><span class="c1">// Local Secondary Indexes.</span>
+<span class="w">  </span><span class="n">SecondaryIndex</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">TitleIndexOffset</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumTrack</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">albumTracksByTitle</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="nd">@DynamoDbBean</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MusicItem</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// All Items.</span>
+<span class="w">  </span><span class="n">String</span><span class="w"> </span><span class="n">partition_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">  </span><span class="n">String</span><span class="w"> </span><span class="n">sort_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">  </span><span class="c1">// Attributes...</span>
+
+<span class="w">  </span><span class="nd">@DynamoDbAttribute</span><span class="p">(</span><span class="s">&quot;partition_key&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="nd">@DynamoDbPartitionKey</span>
+<span class="w">  </span><span class="nd">@DynamoDbSecondarySortKey</span><span class="p">(</span><span class="n">indexNames</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="s">&quot;genre_album_index&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;artist_album_index&quot;</span><span class="p">})</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getPartitionKey</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">partition_key</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setPartitionKey</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">partition_key</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="na">partition_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">partition_key</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@DynamoDbAttribute</span><span class="p">(</span><span class="s">&quot;sort_key&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="nd">@DynamoDbSortKey</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getSortKey</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">sort_key</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setSortKey</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">sort_key</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="na">sort_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sort_key</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="c1">// Getters and setters...</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nc">MusicDb</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">LogicalDb</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">music</span><span class="p">:</span><span class="w"> </span><span class="n">MusicTable</span>
+<span class="p">}</span>
+
+<span class="kd">interface</span><span class="w"> </span><span class="nc">MusicTable</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">LogicalTable</span><span class="o">&lt;</span><span class="n">MusicItem</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">albumInfo</span><span class="p">:</span><span class="w"> </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">albumTracks</span><span class="p">:</span><span class="w"> </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumTrack</span><span class="o">&gt;</span>
+
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">playlistInfo</span><span class="p">:</span><span class="w"> </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">PlaylistInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">PlaylistInfo</span><span class="o">&gt;</span>
+
+<span class="w">  </span><span class="c1">// Global Secondary Indexes.</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">albumInfoByGenre</span><span class="p">:</span><span class="w"> </span><span class="n">SecondaryIndex</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">GenreIndexOffset</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">albumInfoByArtist</span><span class="p">:</span><span class="w"> </span><span class="n">SecondaryIndex</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">ArtistIndexOffset</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span>
+
+<span class="w">  </span><span class="c1">// Local Secondary Indexes.</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">albumTracksByTitle</span><span class="p">:</span><span class="w"> </span><span class="n">SecondaryIndex</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">TitleIndexOffset</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumTrack</span><span class="o">&gt;</span>
+<span class="p">}</span>
+
+<span class="nd">@DynamoDBTable</span><span class="p">(</span><span class="n">tableName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;music_items&quot;</span><span class="p">)</span>
+<span class="kd">class</span><span class="w"> </span><span class="nc">MusicItem</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// Primary key.</span>
+<span class="w">  </span><span class="nd">@DynamoDBHashKey</span>
+<span class="w">  </span><span class="nd">@DynamoDBIndexRangeKey</span><span class="p">(</span><span class="n">globalSecondaryIndexNames</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span><span class="s">&quot;genre_album_index&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;artist_album_index&quot;</span><span class="o">]</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">var</span><span class="w"> </span><span class="nv">partition_key</span><span class="p">:</span><span class="w"> </span><span class="kt">String?</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="nd">@DynamoDBRangeKey</span>
+<span class="w">  </span><span class="kd">var</span><span class="w"> </span><span class="nv">sort_key</span><span class="p">:</span><span class="w"> </span><span class="kt">String?</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="c1">// Attributes...</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">MusicDb</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">LogicalDb</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">MusicTable</span><span class="w"> </span><span class="nf">music</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">MusicTable</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">LogicalTable</span><span class="o">&lt;</span><span class="n">MusicItem</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">albumInfo</span><span class="p">();</span>
+<span class="w">  </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumTrack</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">albumTracks</span><span class="p">();</span>
+
+<span class="w">  </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">PlaylistInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">PlaylistInfo</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">playlistInfo</span><span class="p">();</span>
+
+<span class="w">  </span><span class="c1">// Global Secondary Indexes.</span>
+<span class="w">  </span><span class="n">SecondaryIndex</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">GenreIndexOffset</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">albumInfoByGenre</span><span class="p">();</span>
+<span class="w">  </span><span class="n">SecondaryIndex</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">ArtistIndexOffset</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">albumInfoByArtist</span><span class="p">();</span>
+
+<span class="w">  </span><span class="c1">// Local Secondary Indexes.</span>
+<span class="w">  </span><span class="n">SecondaryIndex</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">TitleIndexOffset</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumTrack</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">albumTracksByTitle</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="nd">@DynamoDBTable</span><span class="p">(</span><span class="n">tableName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;music_items&quot;</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MusicItem</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// All Items.</span>
+<span class="w">  </span><span class="n">String</span><span class="w"> </span><span class="n">partition_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">  </span><span class="n">String</span><span class="w"> </span><span class="n">sort_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">  </span><span class="c1">// Attributes...</span>
+
+<span class="w">  </span><span class="nd">@DynamoDBHashKey</span><span class="p">(</span><span class="n">attributeName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;partition_key&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="nd">@DynamoDBIndexRangeKey</span><span class="p">(</span><span class="n">globalSecondaryIndexNames</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="s">&quot;genre_album_index&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;artist_album_index&quot;</span><span class="p">})</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getPartitionKey</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">partition_key</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setPartitionKey</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">partition_key</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="na">partition_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">partition_key</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@DynamoDBRangeKey</span><span class="p">(</span><span class="n">attributeName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;sort_key&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getSortKey</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">sort_key</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setSortKey</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">sort_key</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="na">sort_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sort_key</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="c1">// Getter and setters...</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>Tempest has these components:</p>
+<ul>
+<li>Logical DB<ul>
+<li>Logical tables (1 to 1 with your DynamoDBMapper classes)<ul>
+<li>Inline views <ul>
+<li>Key type</li>
+<li>Item type</li>
+</ul>
+</li>
+<li>Secondary indexes <ul>
+<li>Offset type</li>
+<li>Item type</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="logical-db">Logical DB<a class="headerlink" href="#logical-db" title="Permanent link">&para;</a></h3>
+<p>A <code>LogicalDb</code> is a collection of tables that implement the DynamoDB best practice of putting multiple
+item types into the same storage table. This makes it possible to perform aggregate operations
+and transactions on those item types.</p>
+<p>For example, you can batch load up to 100 items in a single request. </p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Kotlin</label><label for="__tabbed_2_2">Java</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">val</span><span class="w"> </span><span class="nv">items</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">musicDb</span><span class="p">.</span><span class="na">batchLoad</span><span class="p">(</span>
+<span class="w">  </span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="s">&quot;ALBUM_1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;TRACK_5&quot;</span><span class="p">),</span>
+<span class="w">  </span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="s">&quot;ALBUM_2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;TRACK_3&quot;</span><span class="p">),</span>
+<span class="w">  </span><span class="n">PlaylistInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="s">&quot;PLAYLIST_1&quot;</span><span class="p">))</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="n">ItemSet</span><span class="w"> </span><span class="n">items</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">db</span><span class="p">.</span><span class="na">batchLoad</span><span class="p">(</span>
+<span class="w">    </span><span class="n">List</span><span class="p">.</span><span class="na">of</span><span class="p">(</span>
+<span class="w">        </span><span class="k">new</span><span class="w"> </span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="s">&quot;ALBUM_1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;TRACK_5&quot;</span><span class="p">),</span>
+<span class="w">        </span><span class="k">new</span><span class="w"> </span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="s">&quot;ALBUM_2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;TRACK_3&quot;</span><span class="p">),</span>
+<span class="w">        </span><span class="k">new</span><span class="w"> </span><span class="n">PlaylistInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">(</span><span class="s">&quot;PLAYLIST_1&quot;</span><span class="p">)));</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>To create a <code>LogicalDb</code>, you need to pass in an instance of <code>DynamoDBMapper</code>.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:4"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><input id="__tabbed_3_3" name="__tabbed_3" type="radio" /><input id="__tabbed_3_4" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Kotlin - SDK 2.x</label><label for="__tabbed_3_2">Java - SDK 2.x</label><label for="__tabbed_3_3">Kotlin - SDK 1.x</label><label for="__tabbed_3_4">Java - SDK 1.x</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">val</span><span class="w"> </span><span class="nv">enhancedClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DynamoDbEnhancedClient</span><span class="p">.</span><span class="na">create</span><span class="p">()</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">db</span><span class="p">:</span><span class="w"> </span><span class="n">MusicDb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LogicalDb</span><span class="p">(</span><span class="n">enhancedClient</span><span class="p">)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="n">DynamoDbEnhancedClient</span><span class="w"> </span><span class="n">enhancedClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DynamoDbEnhancedClient</span><span class="p">.</span><span class="na">create</span><span class="p">();</span>
+<span class="n">MusicDb</span><span class="w"> </span><span class="n">db</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LogicalDb</span><span class="p">.</span><span class="na">create</span><span class="p">(</span><span class="n">MusicDb</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">enhancedClient</span><span class="p">);</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">val</span><span class="w"> </span><span class="nv">client</span><span class="p">:</span><span class="w"> </span><span class="n">AmazonDynamoDB</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AmazonDynamoDBClientBuilder</span><span class="p">.</span><span class="na">standard</span><span class="p">().</span><span class="na">build</span><span class="p">()</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">mapper</span><span class="p">:</span><span class="w"> </span><span class="n">DynamoDBMapper</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DynamoDBMapper</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">db</span><span class="p">:</span><span class="w"> </span><span class="n">MusicDb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LogicalDb</span><span class="p">(</span><span class="n">mapper</span><span class="p">)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="n">AmazonDynamoDB</span><span class="w"> </span><span class="n">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AmazonDynamoDBClientBuilder</span><span class="p">.</span><span class="na">standard</span><span class="p">().</span><span class="na">build</span><span class="p">();</span>
+<span class="n">DynamoDBMapper</span><span class="w"> </span><span class="n">mapper</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">DynamoDBMapper</span><span class="p">(</span><span class="n">client</span><span class="p">);</span>
+<span class="n">MusicDb</span><span class="w"> </span><span class="n">db</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LogicalDb</span><span class="p">.</span><span class="na">create</span><span class="p">(</span><span class="n">MusicDb</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">mapper</span><span class="p">);</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<h4 id="optional-configuration">Optional Configuration<a class="headerlink" href="#optional-configuration" title="Permanent link">&para;</a></h4>
+<p>When you create an instance of DynamoDBMapper, it has certain default behaviors; you can override these defaults by using the DynamoDBMapperConfig class.</p>
+<p>The following code snippet creates a DynamoDBMapper with custom settings:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:4"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><input id="__tabbed_4_3" name="__tabbed_4" type="radio" /><input id="__tabbed_4_4" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Kotlin - SDK 2.x</label><label for="__tabbed_4_2">Java - SDK 2.x</label><label for="__tabbed_4_3">Kotlin - SDK 1.x</label><label for="__tabbed_4_4">Java - SDK 1.x</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">val</span><span class="w"> </span><span class="nv">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DynamoDbClient</span><span class="p">.</span><span class="na">create</span><span class="p">()</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">enhancedClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DynamoDbEnhancedClient</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">  </span><span class="p">.</span><span class="na">dynamoDbClient</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="na">extensions</span><span class="p">(</span><span class="n">listOf</span><span class="p">(</span><span class="cm">/* ... */</span><span class="p">))</span>
+<span class="w">  </span><span class="p">.</span><span class="na">build</span><span class="p">()</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">db</span><span class="p">:</span><span class="w"> </span><span class="n">MusicDb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LogicalDb</span><span class="p">(</span><span class="n">enhancedClient</span><span class="p">)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="n">DynamoDbClient</span><span class="w"> </span><span class="n">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DynamoDbClient</span><span class="p">.</span><span class="na">create</span><span class="p">();</span>
+<span class="n">DynamoDbEnhancedClient</span><span class="w"> </span><span class="n">enhancedClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DynamoDbEnhancedClient</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">dynamoDbClient</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">extensions</span><span class="p">(</span><span class="n">List</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="cm">/* ... */</span><span class="p">))</span>
+<span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="n">MusicDb</span><span class="w"> </span><span class="n">db</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LogicalDb</span><span class="p">.</span><span class="na">create</span><span class="p">(</span><span class="n">MusicDb</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">enhancedClient</span><span class="p">);</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">val</span><span class="w"> </span><span class="nv">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AmazonDynamoDBClientBuilder</span><span class="p">.</span><span class="na">standard</span><span class="p">().</span><span class="na">build</span><span class="p">()</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">mapperConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DynamoDBMapperConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">  </span><span class="p">.</span><span class="na">withSaveBehavior</span><span class="p">(</span><span class="n">SaveBehavior</span><span class="p">.</span><span class="na">CLOBBER</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="na">withConsistentReads</span><span class="p">(</span><span class="n">ConsistentReads</span><span class="p">.</span><span class="na">CONSISTENT</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="na">withTableNameOverride</span><span class="p">(</span><span class="kc">null</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="na">withPaginationLoadingStrategy</span><span class="p">(</span><span class="n">PaginationLoadingStrategy</span><span class="p">.</span><span class="na">EAGER_LOADING</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="na">build</span><span class="p">()</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">mapper</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DynamoDBMapper</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="w"> </span><span class="n">mapperConfig</span><span class="p">)</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">db</span><span class="p">:</span><span class="w"> </span><span class="n">MusicDb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LogicalDb</span><span class="p">(</span><span class="n">mapper</span><span class="p">)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="n">AmazonDynamoDB</span><span class="w"> </span><span class="n">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AmazonDynamoDBClientBuilder</span><span class="p">.</span><span class="na">standard</span><span class="p">().</span><span class="na">build</span><span class="p">();</span>
+<span class="n">DynamoDBMapperConfig</span><span class="w"> </span><span class="n">mapperConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DynamoDBMapperConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">withSaveBehavior</span><span class="p">(</span><span class="n">DynamoDBMapperConfig</span><span class="p">.</span><span class="na">SaveBehavior</span><span class="p">.</span><span class="na">CLOBBER</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">withConsistentReads</span><span class="p">(</span><span class="n">DynamoDBMapperConfig</span><span class="p">.</span><span class="na">ConsistentReads</span><span class="p">.</span><span class="na">CONSISTENT</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">withTableNameOverride</span><span class="p">(</span><span class="kc">null</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">withPaginationLoadingStrategy</span><span class="p">(</span><span class="n">DynamoDBMapperConfig</span><span class="p">.</span><span class="na">PaginationLoadingStrategy</span><span class="p">.</span><span class="na">EAGER_LOADING</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="n">DynamoDBMapper</span><span class="w"> </span><span class="n">mapper</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">DynamoDBMapper</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="w"> </span><span class="n">mapperConfig</span><span class="p">);</span>
+<span class="n">MusicDb</span><span class="w"> </span><span class="n">db</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LogicalDb</span><span class="p">.</span><span class="na">create</span><span class="p">(</span><span class="n">MusicDb</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">mapper</span><span class="p">);</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>For more information, see the <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.OptionalConfig.html">DynamoDBMapper documentation</a></p>
+<h3 id="logical-table">Logical Table<a class="headerlink" href="#logical-table" title="Permanent link">&para;</a></h3>
+<p>A <code>LogicalTable</code> is a collection of views on a DynamoDB table that makes it easy to model heterogeneous items using strongly typed data classes.</p>
+<h4 id="inline-view">Inline View<a class="headerlink" href="#inline-view" title="Permanent link">&para;</a></h4>
+<p>An <code>InlineView</code> lets you perform CRUD operations, queries, and scans on an entity type.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Kotlin</label><label for="__tabbed_5_2">Java</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nc">MusicTable</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">LogicalTable</span><span class="o">&lt;</span><span class="n">MusicItem</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">albumInfo</span><span class="p">:</span><span class="w"> </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span>
+<span class="p">}</span>
+
+<span class="kd">data</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nc">AlbumInfo</span><span class="p">(</span>
+<span class="w">  </span><span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;partition_key&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">album_token</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">album_title</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">artist_name</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">release_date</span><span class="p">:</span><span class="w"> </span><span class="n">LocalDate</span><span class="p">,</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">genre_name</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nd">@Attribute</span><span class="p">(</span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;INFO_&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">sort_key</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+
+<span class="w">  </span><span class="kd">data</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nc">Key</span><span class="p">(</span>
+<span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">album_token</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span>
+<span class="w">  </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">sort_key</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nc">MusicTable</span><span class="w"> </span><span class="n">extends</span><span class="w"> </span><span class="n">LogicalTable</span><span class="o">&lt;</span><span class="n">MusicItem</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span><span class="w"> </span><span class="n">albumInfo</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nc">AlbumInfo</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;partition_key&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="n">public</span><span class="w"> </span><span class="n">final</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="n">album_token</span><span class="p">;</span>
+<span class="w">  </span><span class="n">public</span><span class="w"> </span><span class="n">final</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="n">album_title</span><span class="p">;</span>
+<span class="w">  </span><span class="n">public</span><span class="w"> </span><span class="n">final</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="n">artist_name</span><span class="p">;</span>
+<span class="w">  </span><span class="n">public</span><span class="w"> </span><span class="n">final</span><span class="w"> </span><span class="n">LocalDate</span><span class="w"> </span><span class="n">release_date</span><span class="p">;</span>
+<span class="w">  </span><span class="n">public</span><span class="w"> </span><span class="n">final</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="n">genre_name</span><span class="p">;</span>
+
+<span class="w">  </span><span class="nd">@Attribute</span><span class="p">(</span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;INFO_&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="n">public</span><span class="w"> </span><span class="n">final</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="n">sort_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="p">;</span>
+
+<span class="w">  </span><span class="n">public</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="p">(</span>
+<span class="w">      </span><span class="kt">String</span><span class="w"> </span><span class="n">album_token</span><span class="p">,</span>
+<span class="w">      </span><span class="kt">String</span><span class="w"> </span><span class="n">album_title</span><span class="p">,</span><span class="w"> </span>
+<span class="w">      </span><span class="kt">String</span><span class="w"> </span><span class="n">artist_name</span><span class="p">,</span>
+<span class="w">      </span><span class="n">LocalDate</span><span class="w"> </span><span class="n">release_date</span><span class="p">,</span>
+<span class="w">      </span><span class="kt">String</span><span class="w"> </span><span class="n">genre_name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="na">album_token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">album_token</span><span class="p">;</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="na">album_title</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">album_title</span><span class="p">;</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="na">artist_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">artist_name</span><span class="p">;</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="na">release_date</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">release_date</span><span class="p">;</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="na">genre_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">genre_name</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="n">public</span><span class="w"> </span><span class="n">static</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nc">Key</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">public</span><span class="w"> </span><span class="n">final</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="n">album_token</span><span class="p">;</span>
+<span class="w">    </span><span class="n">public</span><span class="w"> </span><span class="n">final</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="n">sort_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">public</span><span class="w"> </span><span class="n">Key</span><span class="p">(</span><span class="kt">String</span><span class="w"> </span><span class="n">album_token</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="na">album_token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">album_token</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>The <code>albumInfo</code> view is a type-safe way to access <code>AlbumInfo</code> entities:</p>
+<table>
+  <tbody>
+    <tr>
+      <td colspan=2 align="center">Primary Key</td>
+      <td rowspan=2 colspan=4 align="center" valign="top">Attributes</td>
+    </tr>
+    <tr>
+      <td><strong>partition_key</strong></td>
+      <td><strong>sort_key</strong></td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_1</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">INFO</td>
+      <td><strong>album_title</strong></td>
+      <td><strong>album_artist</strong></td>
+      <td><strong>release_date</strong></td>
+      <td><strong>genre</strong></td>
+    </tr>
+    <tr>
+      <td>The Dark Side of the Moon</td>
+      <td>Pink Floyd</td>
+      <td>1973-03-01</td>
+      <td>Progressive rock</td>
+    </tr>
+    <tr>
+      <td colspan=6>...</td>
+    </tr>
+    <tr>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">ALBUM_2</td>
+      <td rowspan=2 style="vertical-align:bottom;" valign="bottom">INFO</td>
+      <td><strong>album_title</strong></td>
+      <td><strong>album_artist</strong></td>
+      <td><strong>release_date</strong></td>
+      <td><strong>genre</strong></td>
+    </tr>
+    <tr>
+      <td>The Wall</td>
+      <td>Pink Floyd</td>
+      <td>1979-11-30</td>
+      <td>Progressive rock</td>
+    </tr>
+    <tr>
+      <td colspan=6>...</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="admonition important">
+<p class="admonition-title">Prefixes are 1:1 with Types</p>
+<p>A <code>LogicalTable</code> can have multiple <code>InlineView</code>s. Tempest requires you to declare a prefix on the sort key in each entity type.
+It uses the prefix to determine the entity type.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Prefix</th>
+<th style="text-align: left;">Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">INFO_</td>
+<td style="text-align: left;">AlbumInfo</td>
+</tr>
+<tr>
+<td style="text-align: left;">TRACK_</td>
+<td style="text-align: left;">AlbumTrack</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">Kotlin</label><label for="__tabbed_6_2">Java</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nc">MusicTable</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">LogicalTable</span><span class="o">&lt;</span><span class="n">MusicItem</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">albumInfo</span><span class="p">:</span><span class="w"> </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">albumTracks</span><span class="p">:</span><span class="w"> </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumTrack</span><span class="o">&gt;</span>
+<span class="p">}</span>
+
+<span class="kd">data</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nc">AlbumInfo</span><span class="p">(</span>
+<span class="w">  </span><span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;partition_key&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">album_token</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nd">@Attribute</span><span class="p">(</span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;INFO_&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">sort_key</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="p">}</span>
+
+<span class="kd">data</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nc">AlbumTrack</span><span class="p">(</span>
+<span class="w">  </span><span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;partition_key&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">album_token</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span>
+<span class="w">  </span><span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;sort_key&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;TRACK_&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">track_token</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="p">)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">MusicTable</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">LogicalTable</span><span class="o">&lt;</span><span class="n">MusicItem</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">albumInfo</span><span class="p">();</span>
+<span class="w">  </span><span class="n">InlineView</span><span class="o">&lt;</span><span class="n">AlbumTrack</span><span class="p">.</span><span class="na">Key</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumTrack</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">albumTracks</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">AlbumInfo</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;partition_key&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">album_token</span><span class="p">;</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="w">  </span><span class="nd">@Attribute</span><span class="p">(</span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;INFO_&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">sort_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="p">;</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="p">}</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">AlbumTrack</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;partition_key&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">album_token</span><span class="p">;</span>
+<span class="w">  </span><span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;sort_key&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;TRACK_&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">track_token</span><span class="p">;</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<h4 id="secondary-index">Secondary Index<a class="headerlink" href="#secondary-index" title="Permanent link">&para;</a></h4>
+<p>An <code>SecondaryIndex</code> lets you perform queries, and scans on an entity type.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="7:2"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><input id="__tabbed_7_2" name="__tabbed_7" type="radio" /><div class="tabbed-labels"><label for="__tabbed_7_1">Kotlin</label><label for="__tabbed_7_2">Java</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nc">MusicTable</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">LogicalTable</span><span class="o">&lt;</span><span class="n">MusicItem</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">albumInfoByArtist</span><span class="p">:</span><span class="w"> </span><span class="n">SecondaryIndex</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">ArtistIndexOffset</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span>
+<span class="p">}</span>
+
+<span class="kd">data</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nc">AlbumInfo</span><span class="p">(</span>
+<span class="w">  </span><span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;partition_key&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">album_token</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">album_title</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">artist_name</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">release_date</span><span class="p">:</span><span class="w"> </span><span class="n">LocalDate</span><span class="p">,</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">genre_name</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nd">@Attribute</span><span class="p">(</span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;INFO_&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">sort_key</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+
+<span class="w">  </span><span class="nd">@ForIndex</span><span class="p">(</span><span class="s">&quot;artist_album_index&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">data</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nc">ArtistIndexOffset</span><span class="p">(</span>
+<span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">artist_name</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span>
+<span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">album_token</span><span class="p">:</span><span class="w"> </span><span class="kt">String?</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">// To uniquely identify an item in pagination.</span>
+<span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">sort_key</span><span class="p">:</span><span class="w"> </span><span class="kt">String?</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">MusicTable</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">LogicalTable</span><span class="o">&lt;</span><span class="n">MusicItem</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">SecondaryIndex</span><span class="o">&lt;</span><span class="n">AlbumInfo</span><span class="p">.</span><span class="na">ArtistIndexOffset</span><span class="p">,</span><span class="w"> </span><span class="n">AlbumInfo</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">albumInfoByArtist</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">AlbumInfo</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nd">@Attribute</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;partition_key&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">album_token</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">album_title</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">artist_name</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">LocalDate</span><span class="w"> </span><span class="n">release_date</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">genre_name</span><span class="p">;</span>
+
+<span class="w">  </span><span class="nd">@Attribute</span><span class="p">(</span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;INFO_&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">sort_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="p">;</span>
+
+<span class="w">  </span><span class="nd">@ForIndex</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;artist_album_index&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">class</span> <span class="nc">ArtistIndexOffset</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">artist_name</span><span class="p">;</span>
+<span class="w">    </span><span class="nd">@Nullable</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">album_token</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// To uniquely identify an item in pagination.</span>
+<span class="w">    </span><span class="nd">@Nullable</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">sort_key</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">ArtistIndexOffset</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">artist_name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">this</span><span class="p">(</span><span class="n">artist_name</span><span class="p">,</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="kc">null</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">ArtistIndexOffset</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">artist_name</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">album_token</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">this</span><span class="p">(</span><span class="n">artist_name</span><span class="p">,</span><span class="w"> </span><span class="n">album_token</span><span class="p">,</span><span class="w"> </span><span class="kc">null</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">ArtistIndexOffset</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">artist_name</span><span class="p">,</span><span class="w"> </span><span class="nd">@Nullable</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">album_token</span><span class="p">,</span>
+<span class="w">        </span><span class="nd">@Nullable</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">sort_key</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="na">artist_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">artist_name</span><span class="p">;</span>
+<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="na">album_token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">album_token</span><span class="p">;</span>
+<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="na">sort_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sort_key</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>DynamoDB secondary indexes allows duplicate values.
+In order to uniquely identify an item in pagination, a secondary index offset type needs
+to include the primary index partition key and sort key in addition to the secondary index partition key and sort key.  </p>
+<p>Secondary index offset types are also required to have a <code>@ForIndex</code> annotation that tells Tempest the index name.</p>
+<div class="admonition important">
+<p class="admonition-title">Properties are always mapped by name</p>
+<p>Our secondary index data class properties have the exact same name as the properties in our
+DynamoDB mapper class. Tempest uses name equality to bind indexes, keys, and items to the
+DynamoDB mapper class. Each Tempest type represents a different logical subset of the available
+attributes.</p>
+</div>
+<p>The mapper class is just the union of the fields in each item, key, and secondary index.</p>
+<table>
+<thead>
+<tr>
+<th>MusicItem</th>
+<th>AlbumInfo.Key</th>
+<th>AlbumInfo.ArtistIndexOffset</th>
+<th>AlbumInfo</th>
+<th>AlbumTrack.Key</th>
+<th>AlbumTrack</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>partition_key</td>
+<td>partition_key</td>
+<td>partition_key</td>
+<td>partition_key</td>
+<td>partition_key</td>
+<td>partition_key</td>
+</tr>
+<tr>
+<td>sort_key</td>
+<td>sort_key</td>
+<td>sort_key</td>
+<td>sort_key</td>
+<td>sort_key</td>
+<td>sort_key</td>
+</tr>
+<tr>
+<td>album_title</td>
+<td></td>
+<td></td>
+<td>album_title</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>artist_name</td>
+<td></td>
+<td>artist_name</td>
+<td>artist_name</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>release_date</td>
+<td></td>
+<td></td>
+<td>release_date</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>genre</td>
+<td></td>
+<td></td>
+<td>genre</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>track_title</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>track_title</td>
+</tr>
+<tr>
+<td>run_length</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>run_length</td>
+</tr>
+</tbody>
+</table>
+<h4 id="custom-attribute-types">Custom Attribute Types<a class="headerlink" href="#custom-attribute-types" title="Permanent link">&para;</a></h4>
+<p>Tempest uses <code>DynamoDBMapper</code> to encode and decode entities.</p>
+<p><code>DynamoDBMapper</code> supports <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.DataTypes.html">these primitive Java types</a>. </p>
+<p>You may use <code>DynamoDBTypeConverter</code> to support <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.ArbitraryDataMapping.html">custom attribute types</a>.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="8:4"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio" /><input id="__tabbed_8_2" name="__tabbed_8" type="radio" /><input id="__tabbed_8_3" name="__tabbed_8" type="radio" /><input id="__tabbed_8_4" name="__tabbed_8" type="radio" /><div class="tabbed-labels"><label for="__tabbed_8_1">Kotlin - SDK 2.x</label><label for="__tabbed_8_2">Java - SDK 2.x</label><label for="__tabbed_8_3">Kotlin - SDK 1.x</label><label for="__tabbed_8_4">Java - SDK 1.x</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="nd">@DynamoDbBean</span>
+<span class="kd">class</span><span class="w"> </span><span class="nc">MusicItem</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="w">  </span><span class="nd">@get</span><span class="p">:</span><span class="n">DynamoDbAttribute</span>
+<span class="w">  </span><span class="nd">@get</span><span class="p">:</span><span class="n">DynamoDbConvertedBy</span><span class="p">(</span><span class="n">LocalDateTypeConverter</span><span class="o">::</span><span class="n">class</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">var</span><span class="w"> </span><span class="nv">release_date</span><span class="p">:</span><span class="w"> </span><span class="n">LocalDate? </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="p">}</span>
+
+<span class="kd">internal</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nc">LocalDateTypeConverter</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">AttributeConverter</span><span class="o">&lt;</span><span class="n">LocalDate</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">override</span><span class="w"> </span><span class="kd">fun</span><span class="w"> </span><span class="nf">transformFrom</span><span class="p">(</span><span class="n">input</span><span class="p">:</span><span class="w"> </span><span class="n">LocalDate</span><span class="p">):</span><span class="w"> </span><span class="n">AttributeValue</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">AttributeValue</span><span class="p">.</span><span class="na">builder</span><span class="p">().</span><span class="na">s</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="na">toString</span><span class="p">()).</span><span class="na">build</span><span class="p">()</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">override</span><span class="w"> </span><span class="kd">fun</span><span class="w"> </span><span class="nf">transformTo</span><span class="p">(</span><span class="n">input</span><span class="p">:</span><span class="w"> </span><span class="n">AttributeValue</span><span class="p">):</span><span class="w"> </span><span class="n">LocalDate</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">LocalDate</span><span class="p">.</span><span class="na">parse</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="na">s</span><span class="p">())</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">override</span><span class="w"> </span><span class="kd">fun</span><span class="w"> </span><span class="nf">type</span><span class="p">():</span><span class="w"> </span><span class="n">EnhancedType</span><span class="o">&lt;</span><span class="n">LocalDate</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">EnhancedType</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">LocalDate</span><span class="o">::</span><span class="n">class</span><span class="p">.</span><span class="na">java</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">override</span><span class="w"> </span><span class="kd">fun</span><span class="w"> </span><span class="nf">attributeValueType</span><span class="p">():</span><span class="w"> </span><span class="n">AttributeValueType</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">AttributeValueType</span><span class="p">.</span><span class="na">S</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="nd">@DynamoDbBean</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MusicItem</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="w">  </span><span class="nd">@DynamoDbAttribute</span><span class="p">(</span><span class="s">&quot;release_date&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="nd">@DynamoDbConvertedBy</span><span class="p">(</span><span class="n">LocalDateTypeConverter</span><span class="p">.</span><span class="na">class</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getReleaseDate</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">release_date</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="p">}</span>
+
+<span class="kd">class</span> <span class="nc">LocalDateTypeConverter</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">AttributeConverter</span><span class="o">&lt;</span><span class="n">LocalDate</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nd">@Override</span><span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="n">AttributeValue</span><span class="w"> </span><span class="nf">transformFrom</span><span class="p">(</span><span class="n">LocalDate</span><span class="w"> </span><span class="n">input</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">AttributeValue</span><span class="p">.</span><span class="na">builder</span><span class="p">().</span><span class="na">s</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="na">toString</span><span class="p">()).</span><span class="na">build</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Override</span><span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="n">LocalDate</span><span class="w"> </span><span class="nf">transformTo</span><span class="p">(</span><span class="n">AttributeValue</span><span class="w"> </span><span class="n">input</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">LocalDate</span><span class="p">.</span><span class="na">parse</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="na">s</span><span class="p">());</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Override</span><span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="n">EnhancedType</span><span class="o">&lt;</span><span class="n">LocalDate</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">type</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">EnhancedType</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">LocalDate</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Override</span><span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="n">AttributeValueType</span><span class="w"> </span><span class="nf">attributeValueType</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">AttributeValueType</span><span class="p">.</span><span class="na">S</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="nd">@DynamoDBTable</span><span class="p">(</span><span class="n">tableName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;music_items&quot;</span><span class="p">)</span>
+<span class="kd">class</span><span class="w"> </span><span class="nc">MusicItem</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="w">  </span><span class="nd">@DynamoDBAttribute</span>
+<span class="w">  </span><span class="nd">@DynamoDBTypeConverted</span><span class="p">(</span><span class="n">converter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LocalDateTypeConverter</span><span class="o">::</span><span class="n">class</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">var</span><span class="w"> </span><span class="nv">release_date</span><span class="p">:</span><span class="w"> </span><span class="n">LocalDate? </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="p">}</span>
+
+<span class="kd">class</span><span class="w"> </span><span class="nc">LocalDateTypeConverter</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">DynamoDBTypeConverter</span><span class="o">&lt;</span><span class="kt">String</span><span class="p">,</span><span class="w"> </span><span class="n">LocalDate</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">override</span><span class="w"> </span><span class="kd">fun</span><span class="w"> </span><span class="nf">unconvert</span><span class="p">(</span><span class="n">string</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">):</span><span class="w"> </span><span class="n">LocalDate</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">LocalDate</span><span class="p">.</span><span class="na">parse</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">override</span><span class="w"> </span><span class="kd">fun</span><span class="w"> </span><span class="nf">convert</span><span class="p">(</span><span class="n">localDate</span><span class="p">:</span><span class="w"> </span><span class="n">LocalDate</span><span class="p">):</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">localDate</span><span class="p">.</span><span class="na">toString</span><span class="p">()</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="nd">@DynamoDBTable</span><span class="p">(</span><span class="n">tableName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;music_items&quot;</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MusicItem</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="w">  </span><span class="nd">@DynamoDBAttribute</span><span class="p">(</span><span class="n">attributeName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;release_date&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="nd">@DynamoDBTypeConverted</span><span class="p">(</span><span class="n">converter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LocalDateTypeConverter</span><span class="p">.</span><span class="na">class</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">LocalDate</span><span class="w"> </span><span class="nf">getReleaseDate</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">release_date</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="p">}</span>
+
+<span class="kd">class</span> <span class="nc">LocalDateTypeConverter</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">DynamoDBTypeConverter</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">LocalDate</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nd">@Override</span><span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">convert</span><span class="p">(</span><span class="n">LocalDate</span><span class="w"> </span><span class="n">object</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">object</span><span class="p">.</span><span class="na">toString</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Override</span><span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="n">LocalDate</span><span class="w"> </span><span class="nf">unconvert</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">object</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">LocalDate</span><span class="p">.</span><span class="na">parse</span><span class="p">(</span><span class="n">object</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<hr />
+<p>Check out the code samples on Github:</p>
+<ul>
+<li>Music Library - SDK 1.x (<a href="https://github.com/cashapp/tempest/tree/main/samples/musiclibrary/src/main/kotlin/app/cash/tempest/musiclibrary">.kt</a>, <a href="https://github.com/cashapp/tempest/tree/main/samples/musiclibrary/src/main/java/app/cash/tempest/musiclibrary/java">.java</a>)</li>
+<li>Music Library - SDK 2.x (<a href="https://github.com/cashapp/tempest/tree/main/samples/musiclibrary2/src/main/kotlin/app/cash/tempest2/musiclibrary">.kt</a>, <a href="https://github.com/cashapp/tempest/tree/main/samples/musiclibrary2/src/main/java/app/cash/tempest2/musiclibrary/java">.java</a>)</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2021 Square, Inc.
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

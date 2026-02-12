@@ -1,0 +1,19 @@
+$dokka.format:gfm-v1
+$dokka.linkExtension:md
+$dokka.location:app.cash.tempest.testing////PointingToDeclaration/tempest-testing-docker/app.cash.tempest.testing/index.md
+$dokka.location:app.cash.tempest.testing/Composer///PointingToDeclaration/tempest-testing-docker/app.cash.tempest.testing/-composer/index.md
+$dokka.location:app.cash.tempest.testing/Composer/Composer/#kotlin.String#kotlin.Array[app.cash.tempest.testing.Container]/PointingToDeclaration/tempest-testing-docker/app.cash.tempest.testing/-composer/-composer.md
+$dokka.location:app.cash.tempest.testing/Composer/running/#/PointingToDeclaration/tempest-testing-docker/app.cash.tempest.testing/-composer/running.md
+$dokka.location:app.cash.tempest.testing/Composer/start/#/PointingToDeclaration/tempest-testing-docker/app.cash.tempest.testing/-composer/start.md
+$dokka.location:app.cash.tempest.testing/Composer/stop/#/PointingToDeclaration/tempest-testing-docker/app.cash.tempest.testing/-composer/stop.md
+$dokka.location:app.cash.tempest.testing/Container///PointingToDeclaration/tempest-testing-docker/app.cash.tempest.testing/-container/index.md
+$dokka.location:app.cash.tempest.testing/Container/Container/#kotlin.Function1[com.github.dockerjava.api.command.CreateContainerCmd,kotlin.Unit]#kotlin.Function2[com.github.dockerjava.api.DockerClient,kotlin.String,kotlin.Unit]/PointingToDeclaration/tempest-testing-docker/app.cash.tempest.testing/-container/-container.md
+$dokka.location:app.cash.tempest.testing/Container/Container/#kotlin.Function1[com.github.dockerjava.api.command.CreateContainerCmd,kotlin.Unit]/PointingToDeclaration/tempest-testing-docker/app.cash.tempest.testing/-container/-container.md
+$dokka.location:app.cash.tempest.testing/Container/beforeStartHook/#/PointingToDeclaration/tempest-testing-docker/app.cash.tempest.testing/-container/before-start-hook.md
+$dokka.location:app.cash.tempest.testing/Container/createCmd/#/PointingToDeclaration/tempest-testing-docker/app.cash.tempest.testing/-container/create-cmd.md
+$dokka.location:app.cash.tempest.testing/DockerDynamoDbServer.Factory///PointingToDeclaration/tempest-testing-docker/app.cash.tempest.testing/-docker-dynamo-db-server/-factory/index.md
+$dokka.location:app.cash.tempest.testing/DockerDynamoDbServer.Factory/create/#kotlin.Int#kotlin.Function0[kotlin.Unit]/PointingToDeclaration/tempest-testing-docker/app.cash.tempest.testing/-docker-dynamo-db-server/-factory/create.md
+$dokka.location:app.cash.tempest.testing/DockerDynamoDbServer///PointingToDeclaration/tempest-testing-docker/app.cash.tempest.testing/-docker-dynamo-db-server/index.md
+$dokka.location:app.cash.tempest.testing/DockerDynamoDbServer/id/#/PointingToDeclaration/tempest-testing-docker/app.cash.tempest.testing/-docker-dynamo-db-server/id.md
+$dokka.location:app.cash.tempest.testing/DockerDynamoDbServer/port/#/PointingToDeclaration/tempest-testing-docker/app.cash.tempest.testing/-docker-dynamo-db-server/port.md
+app.cash.tempest.testing

@@ -1,0 +1,13 @@
+$dokka.format:gfm-v1
+$dokka.linkExtension:md
+$dokka.location:app.cash.tempest.testing////PointingToDeclaration/tempest-testing-junit5/app.cash.tempest.testing/index.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDb.Builder///PointingToDeclaration/tempest-testing-junit5/app.cash.tempest.testing/-test-dynamo-db/-builder/index.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDb.Builder/Builder/#app.cash.tempest.testing.TestDynamoDbServer.Factory[*]/PointingToDeclaration/tempest-testing-junit5/app.cash.tempest.testing/-test-dynamo-db/-builder/-builder.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDb.Builder/addTable/#app.cash.tempest.testing.TestTable/PointingToDeclaration/tempest-testing-junit5/app.cash.tempest.testing/-test-dynamo-db/-builder/add-table.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDb.Builder/addTables/#kotlin.collections.List[app.cash.tempest.testing.TestTable]/PointingToDeclaration/tempest-testing-junit5/app.cash.tempest.testing/-test-dynamo-db/-builder/add-tables.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDb.Builder/build/#/PointingToDeclaration/tempest-testing-junit5/app.cash.tempest.testing/-test-dynamo-db/-builder/build.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDb.Builder/port/#kotlin.Int/PointingToDeclaration/tempest-testing-junit5/app.cash.tempest.testing/-test-dynamo-db/-builder/port.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDb///PointingToDeclaration/tempest-testing-junit5/app.cash.tempest.testing/-test-dynamo-db/index.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDb/afterEach/#org.junit.jupiter.api.extension.ExtensionContext?/PointingToDeclaration/tempest-testing-junit5/app.cash.tempest.testing/-test-dynamo-db/after-each.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDb/beforeEach/#org.junit.jupiter.api.extension.ExtensionContext/PointingToDeclaration/tempest-testing-junit5/app.cash.tempest.testing/-test-dynamo-db/before-each.md
+app.cash.tempest.testing

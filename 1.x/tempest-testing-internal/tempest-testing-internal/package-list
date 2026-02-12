@@ -1,0 +1,34 @@
+$dokka.format:gfm-v1
+$dokka.linkExtension:md
+$dokka.location:app.cash.tempest.testing.internal////PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/index.md
+$dokka.location:app.cash.tempest.testing.internal//allocateRandomPort/#/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/allocate-random-port.md
+$dokka.location:app.cash.tempest.testing.internal//buildDynamoDb/#kotlin.String#kotlin.Int/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/build-dynamo-db.md
+$dokka.location:app.cash.tempest.testing.internal//buildDynamoDbStreams/#kotlin.String#kotlin.Int/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/build-dynamo-db-streams.md
+$dokka.location:app.cash.tempest.testing.internal//createTable/com.amazonaws.services.dynamodbv2.AmazonDynamoDB#app.cash.tempest.testing.TestTable/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/create-table.md
+$dokka.location:app.cash.tempest.testing.internal//debug/mu.KLogger#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.Any?]]#kotlin.Function0[kotlin.Any?]/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/debug.md
+$dokka.location:app.cash.tempest.testing.internal//debug/mu.KLogger#kotlin.Throwable#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.Any?]]#kotlin.Function0[kotlin.Any?]/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/debug.md
+$dokka.location:app.cash.tempest.testing.internal//error/mu.KLogger#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.Any?]]#kotlin.Function0[kotlin.Any?]/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/error.md
+$dokka.location:app.cash.tempest.testing.internal//error/mu.KLogger#kotlin.Throwable#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.Any?]]#kotlin.Function0[kotlin.Any?]/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/error.md
+$dokka.location:app.cash.tempest.testing.internal//getLogger/#/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/get-logger.md
+$dokka.location:app.cash.tempest.testing.internal//hostName/#kotlin.Int/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/host-name.md
+$dokka.location:app.cash.tempest.testing.internal//info/mu.KLogger#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.Any?]]#kotlin.Function0[kotlin.Any?]/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/info.md
+$dokka.location:app.cash.tempest.testing.internal//info/mu.KLogger#kotlin.Throwable#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.Any?]]#kotlin.Function0[kotlin.Any?]/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/info.md
+$dokka.location:app.cash.tempest.testing.internal//isServerListening/#kotlin.String#kotlin.Int/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/is-server-listening.md
+$dokka.location:app.cash.tempest.testing.internal//log/mu.KLogger#org.slf4j.event.Level#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.Any?]]#kotlin.Function0[kotlin.Any?]/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/log.md
+$dokka.location:app.cash.tempest.testing.internal//log/mu.KLogger#org.slf4j.event.Level#kotlin.Throwable#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.Any?]]#kotlin.Function0[kotlin.Any?]/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/log.md
+$dokka.location:app.cash.tempest.testing.internal//pickRandomPort/#/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/pick-random-port.md
+$dokka.location:app.cash.tempest.testing.internal//warn/mu.KLogger#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.Any?]]#kotlin.Function0[kotlin.Any?]/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/warn.md
+$dokka.location:app.cash.tempest.testing.internal//warn/mu.KLogger#kotlin.Throwable#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.Any?]]#kotlin.Function0[kotlin.Any?]/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/warn.md
+$dokka.location:app.cash.tempest.testing.internal/DefaultTestDynamoDbClient///PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/-default-test-dynamo-db-client/index.md
+$dokka.location:app.cash.tempest.testing.internal/DefaultTestDynamoDbClient/DefaultTestDynamoDbClient/#kotlin.collections.List[app.cash.tempest.testing.TestTable]#kotlin.Int/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/-default-test-dynamo-db-client/-default-test-dynamo-db-client.md
+$dokka.location:app.cash.tempest.testing.internal/DefaultTestDynamoDbClient/dynamoDb/#/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/-default-test-dynamo-db-client/dynamo-db.md
+$dokka.location:app.cash.tempest.testing.internal/DefaultTestDynamoDbClient/dynamoDbStreams/#/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/-default-test-dynamo-db-client/dynamo-db-streams.md
+$dokka.location:app.cash.tempest.testing.internal/DefaultTestDynamoDbClient/reset/#/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/-default-test-dynamo-db-client/reset.md
+$dokka.location:app.cash.tempest.testing.internal/DefaultTestDynamoDbClient/tables/#/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/-default-test-dynamo-db-client/tables.md
+$dokka.location:app.cash.tempest.testing.internal/Tag///PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/-tag/index.md
+$dokka.location:app.cash.tempest.testing.internal/TestDynamoDbService.Companion///PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/-test-dynamo-db-service/-companion/index.md
+$dokka.location:app.cash.tempest.testing.internal/TestDynamoDbService.Companion/create/#app.cash.tempest.testing.TestDynamoDbServer.Factory[*]#kotlin.collections.List[app.cash.tempest.testing.TestTable]#kotlin.Int?/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/-test-dynamo-db-service/-companion/create.md
+$dokka.location:app.cash.tempest.testing.internal/TestDynamoDbService///PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/-test-dynamo-db-service/index.md
+$dokka.location:app.cash.tempest.testing.internal/TestDynamoDbService/client/#/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/-test-dynamo-db-service/client.md
+$dokka.location:app.cash.tempest.testing.internal/TestDynamoDbService/server/#/PointingToDeclaration/tempest-testing-internal/app.cash.tempest.testing.internal/-test-dynamo-db-service/server.md
+app.cash.tempest.testing.internal

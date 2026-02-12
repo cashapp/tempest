@@ -1,0 +1,28 @@
+$dokka.format:gfm-v1
+$dokka.linkExtension:md
+$dokka.location:app.cash.tempest.testing////PointingToDeclaration/tempest-testing/app.cash.tempest.testing/index.md
+$dokka.location:app.cash.tempest.testing//logicalDb/app.cash.tempest.testing.TestDynamoDbClient#/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/logical-db.md
+$dokka.location:app.cash.tempest.testing//logicalDb/app.cash.tempest.testing.TestDynamoDbClient#com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/logical-db.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDbClient///PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-dynamo-db-client/index.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDbClient/dynamoDb/#/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-dynamo-db-client/dynamo-db.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDbClient/dynamoDbStreams/#/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-dynamo-db-client/dynamo-db-streams.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDbClient/logicalDb/#java.lang.Class[TypeParam(bounds=[app.cash.tempest.LogicalDb])]#com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-dynamo-db-client/logical-db.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDbClient/logicalDb/#java.lang.Class[TypeParam(bounds=[app.cash.tempest.LogicalDb])]/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-dynamo-db-client/logical-db.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDbClient/logicalDb/#kotlin.reflect.KClass[TypeParam(bounds=[app.cash.tempest.LogicalDb])]#com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-dynamo-db-client/logical-db.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDbClient/logicalDb/#kotlin.reflect.KClass[TypeParam(bounds=[app.cash.tempest.LogicalDb])]/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-dynamo-db-client/logical-db.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDbClient/reset/#/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-dynamo-db-client/reset.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDbClient/tables/#/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-dynamo-db-client/tables.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDbServer.Factory///PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-dynamo-db-server/-factory/index.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDbServer.Factory/create/#kotlin.Int#kotlin.Function0[kotlin.Unit]/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-dynamo-db-server/-factory/create.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDbServer.Factory/create/#kotlin.Int/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-dynamo-db-server/-factory/create.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDbServer///PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-dynamo-db-server/index.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDbServer/id/#/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-dynamo-db-server/id.md
+$dokka.location:app.cash.tempest.testing/TestDynamoDbServer/port/#/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-dynamo-db-server/port.md
+$dokka.location:app.cash.tempest.testing/TestTable.Companion///PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-table/-companion/index.md
+$dokka.location:app.cash.tempest.testing/TestTable.Companion/create/#java.lang.Class[*]#kotlin.Function1[com.amazonaws.services.dynamodbv2.model.CreateTableRequest,com.amazonaws.services.dynamodbv2.model.CreateTableRequest]/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-table/-companion/create.md
+$dokka.location:app.cash.tempest.testing/TestTable.Companion/create/#kotlin.Function1[com.amazonaws.services.dynamodbv2.model.CreateTableRequest,com.amazonaws.services.dynamodbv2.model.CreateTableRequest]/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-table/-companion/create.md
+$dokka.location:app.cash.tempest.testing/TestTable.Companion/create/#kotlin.reflect.KClass[*]#kotlin.Function1[com.amazonaws.services.dynamodbv2.model.CreateTableRequest,com.amazonaws.services.dynamodbv2.model.CreateTableRequest]/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-table/-companion/create.md
+$dokka.location:app.cash.tempest.testing/TestTable///PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-table/index.md
+$dokka.location:app.cash.tempest.testing/TestTable/configureTable/#/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-table/configure-table.md
+$dokka.location:app.cash.tempest.testing/TestTable/tableClass/#/PointingToDeclaration/tempest-testing/app.cash.tempest.testing/-test-table/table-class.md
+app.cash.tempest.testing

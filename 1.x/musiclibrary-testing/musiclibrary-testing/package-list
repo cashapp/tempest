@@ -1,0 +1,24 @@
+$dokka.format:gfm-v1
+$dokka.linkExtension:md
+$dokka.location:app.cash.tempest.musiclibrary////PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/index.md
+$dokka.location:app.cash.tempest.musiclibrary//AFTER_HOURS_EP/#/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-a-f-t-e-r_-h-o-u-r-s_-e-p.md
+$dokka.location:app.cash.tempest.musiclibrary//LOCKDOWN_SINGLE/#/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-l-o-c-k-d-o-w-n_-s-i-n-g-l-e.md
+$dokka.location:app.cash.tempest.musiclibrary//SPIRIT_WORLD_FIELD_GUIDE/#/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-s-p-i-r-i-t_-w-o-r-l-d_-f-i-e-l-d_-g-u-i-d-e.md
+$dokka.location:app.cash.tempest.musiclibrary//THE_DARK_SIDE_OF_THE_MOON/#/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-t-h-e_-d-a-r-k_-s-i-d-e_-o-f_-t-h-e_-m-o-o-n.md
+$dokka.location:app.cash.tempest.musiclibrary//THE_WALL/#/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-t-h-e_-w-a-l-l.md
+$dokka.location:app.cash.tempest.musiclibrary//WHAT_YOU_DO_TO_ME_SINGLE/#/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-w-h-a-t_-y-o-u_-d-o_-t-o_-m-e_-s-i-n-g-l-e.md
+$dokka.location:app.cash.tempest.musiclibrary/Album///PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-album/index.md
+$dokka.location:app.cash.tempest.musiclibrary/Album/Album/#kotlin.String#kotlin.String#kotlin.String#java.time.LocalDate#kotlin.String#kotlin.collections.List[app.cash.tempest.musiclibrary.Track]#kotlin.String?/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-album/-album.md
+$dokka.location:app.cash.tempest.musiclibrary/Album/album_title/#/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-album/album_title.md
+$dokka.location:app.cash.tempest.musiclibrary/Album/album_token/#/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-album/album_token.md
+$dokka.location:app.cash.tempest.musiclibrary/Album/artist_name/#/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-album/artist_name.md
+$dokka.location:app.cash.tempest.musiclibrary/Album/genre_name/#/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-album/genre_name.md
+$dokka.location:app.cash.tempest.musiclibrary/Album/label/#/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-album/label.md
+$dokka.location:app.cash.tempest.musiclibrary/Album/release_date/#/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-album/release_date.md
+$dokka.location:app.cash.tempest.musiclibrary/Album/trackTitles/#/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-album/track-titles.md
+$dokka.location:app.cash.tempest.musiclibrary/Album/tracks/#/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-album/tracks.md
+$dokka.location:app.cash.tempest.musiclibrary/Track///PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-track/index.md
+$dokka.location:app.cash.tempest.musiclibrary/Track/Track/#kotlin.String#java.time.Duration/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-track/-track.md
+$dokka.location:app.cash.tempest.musiclibrary/Track/run_length/#/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-track/run_length.md
+$dokka.location:app.cash.tempest.musiclibrary/Track/track_title/#/PointingToDeclaration/musiclibrary-testing/app.cash.tempest.musiclibrary/-track/track_title.md
+app.cash.tempest.musiclibrary

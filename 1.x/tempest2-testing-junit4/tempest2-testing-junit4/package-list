@@ -1,0 +1,11 @@
+$dokka.format:gfm-v1
+$dokka.linkExtension:md
+$dokka.location:app.cash.tempest2.testing////PointingToDeclaration/tempest2-testing-junit4/app.cash.tempest2.testing/index.md
+$dokka.location:app.cash.tempest2.testing/TestDynamoDb.Builder///PointingToDeclaration/tempest2-testing-junit4/app.cash.tempest2.testing/-test-dynamo-db/-builder/index.md
+$dokka.location:app.cash.tempest2.testing/TestDynamoDb.Builder/Builder/#app.cash.tempest2.testing.TestDynamoDbServer.Factory[*]/PointingToDeclaration/tempest2-testing-junit4/app.cash.tempest2.testing/-test-dynamo-db/-builder/-builder.md
+$dokka.location:app.cash.tempest2.testing/TestDynamoDb.Builder/addTable/#app.cash.tempest2.testing.TestTable/PointingToDeclaration/tempest2-testing-junit4/app.cash.tempest2.testing/-test-dynamo-db/-builder/add-table.md
+$dokka.location:app.cash.tempest2.testing/TestDynamoDb.Builder/addTables/#kotlin.collections.List[app.cash.tempest2.testing.TestTable]/PointingToDeclaration/tempest2-testing-junit4/app.cash.tempest2.testing/-test-dynamo-db/-builder/add-tables.md
+$dokka.location:app.cash.tempest2.testing/TestDynamoDb.Builder/build/#/PointingToDeclaration/tempest2-testing-junit4/app.cash.tempest2.testing/-test-dynamo-db/-builder/build.md
+$dokka.location:app.cash.tempest2.testing/TestDynamoDb.Builder/port/#kotlin.Int/PointingToDeclaration/tempest2-testing-junit4/app.cash.tempest2.testing/-test-dynamo-db/-builder/port.md
+$dokka.location:app.cash.tempest2.testing/TestDynamoDb///PointingToDeclaration/tempest2-testing-junit4/app.cash.tempest2.testing/-test-dynamo-db/index.md
+app.cash.tempest2.testing

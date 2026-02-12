@@ -1,0 +1,9 @@
+$dokka.format:gfm-v1
+$dokka.linkExtension:md
+$dokka.location:app.cash.tempest.testing////PointingToDeclaration/tempest-testing-jvm/app.cash.tempest.testing/index.md
+$dokka.location:app.cash.tempest.testing/JvmDynamoDbServer.Factory///PointingToDeclaration/tempest-testing-jvm/app.cash.tempest.testing/-jvm-dynamo-db-server/-factory/index.md
+$dokka.location:app.cash.tempest.testing/JvmDynamoDbServer.Factory/create/#kotlin.Int#kotlin.Function0[kotlin.Unit]/PointingToDeclaration/tempest-testing-jvm/app.cash.tempest.testing/-jvm-dynamo-db-server/-factory/create.md
+$dokka.location:app.cash.tempest.testing/JvmDynamoDbServer///PointingToDeclaration/tempest-testing-jvm/app.cash.tempest.testing/-jvm-dynamo-db-server/index.md
+$dokka.location:app.cash.tempest.testing/JvmDynamoDbServer/id/#/PointingToDeclaration/tempest-testing-jvm/app.cash.tempest.testing/-jvm-dynamo-db-server/id.md
+$dokka.location:app.cash.tempest.testing/JvmDynamoDbServer/port/#/PointingToDeclaration/tempest-testing-jvm/app.cash.tempest.testing/-jvm-dynamo-db-server/port.md
+app.cash.tempest.testing
