@@ -70,6 +70,7 @@ class DockerDynamoDbServer private constructor(
   )
 
   object Factory : TestDynamoDbServer.Factory<DockerDynamoDbServer> {
+    override fun hostName(port: Int): String = app.cash.tempest.testing.internal.hostName(port)
     override fun create(port: Int, onBeforeStartup: () -> Unit) = DockerDynamoDbServer(port, onBeforeStartup)
   }
 }

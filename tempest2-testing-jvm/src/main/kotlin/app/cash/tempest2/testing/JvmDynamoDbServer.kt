@@ -73,6 +73,7 @@ class JvmDynamoDbServer private constructor(
   }
 
   object Factory : TestDynamoDbServer.Factory<JvmDynamoDbServer> {
+    override fun hostName(port: Int) = "localhost"
     override fun create(port: Int, onBeforeStartup: () -> Unit) = JvmDynamoDbServer(port, onBeforeStartup)
   }
 }
