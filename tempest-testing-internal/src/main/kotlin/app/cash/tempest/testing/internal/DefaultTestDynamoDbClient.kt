@@ -22,7 +22,7 @@ import com.google.common.util.concurrent.AbstractIdleService
 
 class DefaultTestDynamoDbClient(
   override val tables: List<TestTable>,
-  port: Int,
+  private val port: Int,
 ) : AbstractIdleService(), TestDynamoDbClient {
   // TODO: Is there a better way of doing this than making a network connection?
   private val hostName by lazy { hostName(port) }
@@ -41,11 +41,32 @@ class DefaultTestDynamoDbClient(
 
   override fun reset() {
     // Cleans up the tables before each run.
-    for (tableName in dynamoDb.listTables().tableNames) {
-      dynamoDb.deleteTable(tableName)
+    log.info { "connecting to DynamoDB Local at $hostName:$port" }
+    var lastException: Exception? = null
+    for (attempt in 1..3) {
+      try {
+        val tableNames = dynamoDb.listTables().tableNames
+        log.info { "successfully connected to DynamoDB Local at $hostName:$port" }
+        for (tableName in tableNames) {
+          dynamoDb.deleteTable(tableName)
+        }
+        for (table in tables) {
+          dynamoDb.createTable(table)
+        }
+        return
+      } catch (e: Exception) {
+        lastException = e
+        log.warn(e) { "failed to connect to DynamoDB Local at $hostName:$port (attempt $attempt/3), retrying..." }
+        if (attempt < 3) {
+          Thread.sleep(500)
+        }
+      }
     }
-    for (table in tables) {
-      dynamoDb.createTable(table)
-    }
+    log.error(lastException!!) { "failed to connect to DynamoDB Local at $hostName:$port after 3 attempts" }
+    throw lastException
+  }
+
+  companion object {
+    private val log = getLogger<DefaultTestDynamoDbClient>()
   }
 }
