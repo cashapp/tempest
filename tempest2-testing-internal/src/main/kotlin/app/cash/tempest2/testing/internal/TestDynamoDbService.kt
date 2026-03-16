@@ -57,7 +57,9 @@ class TestDynamoDbService(
       val socket = allocatedSockets.getOrPut(key) { allocateRandomPort() }
       return PortHolder(socket.localPort) {
         if (!socket.isClosed) {
+          val portNumber = socket.localPort
           socket.close()
+          log.info { "released port $portNumber" }
         }
       }
     }
