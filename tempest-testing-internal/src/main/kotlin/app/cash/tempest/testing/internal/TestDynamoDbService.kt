@@ -18,8 +18,10 @@ class TestDynamoDbService private constructor(
 
   override fun startUp() {
     server.startIfNeeded()
+    log.info { "starting client for ${server.id}" }
     client.startAsync()
     client.awaitRunning()
+    log.info { "client started for ${server.id}" }
   }
 
   override fun shutDown() {
@@ -32,9 +34,12 @@ class TestDynamoDbService private constructor(
       log.info { "$id already running, not starting anything" }
       return
     }
+    val startTime = System.currentTimeMillis()
     log.info { "starting $id" }
     startAsync()
     awaitRunning()
+    val elapsed = System.currentTimeMillis() - startTime
+    log.info { "$id started in ${elapsed}ms" }
     Runtime.getRuntime().addShutdownHook(
       Thread {
         log.info { "stopping $id" }
