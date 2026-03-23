@@ -24,11 +24,12 @@ class DefaultTestDynamoDbClient(
   override val tables: List<TestTable>,
   private val port: Int,
 ) : AbstractIdleService(), TestDynamoDbClient {
-  // TODO: Is there a better way of doing this than making a network connection?
+  // Lazy so that hostName is resolved after the DynamoDB Local server is started,
+  // not at construction time when the placeholder ServerSocket is still holding the port.
   private val hostName by lazy { hostName(port) }
 
-  override val dynamoDb = buildDynamoDb(hostName, port)
-  override val dynamoDbStreams = buildDynamoDbStreams(hostName, port)
+  override val dynamoDb by lazy { buildDynamoDb(hostName, port) }
+  override val dynamoDbStreams by lazy { buildDynamoDbStreams(hostName, port) }
 
   override fun startUp() {
     reset()
