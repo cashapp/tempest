@@ -75,7 +75,7 @@ class TestDynamoDbService(
     ): TestDynamoDbService {
       val portHolder = port?.let { PortHolder(it) } ?: defaultPortHolder(serverFactory.toString())
       return TestDynamoDbService(
-        DefaultTestDynamoDbClient(tables, portHolder.value),
+        DefaultTestDynamoDbClient(tables, serverFactory.hostName(portHolder.value), portHolder.value),
         serverFactory.create(portHolder.value, portHolder.releasePort)
       )
     }

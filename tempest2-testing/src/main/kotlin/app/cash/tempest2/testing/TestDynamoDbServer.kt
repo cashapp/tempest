@@ -26,6 +26,8 @@ interface TestDynamoDbServer : Service {
   val port: Int
 
   interface Factory<T : TestDynamoDbServer> {
+    /** The hostname the client should use to connect to the server. */
+    fun hostName(port: Int): String
     fun create(port: Int): T = create(port) {}
     fun create(port: Int, onBeforeStartup: () -> Unit): T
   }

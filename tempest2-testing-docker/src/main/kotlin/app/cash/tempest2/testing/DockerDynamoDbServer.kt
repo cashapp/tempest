@@ -17,6 +17,7 @@
 package app.cash.tempest2.testing
 
 import app.cash.tempest2.testing.internal.buildDynamoDb
+import app.cash.tempest2.testing.internal.hostName
 import com.github.dockerjava.api.model.ExposedPort
 import com.github.dockerjava.api.model.Ports
 import com.google.common.util.concurrent.AbstractIdleService
@@ -69,6 +70,7 @@ class DockerDynamoDbServer private constructor(
   )
 
   object Factory : TestDynamoDbServer.Factory<DockerDynamoDbServer> {
+    override fun hostName(port: Int): String = app.cash.tempest2.testing.internal.hostName(port)
     override fun create(port: Int, onBeforeStartup: () -> Unit) = DockerDynamoDbServer(port, onBeforeStartup)
   }
 }
