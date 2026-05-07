@@ -161,7 +161,7 @@ internal class DynamoDbLogicalDb(
       )
 
       return batchRequests
-        .map { request -> dynamoDbEnhancedClient.batchGetItem(request).limit(1).asFlow() }
+        .map { request -> dynamoDbEnhancedClient.batchGetItem(request).asFlow() }
         .reduce { acc, item -> merge(acc, item) }
         .map { page -> toBatchLoadResponse(requestsByTable, requests, listOf(page)) }
         .asPublisher()
