@@ -27,6 +27,7 @@ import app.cash.tempest2.KeySet
 import app.cash.tempest2.LogicalDb
 import app.cash.tempest2.LogicalTable
 import app.cash.tempest2.TransactionWriteSet
+import app.cash.tempest2.WriteOperation
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.CLOBBER
 import app.cash.tempest2.internal.DynamoDbLogicalDb.WriteRequest.Op.DELETE
 import kotlinx.coroutines.flow.map
@@ -345,25 +346,25 @@ internal class DynamoDbLogicalDb(
   private fun toTransactionWriteRequest(writeSet: TransactionWriteSet): TransactWriteItemsEnhancedRequest? {
     return TransactWriteItemsEnhancedRequest.builder()
       .apply {
-        for (itemToSave in writeSet.itemsToSave) {
-          addUpdateItem(itemToSave.encodeAsItem(), writeSet.writeExpressions[itemToSave])
-        }
-        for (itemToPut in writeSet.itemsToPut) {
-          val userExpression = writeSet.writeExpressions[itemToPut]
-          val encodedItem = itemToPut.encodeAsItem()
-          if (userExpression != null) {
-            // Manual versioning: merge version check with user expression
-            addPutItemWithManualVersioning(encodedItem, userExpression)
-          } else {
-            // Let SDK handle versioning automatically
-            addPutItem(encodedItem, null)
+        // Replay operations in the caller's insertion order so the request items line up
+        // positionally with DynamoDB's returned List<CancellationReason>.
+        for (operation in writeSet.operations) {
+          val userExpression = writeSet.writeExpressions[operation.subject]
+          when (operation) {
+            is WriteOperation.Save -> addUpdateItem(operation.item.encodeAsItem(), userExpression)
+            is WriteOperation.Put -> {
+              val encodedItem = operation.item.encodeAsItem()
+              if (userExpression != null) {
+                // Manual versioning: merge version check with user expression
+                addPutItemWithManualVersioning(encodedItem, userExpression)
+              } else {
+                // Let SDK handle versioning automatically
+                addPutItem(encodedItem, null)
+              }
+            }
+            is WriteOperation.Delete -> addDeleteItem(operation.key.encodeAsKey(), userExpression)
+            is WriteOperation.Check -> addConditionCheck(operation.key.encodeAsKey(), userExpression)
           }
-        }
-        for (keyToDelete in writeSet.keysToDelete) {
-          addDeleteItem(keyToDelete.encodeAsKey(), writeSet.writeExpressions[keyToDelete])
-        }
-        for (keyToCheck in writeSet.keysToCheck) {
-          addConditionCheck(keyToCheck.encodeAsKey(), writeSet.writeExpressions[keyToCheck])
         }
         if (writeSet.idempotencyToken != null) {
           clientRequestToken(writeSet.idempotencyToken)
@@ -439,24 +440,19 @@ internal class DynamoDbLogicalDb(
   }
 
   private fun TransactionWriteSet.describeOperations(): List<String> {
-    val descriptions = mutableListOf<String>()
-    for (itemToSave in itemsToSave) {
-      val rawItemKey = itemToSave.encodeAsItem().rawItemKey()
-      descriptions.add("Save item (non-key attributes omitted) $rawItemKey")
+    // Describe in insertion order so the message lines up with the returned cancellation reasons.
+    return operations.map { operation ->
+      when (operation) {
+        is WriteOperation.Save ->
+          "Save item (non-key attributes omitted) ${operation.item.encodeAsItem().rawItemKey()}"
+        is WriteOperation.Put ->
+          "Put item (non-key attributes omitted) ${operation.item.encodeAsItem().rawItemKey()}"
+        is WriteOperation.Delete ->
+          "Delete key ${operation.key.encodeAsKey().rawItemKey()}"
+        is WriteOperation.Check ->
+          "Check key ${operation.key.encodeAsKey().rawItemKey()}"
+      }
     }
-    for (itemToPut in itemsToPut) {
-      val rawItemKey = itemToPut.encodeAsItem().rawItemKey()
-      descriptions.add("Put item (non-key attributes omitted) $rawItemKey")
-    }
-    for (keyToDelete in keysToDelete) {
-      val rawItemKey = keyToDelete.encodeAsKey().rawItemKey()
-      descriptions.add("Delete key $rawItemKey")
-    }
-    for (keyToCheck in keysToCheck) {
-      val rawItemKey = keyToCheck.encodeAsKey().rawItemKey()
-      descriptions.add("Check key $rawItemKey")
-    }
-    return descriptions.toList()
   }
 
   private fun <T> ReadBatch.Builder<T>.addGetItem(key: Key, consistentReads: Boolean) =
