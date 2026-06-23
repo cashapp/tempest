@@ -96,12 +96,19 @@ class Composer(private val name: String, private vararg val containers: Containe
                     docker.removeContainerCmd(it.id).exec()
                 }
 
-            log.info { "pulling ${create.image} for $name container" }
-
-            val imageParts = create.image!!.split(":")
-            docker.pullImageCmd(imageParts[0])
-                .withTag(imageParts.getOrElse(1) { "latest" })
-                .exec(PullImageResultCallback()).awaitCompletion()
+            val image = create.image!!
+            if (docker.imageIsPresent(image)) {
+                // The image is already on disk, so skip the pull. An unconditional pull contacts the
+                // registry on every startup (a manifest/auth round-trip) even for a cached image, which
+                // is slow under load and fails outright when the registry or Docker Hub auth is flaky.
+                log.info { "image $image already present, skipping pull for $name container" }
+            } else {
+                log.info { "pulling $image for $name container" }
+                val imageParts = image.split(":")
+                docker.pullImageCmd(imageParts[0])
+                    .withTag(imageParts.getOrElse(1) { "latest" })
+                    .exec(PullImageResultCallback()).awaitCompletion()
+            }
 
             log.info { "starting $name container" }
 
@@ -127,6 +134,14 @@ class Composer(private val name: String, private vararg val containers: Containe
             log.info { "started $name; container id=$id" }
         }
     }
+
+    private fun DockerClient.imageIsPresent(image: String): Boolean =
+        try {
+            inspectImageCmd(image).exec()
+            true
+        } catch (e: NotFoundException) {
+            false
+        }
 
     private fun Container.name(): String {
         val create = docker.createContainerCmd("todo").apply(createCmd)
