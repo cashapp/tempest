@@ -26,10 +26,14 @@ import software.amazon.awssdk.services.dynamodb.model.DynamoDbException
 
 class DockerDynamoDbServer private constructor(
   override val port: Int,
-  private val onBeforeStartup: () -> Unit
+  private val onBeforeStartup: () -> Unit,
+  imageResolver: (String) -> String
 ) : AbstractIdleService(), TestDynamoDbServer {
 
   override val id = "tempest2-docker-dynamodb-local-$port"
+
+  /** The image reference to pull and run, after applying [Factory.imageResolver]. */
+  private val resolvedImage = imageResolver(DEFAULT_IMAGE)
 
   override fun startUp() {
     onBeforeStartup()
@@ -61,7 +65,7 @@ class DockerDynamoDbServer private constructor(
       val exposedClientPort = ExposedPort.tcp(8000)
       val portBindings = Ports()
       portBindings.bind(exposedClientPort, Ports.Binding.bindPort(port))
-      withImage("amazon/dynamodb-local:2.6.1")
+      withImage(resolvedImage)
         .withName(id)
         .withExposedPorts(exposedClientPort)
         .withCmd("-jar", "DynamoDBLocal.jar", "-sharedDb", "-disableTelemetry")
@@ -70,7 +74,24 @@ class DockerDynamoDbServer private constructor(
   )
 
   object Factory : TestDynamoDbServer.Factory<DockerDynamoDbServer> {
+    /**
+     * Hook to rewrite the Docker image reference before it is pulled and run. Receives [DEFAULT_IMAGE]
+     * and returns the reference to actually use. Defaults to the identity function (pull from Docker
+     * Hub). Override this to redirect pulls through a registry mirror, e.g.:
+     *
+     * ```
+     * DockerDynamoDbServer.Factory.imageResolver = { image -> "my-mirror.example.com/$image" }
+     * ```
+     */
+    var imageResolver: (String) -> String = { it }
+
     override fun hostName(port: Int): String = app.cash.tempest2.testing.internal.hostName(port)
-    override fun create(port: Int, onBeforeStartup: () -> Unit) = DockerDynamoDbServer(port, onBeforeStartup)
+    override fun create(port: Int, onBeforeStartup: () -> Unit) =
+      DockerDynamoDbServer(port, onBeforeStartup, imageResolver)
+  }
+
+  companion object {
+    /** Default DynamoDB Local image, pulled from Docker Hub unless [Factory.imageResolver] rewrites it. */
+    const val DEFAULT_IMAGE = "amazon/dynamodb-local:2.6.1"
   }
 }
