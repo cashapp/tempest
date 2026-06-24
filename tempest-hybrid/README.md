@@ -1,0 +1,454 @@
+# Tempest-Hybrid: DynamoDB + S3 Hybrid Storage
+
+A library that enables transparent S3-backed storage for DynamoDB, allowing applications to store large or cold data in S3 while maintaining DynamoDB's query capabilities through automatic hydration.
+
+## Features
+
+- **Transparent S3 Hydration**: Automatically retrieves S3-stored data when querying DynamoDB
+- **Type Safety**: Preserves Tempest's type-safe DynamoDB operations
+- **Performance**: Parallel S3 fetching for multiple items
+- **Compatibility**: Works with existing DynamoDB queries without modification
+- **Cost Optimization**: Store cold/large data in S3 (significantly cheaper than DynamoDB)
+
+## Installation
+
+Add the dependency to your `build.gradle.kts`:
+
+```kotlin
+dependencies {
+    implementation("app.cash.tempest:tempest-hybrid:VERSION")
+}
+```
+
+## Quick Start
+
+### 1. Basic Setup
+
+```kotlin
+import app.cash.tempest.hybrid.*
+import java.util.concurrent.Executors
+
+// Create your executor for parallel S3 reads
+val s3Executor = Executors.newFixedThreadPool(10)
+
+// Configure hybrid storage
+val hybridConfig = HybridConfig(
+    s3Config = HybridConfig.S3Config(
+        bucketName = "my-data-bucket",
+        keyPrefix = "dynamodb-archive/",  // Optional
+        region = "us-east-1"              // Optional
+    )
+)
+
+// Create the factory
+val hybridFactory = HybridDynamoDbFactory(
+    s3Client = amazonS3Client,
+    objectMapper = objectMapper,
+    hybridConfig = hybridConfig,
+    s3Executor = s3Executor
+)
+
+// Wrap your existing DynamoDB client
+val hybridDynamoDbClient = hybridFactory.wrapDynamoDbClient(originalDynamoDbClient)
+
+// Use the hybrid client with Tempest as normal
+val db = LogicalDb(DynamoDBEnhanced.builder()
+    .dynamoDbClient(hybridDynamoDbClient)
+    .build())
+```
+
+### 2. S3 Pointer Format
+
+When items are stored in S3 (by your external archival process), represent them in DynamoDB with this pointer structure:
+
+```json
+{
+  "pk": "USER#123",
+  "sk": "TRANSACTION#2024-01-15",
+  "_s3_pointer": "s3://path/to/data.json.gz"
+}
+```
+
+The library will automatically detect these pointers and hydrate the full data from S3.
+
+### 3. Using keyPrefix in Archival Jobs
+
+The `keyPrefix` configuration allows you to organize S3 objects with a common prefix:
+
+```kotlin
+val config = HybridConfig(
+    s3Config = HybridConfig.S3Config(
+        bucketName = "my-archive-bucket",
+        keyPrefix = "dynamodb/production/2024/"
+    )
+)
+
+// Use the new S3KeyGenerator method that incorporates keyPrefix
+val s3Key = S3KeyGenerator.generateS3Key(
+    item,
+    "{tableName}/{partitionKey}/{sortKey}",
+    "transactions",
+    config  // Pass config to use keyPrefix
+)
+// Result: "dynamodb/production/2024/transactions/USER#123/TX#456.json.gz"
+```
+
+This helps organize S3 data by environment, date, or any other scheme you prefer.
+
+### 4. Executor Lifecycle Management
+
+The library provides two options for executor management:
+
+#### Option A: Use the Convenience Factory (Recommended)
+
+```kotlin
+// Creates an executor with automatic shutdown on JVM exit
+val s3Executor = HybridDynamoDbFactory.createS3Executor(
+    threadCount = 10,
+    threadNamePrefix = "s3-hydration"
+)
+
+// Features:
+// - Daemon threads (won't prevent JVM shutdown)
+// - Automatic shutdown hook
+// - Descriptive thread names
+// - No manual cleanup needed
+```
+
+#### Option B: Manage Your Own Executor
+
+```kotlin
+// Create your own executor
+val s3Executor = Executors.newFixedThreadPool(10)
+
+// IMPORTANT: You must shut it down properly
+Runtime.getRuntime().addShutdownHook(Thread {
+    s3Executor.shutdown()
+    if (!s3Executor.awaitTermination(30, TimeUnit.SECONDS)) {
+        s3Executor.shutdownNow()
+    }
+})
+```
+
+**⚠️ Warning**: The library will log a warning if executors are not properly shutdown. This helps detect thread leaks that could prevent JVM shutdown.
+
+## How It Works
+
+1. **Query Interception**: The library wraps your DynamoDB client to intercept Query, Scan, and GetItem operations
+2. **Pointer Detection**: Identifies items with `_s3_pointer` attributes
+3. **S3 Hydration**: Fetches full data from S3 (in parallel for multiple items)
+4. **Transparent Replacement**: Replaces pointer items with hydrated data before returning to your application
+
+## Configuration
+
+### Executor Configuration
+
+Choose the right executor based on your workload:
+
+```kotlin
+// Fixed thread pool - predictable resource usage
+val s3Executor = Executors.newFixedThreadPool(10)
+
+// Cached thread pool - scales with demand
+val s3Executor = Executors.newCachedThreadPool()
+
+// Virtual threads (Java 21+) - ideal for I/O operations
+val s3Executor = Executors.newVirtualThreadPerTaskExecutor()
+
+// Sequential mode - useful for debugging
+val s3Executor = null  // Pass null for sequential execution
+```
+
+### Thread Pool Sizing Guidelines
+
+| Workload Type | Recommended Threads | Rationale |
+|--------------|-------------------|-----------|
+| Light (< 10 items/query) | 5 | Minimize resource usage |
+| Medium (10-50 items/query) | 10 | Balance performance and resources |
+| Heavy (> 50 items/query) | 20 | Maximize parallelism |
+| Batch Operations | 30-50 | High throughput for migrations |
+
+### Retry Configuration
+
+Enable automatic retry for transient S3 failures:
+
+```kotlin
+val config = HybridConfig(
+    s3Config = HybridConfig.S3Config(bucketName = "my-bucket"),
+    retryConfig = HybridConfig.RetryConfig(
+        enabled = true,                    // Enable retry logic
+        maxAttempts = 3,                   // Maximum attempts including initial
+        initialDelayMs = 100,              // Initial delay before first retry
+        maxDelayMs = 5000,                 // Maximum delay between retries
+        retryableExceptions = setOf(       // Exception types to retry
+            IOException::class.java,
+            SocketTimeoutException::class.java,
+            ConnectException::class.java
+        )
+    )
+)
+```
+
+By default, retry logic is disabled for backward compatibility. When enabled, it uses exponential backoff with jitter to prevent thundering herd problems.
+
+#### Retry Behavior
+
+- **Exponential Backoff**: Delay doubles with each attempt (100ms → 200ms → 400ms → ...)
+- **Jitter**: ±20% randomization to spread out retry attempts
+- **Max Delay Cap**: Delays are capped at `maxDelayMs` to prevent excessive wait times
+- **Smart Exception Handling**: Only retries transient network errors, not permission or data errors
+
+## Performance
+
+### Parallel vs Sequential Hydration
+
+With 10 threads and 50ms S3 latency:
+
+| Items | Sequential | Parallel | Improvement |
+|-------|-----------|----------|-------------|
+| 10 | 500ms | 50ms | 10x |
+| 20 | 1,000ms | 100ms | 10x |
+| 50 | 2,500ms | 250ms | 10x |
+| 100 | 5,000ms | 500ms | 10x |
+
+## Spring Boot Integration
+
+```kotlin
+@Configuration
+class DynamoDbConfig {
+
+    @Bean
+    fun s3Executor(): ExecutorService {
+        return ThreadPoolExecutor(
+            5,  // core pool size
+            20, // maximum pool size
+            60L, TimeUnit.SECONDS, // keep-alive
+            LinkedBlockingQueue(100),
+            ThreadFactoryBuilder()
+                .setNameFormat("s3-hydration-%d")
+                .build()
+        )
+    }
+
+    @Bean
+    fun hybridDynamoDbClient(
+        dynamoDbClient: DynamoDbClient,
+        s3Client: AmazonS3,
+        objectMapper: ObjectMapper,
+        @Value("\${s3.bucket}") bucketName: String,
+        s3Executor: ExecutorService
+    ): DynamoDbClient {
+        val config = HybridConfig(
+            s3Config = HybridConfig.S3Config(
+                bucketName = bucketName,
+                keyPrefix = "dynamodb/${environment}/"
+            ),
+            retryConfig = HybridConfig.RetryConfig(
+                enabled = true,
+                maxAttempts = 3
+            )
+        )
+
+        val factory = HybridDynamoDbFactory(
+            s3Client = s3Client,
+            objectMapper = objectMapper,
+            hybridConfig = config,
+            s3Executor = s3Executor
+        )
+
+        return factory.wrapDynamoDbClient(dynamoDbClient)
+    }
+
+    @PreDestroy
+    fun cleanup() {
+        s3Executor.shutdown()
+    }
+}
+```
+
+## Data Format
+
+### DynamoDB JSON Format
+
+The library supports DynamoDB's native JSON format:
+
+```json
+{
+  "pk": {"S": "USER#123"},
+  "sk": {"S": "TRANSACTION#2024"},
+  "amount": {"N": "100.50"},
+  "items": {"L": [
+    {"S": "item1"},
+    {"S": "item2"}
+  ]},
+  "metadata": {"M": {
+    "category": {"S": "food"},
+    "priority": {"N": "1"}
+  }}
+}
+```
+
+### Regular JSON Format
+
+Also supports regular JSON (automatically converted):
+
+```json
+{
+  "pk": "USER#123",
+  "sk": "TRANSACTION#2024",
+  "amount": 100.50,
+  "items": ["item1", "item2"],
+  "metadata": {
+    "category": "food",
+    "priority": 1
+  }
+}
+```
+
+## Error Handling
+
+The library implements graceful degradation:
+
+- **S3 Read Failures**: Returns the original pointer item (application may handle or fail)
+- **JSON Parse Errors**: Logs error and returns pointer item
+- **Network Issues**: No built-in retry (add your own retry logic if needed)
+
+## Monitoring
+
+The library includes an optional metrics interface for tracking S3 hydration performance. Metrics are disabled by default for zero overhead.
+
+### Basic Metrics Setup
+
+```kotlin
+// Use the built-in counting metrics for testing
+val metrics = CountingMetrics()
+
+val hybridConfig = HybridConfig(
+    s3Config = HybridConfig.S3Config(bucketName = "my-bucket"),
+    metrics = metrics  // Enable metrics collection
+)
+
+// Later, check the metrics
+println("Total hydrations: ${metrics.hydrationCount()}")
+println("Success rate: ${metrics.successCount() / metrics.hydrationCount()}")
+```
+
+### Custom Metrics Implementation
+
+Integrate with your existing metrics system:
+
+```kotlin
+class DatadogMetrics(private val statsd: StatsDClient) : HybridMetrics {
+    override fun record(event: MetricEvent) {
+        when (event) {
+            is MetricEvent.Hydration -> {
+                statsd.incrementCounter("tempest.hybrid.hydration.${event.operation}")
+                statsd.recordExecutionTime("tempest.hybrid.latency.${event.operation}", event.latencyMs)
+                if (!event.success) {
+                    statsd.incrementCounter("tempest.hybrid.errors.${event.operation}")
+                }
+            }
+            is MetricEvent.BatchComplete -> {
+                statsd.recordHistogramValue("tempest.hybrid.batch_size.${event.operation}", event.itemCount)
+                statsd.recordGaugeValue("tempest.hybrid.success_rate.${event.operation}",
+                    event.successCount.toDouble() / event.itemCount)
+            }
+            is MetricEvent.RetryAttempt -> {
+                statsd.incrementCounter("tempest.hybrid.retry.${event.operation}.attempt${event.attempt}")
+                if (event.succeeded) {
+                    statsd.incrementCounter("tempest.hybrid.retry.${event.operation}.success")
+                }
+                statsd.recordExecutionTime("tempest.hybrid.retry.delay", event.delayMs)
+            }
+        }
+    }
+}
+```
+
+### Conditional Metrics
+
+Enable metrics based on runtime conditions:
+
+```kotlin
+// Only record metrics for 10% of requests (sampling)
+val sampledMetrics = ConditionalMetrics(actualMetrics) {
+    Random.nextDouble() < 0.1
+}
+
+// Or enable based on feature flag
+val flaggedMetrics = ConditionalMetrics(actualMetrics) {
+    featureFlags.isEnabled("tempest-hybrid-metrics")
+}
+```
+
+### Available Metrics
+
+The library tracks these low-cardinality metrics:
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `Hydration.operation` | String | DynamoDB operation (query, scan, getItem, etc.) |
+| `Hydration.success` | Boolean | Whether S3 fetch succeeded |
+| `Hydration.latencyMs` | Long | Time taken for S3 operation |
+| `BatchComplete.itemCount` | Int | Number of items needing hydration |
+| `BatchComplete.successCount` | Int | Number successfully hydrated |
+| `RetryAttempt.operation` | String | DynamoDB operation being retried |
+| `RetryAttempt.attempt` | Int | Attempt number (1-based) |
+| `RetryAttempt.maxAttempts` | Int | Maximum attempts configured |
+| `RetryAttempt.delayMs` | Long | Delay before this retry attempt |
+| `RetryAttempt.succeeded` | Boolean | Whether this retry succeeded |
+
+### Disabling Metrics
+
+To completely disable metrics (default behavior):
+
+```kotlin
+val hybridConfig = HybridConfig(
+    s3Config = HybridConfig.S3Config(bucketName = "my-bucket"),
+    metrics = null  // No metrics overhead
+)
+```
+
+### Logging
+
+The library uses SLF4J for logging:
+
+```xml
+<!-- Set appropriate log levels -->
+<logger name="app.cash.tempest.hybrid" level="INFO"/>
+```
+
+## Limitations
+
+1. **Read-Only Hydration**: This library only handles the read path. Writing to S3 and creating pointers must be done separately.
+2. **No Caching**: Does not cache hydrated items (add application-level caching if needed)
+3. ~~**No Retry Logic**~~: **Optional retry logic now available** - configure via `RetryConfig`
+4. **Size Limits**: S3 objects should be reasonable size for in-memory processing
+
+## Security Considerations
+
+1. **IAM Permissions**: Ensure your application has proper S3 read permissions
+2. **Encryption**: Use S3 encryption at rest (SSE-S3 or SSE-KMS)
+3. **Network**: Consider using VPC endpoints for S3 access
+4. **Sensitive Data**: S3 pointer paths are visible in DynamoDB
+
+## Troubleshooting
+
+### Common Issues
+
+**Issue**: High latency for queries with many S3 pointers
+- **Solution**: Increase thread pool size or optimize S3 object sizes
+
+**Issue**: Out of memory errors
+- **Solution**: Reduce thread pool size or process large results in batches
+
+**Issue**: S3 throttling errors
+- **Solution**: Reduce concurrency or implement exponential backoff
+
+## Contributing
+
+See the main Tempest repository for contribution guidelines.
+
+## License
+
+Licensed under the Apache License, Version 2.0. See LICENSE file for details.
