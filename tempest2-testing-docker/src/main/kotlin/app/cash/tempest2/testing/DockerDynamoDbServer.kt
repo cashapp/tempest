@@ -18,6 +18,7 @@ package app.cash.tempest2.testing
 
 import app.cash.tempest2.testing.internal.buildDynamoDb
 import app.cash.tempest2.testing.internal.hostName
+import com.github.dockerjava.api.model.AuthConfig
 import com.github.dockerjava.api.model.ExposedPort
 import com.github.dockerjava.api.model.Ports
 import com.google.common.util.concurrent.AbstractIdleService
@@ -27,7 +28,8 @@ import software.amazon.awssdk.services.dynamodb.model.DynamoDbException
 class DockerDynamoDbServer private constructor(
   override val port: Int,
   private val onBeforeStartup: () -> Unit,
-  imageResolver: (String) -> String
+  imageResolver: (String) -> String,
+  authProvider: (() -> AuthConfig)?
 ) : AbstractIdleService(), TestDynamoDbServer {
 
   override val id = "tempest2-docker-dynamodb-local-$port"
@@ -60,17 +62,20 @@ class DockerDynamoDbServer private constructor(
 
   private val composer = Composer(
     "e-$id",
-    Container {
-      // DynamoDB Local listens on port 8000 by default.
-      val exposedClientPort = ExposedPort.tcp(8000)
-      val portBindings = Ports()
-      portBindings.bind(exposedClientPort, Ports.Binding.bindPort(port))
-      withImage(resolvedImage)
-        .withName(id)
-        .withExposedPorts(exposedClientPort)
-        .withCmd("-jar", "DynamoDBLocal.jar", "-sharedDb", "-disableTelemetry")
-        .withPortBindings(portBindings)
-    }
+    Container(createCmd = {
+        // DynamoDB Local listens on port 8000 by default.
+        val exposedClientPort = ExposedPort.tcp(8000)
+        val portBindings = Ports()
+        portBindings.bind(exposedClientPort, Ports.Binding.bindPort(port))
+        withImage(resolvedImage)
+          .withName(id)
+          .withExposedPorts(exposedClientPort)
+          .withCmd("-jar", "DynamoDBLocal.jar", "-sharedDb", "-disableTelemetry")
+          .withPortBindings(portBindings)
+      },
+      beforeStartHook = { _, _ -> },
+      authConfig = authProvider?.let { it() },
+    )
   )
 
   object Factory : TestDynamoDbServer.Factory<DockerDynamoDbServer> {
@@ -84,10 +89,11 @@ class DockerDynamoDbServer private constructor(
      * ```
      */
     var imageResolver: (String) -> String = { it }
+    var authProvider: (() -> AuthConfig)? = null
 
     override fun hostName(port: Int): String = app.cash.tempest2.testing.internal.hostName(port)
     override fun create(port: Int, onBeforeStartup: () -> Unit) =
-      DockerDynamoDbServer(port, onBeforeStartup, imageResolver)
+      DockerDynamoDbServer(port, onBeforeStartup, imageResolver, authProvider)
   }
 
   companion object {

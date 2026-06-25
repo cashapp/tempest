@@ -8,6 +8,7 @@ import com.github.dockerjava.api.command.CreateContainerCmd
 import com.github.dockerjava.api.command.PullImageResultCallback
 import com.github.dockerjava.api.command.WaitContainerResultCallback
 import com.github.dockerjava.api.exception.NotFoundException
+import com.github.dockerjava.api.model.AuthConfig
 import com.github.dockerjava.api.model.Frame
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
@@ -30,9 +31,11 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 data class Container(
     val createCmd: CreateContainerCmd.() -> Unit,
-    val beforeStartHook: (docker: DockerClient, id: String) -> Unit
+    val beforeStartHook: (docker: DockerClient, id: String) -> Unit,
+    val authConfig: AuthConfig?
 ) {
-    constructor(createCmd: CreateContainerCmd.() -> Unit) : this(createCmd, { _, _ -> })
+    constructor(createCmd: CreateContainerCmd.() -> Unit) : this(createCmd, { _, _ -> }, null)
+    constructor(createCmd: CreateContainerCmd.() -> Unit, beforeStartHook: (docker: DockerClient, id: String) -> Unit) : this(createCmd, beforeStartHook, null)
 }
 
 /**
@@ -107,6 +110,11 @@ class Composer(private val name: String, private vararg val containers: Containe
                 val imageParts = image.split(":")
                 docker.pullImageCmd(imageParts[0])
                     .withTag(imageParts.getOrElse(1) { "latest" })
+                    .also { pullCmd ->
+                        container.authConfig?.let { authConfig ->
+                            pullCmd.withAuthConfig(authConfig)
+                        }
+                    }
                     .exec(PullImageResultCallback()).awaitCompletion()
             }
 
