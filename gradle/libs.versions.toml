@@ -42,7 +42,7 @@ loggingApi = { module = "io.github.microutils:kotlin-logging", version = "3.0.5"
 mavenPublishGradlePlugin = { module = "com.vanniktech:gradle-maven-publish-plugin", version = "0.33.0" }
 moshiCore = { module = "com.squareup.moshi:moshi", version = "1.15.2" }
 moshiKotlin = { module = "com.squareup.moshi:moshi-kotlin", version = "1.15.2" }
-nettyBom = { module = "io.netty:netty-bom", version = "4.2.6.Final" }
+nettyBom = { module = "io.netty:netty-bom", version = "4.2.17.Final" }
 okio = { module = "com.squareup.okio:okio", version = "3.16.0" }
 okioFakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version = "3.16.0" }
 shadowGradlePlugin = { module = "com.gradleup.shadow:shadow-gradle-plugin", version = "9.1.0" }
