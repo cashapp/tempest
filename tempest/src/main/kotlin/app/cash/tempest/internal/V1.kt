@@ -68,7 +68,7 @@ internal class V1RawItemTypeFactory(
       tableName,
       tableModel.hashKey<Any>().name(),
       tableModel.rangeKeyIfExists<Any>()?.name(),
-      tableModel.fields().map { it.name() }.sorted(),
+      tableModel.fields().associate { it.name() to it.name() },
       secondaryIndexes(tableModel)
     )
   }

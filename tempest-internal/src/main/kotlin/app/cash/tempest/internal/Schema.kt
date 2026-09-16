@@ -159,17 +159,17 @@ data class KeyType(
             constructorParameters
           )
         ) { "Please move Attribute annotation from $keyType.${property.name} to ${itemType.type}.${property.name}" }
-        attributeNames.addAll(attribute.names)
+        attributeNames.addAll(attribute.attributeNames)
       }
       for (keyAttribute in itemType.keyAttributes(itemType.primaryIndex)) {
-        require(attributeNames.containsAll(keyAttribute.names)) { "Expect $keyType to have property ${keyAttribute.propertyName}" }
+        require(attributeNames.containsAll(keyAttribute.attributeNames)) { "Expect $keyType to have property ${keyAttribute.propertyName}" }
       }
       val secondaryIndexName = forIndexAnnotation.secondaryIndexName(keyType)
       val (hashKeyName, rangeKeyName) = if (secondaryIndexName != null) {
         val secondaryIndex =
           requireNotNull(itemType.secondaryIndexes[secondaryIndexName]) { "Expect ${itemType.rawItemType} to have secondary index $secondaryIndexName" }
         for (keyAttribute in itemType.keyAttributes(secondaryIndex)) {
-          require(attributeNames.containsAll(keyAttribute.names)) { "Expect $keyType to have property ${keyAttribute.propertyName}" }
+          require(attributeNames.containsAll(keyAttribute.attributeNames)) { "Expect $keyType to have property ${keyAttribute.propertyName}" }
         }
         secondaryIndex.hashKeyName to secondaryIndex.rangeKeyName
       } else {
@@ -199,12 +199,12 @@ data class ItemType(
 ) : LogicalType() {
 
   val attributeNames: Set<String>
-    get() = attributes.values.flatMap { it.names }.toSet()
+    get() = attributes.values.flatMap { it.attributeNames }.toSet()
 
   fun keyAttributes(index: Index): Set<Attribute> {
     val keyAttributes = mutableSetOf<Attribute>()
     for ((_, attribute) in attributes) {
-      for (attributeName in attribute.names) {
+      for (attributeName in attribute.attributeNames) {
         if (attributeName == index.hashKeyName || attributeName == index.rangeKeyName) {
           keyAttributes.add(attribute)
         }
@@ -215,7 +215,8 @@ data class ItemType(
 
   data class Attribute(
     val propertyName: String,
-    val names: Set<String>,
+    val rawPropertyNames: Set<String>,
+    val attributeNames: Set<String>,
     val prefix: String,
     val returnType: KType,
     val allowEmpty: Boolean
@@ -262,7 +263,7 @@ data class ItemType(
         attributes[property.name] = attribute
       }
       val attributesByName =
-        attributes.values.flatMap { attribute -> attribute.names.map { it to attribute } }.toMap()
+        attributes.values.flatMap { attribute -> attribute.attributeNames.map { it to attribute } }.toMap()
       require(attributesByName.contains(primaryIndex.hashKeyName)) {
         "Expect $itemType to map to ${rawItemType.type}'s hash key ${primaryIndex.hashKeyName}"
       }
@@ -287,19 +288,29 @@ data class ItemType(
       if (property.shouldIgnore) {
         return null
       }
-      val (expectedRawItemAttributes, prefix, allowEmpty) = attributeAnnotation.attributeMetadata(
+      val (expectedRawItemProperties, prefix, allowEmpty) = attributeAnnotation.attributeMetadata(
         property,
         constructorParameters
       )
-      for (expectedAttribute in expectedRawItemAttributes) {
-        require(rawItemType.propertyNames.contains(expectedAttribute)) {
-          "Expect $expectedAttribute, required by $itemType, to be declared in " +
+      for (expectedProperty in expectedRawItemProperties) {
+        require(rawItemType.attributeNamesByPropertyName.containsKey(expectedProperty)) {
+          "Expect $expectedProperty, required by $itemType, to be declared in " +
             "${rawItemType.type}. But found ${rawItemType.propertyNames}. Use @Transient to exclude it. " +
             "You might see this error message if the property name starts with `is`. " +
             "See: https://github.com/cashapp/tempest/issues/53."
         }
       }
-      return Attribute(property.name, expectedRawItemAttributes, prefix, property.returnType, allowEmpty)
+      val attributeNames = expectedRawItemProperties.mapTo(mutableSetOf()) {
+        rawItemType.attributeNamesByPropertyName.getValue(it)
+      }
+      return Attribute(
+        property.name,
+        expectedRawItemProperties,
+        attributeNames,
+        prefix,
+        property.returnType,
+        allowEmpty
+      )
     }
   }
 }
@@ -309,9 +320,12 @@ data class RawItemType(
   val tableName: String,
   val hashKeyName: String,
   val rangeKeyName: String?,
-  val propertyNames: List<String>,
+  val attributeNamesByPropertyName: Map<String, String>,
   val secondaryIndexes: Map<String, ItemType.SecondaryIndex>
 ) : LogicalType() {
+
+  val propertyNames: List<String>
+    get() = attributeNamesByPropertyName.keys.sorted()
 
   override val codec: Codec<Any, Any> = IdentityCodec
 

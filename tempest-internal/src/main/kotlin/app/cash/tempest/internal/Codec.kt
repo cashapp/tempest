@@ -177,7 +177,7 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
       for (property in itemType.memberProperties) {
         val propertyName = property.name
         val itemAttribute = itemAttributes[propertyName] ?: continue
-        val mappedProperties = itemAttribute.names
+        val mappedProperties = itemAttribute.rawPropertyNames
           .map { requireNotNull(dbItemProperties[it]) { "Expect ${rawItemType.type} to have property $propertyName" } }
         val mappedPropertyTypes = mappedProperties.map { it.returnType }.distinct()
         require(mappedPropertyTypes.size == 1) { "Expect mapped properties of $propertyName to have the same type: ${mappedProperties.map { it.name }}" }
@@ -202,7 +202,11 @@ internal class ReflectionCodec<A : Any, D : Any> private constructor(
       }
       val attributePrefixes = itemAttributes.values
         .filter { attribute -> attribute.prefix.isNotEmpty() }
-        .flatMap { attribute -> attribute.names.map { Prefixer.AttributePrefix(it, attribute.prefix, attribute.allowEmpty) } }
+        .flatMap { attribute ->
+          attribute.attributeNames.map {
+            Prefixer.AttributePrefix(it, attribute.prefix, attribute.allowEmpty)
+          }
+        }
       return ReflectionCodec(
         itemType.defaultConstructor,
         ClassFactory.create(itemType.java),

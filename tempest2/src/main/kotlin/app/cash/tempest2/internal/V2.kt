@@ -30,8 +30,11 @@ import app.cash.tempest2.TableName
 import app.cash.tempest2.TableNameResolver
 import software.amazon.awssdk.enhanced.dynamodb.TableMetadata
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+import java.beans.Introspector
 import kotlin.reflect.KClass
+import kotlin.reflect.full.memberProperties
 
 internal object V2ForIndexAnnotation : ForIndexAnnotation<ForIndex> {
   override val type = ForIndex::class
@@ -69,12 +72,13 @@ internal class V2RawItemTypeFactory : RawItemType.Factory {
 
   override fun create(tableName: String, rawItemType: KClass<*>): RawItemType {
     val tableSchema = TableSchemaFactory.create<Any>(rawItemType.java)
+    val attributeNamesByProperty = rawItemType.attributeNamesByProperty(tableSchema)
     return RawItemType(
       rawItemType as KClass<Any>,
       tableName,
       tableSchema.tableMetadata().primaryPartitionKey(),
       tableSchema.tableMetadata().primarySortKey().orElse(null),
-      tableSchema.attributeNames().sorted(),
+      attributeNamesByProperty,
       tableSchema.tableMetadata().indices()
         .filter { it.name() != TableMetadata.primaryIndexName() }
         .map {
@@ -86,6 +90,26 @@ internal class V2RawItemTypeFactory : RawItemType.Factory {
         }.associateBy { it.name }
     )
   }
+}
+
+private fun KClass<*>.attributeNamesByProperty(tableSchema: TableSchema<*>): Map<String, String> {
+  val dynamoDbAttributeNames = tableSchema.attributeNames().toSet()
+  val propertyNames = memberProperties.mapTo(mutableSetOf()) { it.name }
+  val annotatedAttributeNames = java.methods.mapNotNull { method ->
+    val annotation = method.getAnnotation(DynamoDbAttribute::class.java) ?: return@mapNotNull null
+    val propertyName = when {
+      method.name.startsWith("get") -> method.name.removePrefix("get")
+      method.name.startsWith("is") -> method.name.removePrefix("is")
+      method.name in propertyNames -> method.name
+      else -> return@mapNotNull null
+    }
+    val attributeName = annotation.value.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+    Introspector.decapitalize(propertyName) to attributeName
+  }.toMap()
+
+  return memberProperties.associate { property ->
+    property.name to (annotatedAttributeNames[property.name] ?: property.name)
+  }.filterValues { it in dynamoDbAttributeNames }
 }
 
 internal fun getTableName(
