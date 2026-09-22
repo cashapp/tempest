@@ -16,8 +16,8 @@
 
 package app.cash.tempest.testing
 
-import app.cash.tempest.testing.dynamodb.local.shaded.com.amazonaws.services.dynamodbv2.local.main.ServerRunner
-import app.cash.tempest.testing.dynamodb.local.shaded.com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer
+import app.cash.tempest.testing.dynamodb.local.shaded.software.amazon.dynamodb.services.local.main.ServerRunner
+import app.cash.tempest.testing.dynamodb.local.shaded.software.amazon.dynamodb.services.local.server.DynamoDBProxyServer
 import app.cash.tempest.testing.internal.getLogger
 import app.cash.tempest.testing.internal.isServerListening
 import com.google.common.util.concurrent.AbstractIdleService
