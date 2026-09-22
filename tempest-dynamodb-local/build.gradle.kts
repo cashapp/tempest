@@ -14,11 +14,18 @@ dependencies {
   implementation(libs.awsDynamodbLocal) {
     isTransitive = false
   }
+  implementation(libs.partiqlLang) {
+    isTransitive = false
+  }
+  implementation(libs.partiqlIrGeneratorRuntime) {
+    isTransitive = false
+  }
 
   // Implementation dependencies will be shaded in the JAR.
   implementation(libs.bundles.jackson)
   implementation(libs.bundles.jetty)
   implementation(libs.antlr4Runtime)
+  implementation(libs.jodaTime)
   implementation(libs.kotlinStdLib)
 
   // Shadow dependencies will not be shaded.
@@ -27,11 +34,17 @@ dependencies {
   shadow(libs.aws2Dynamodb)
   shadow(libs.aws2DynamodbEnhanced)
   shadow(libs.aws2Pinpoint)
-  shadow(libs.awsDynamodb)
+  shadow(libs.aws2CognitoIdentity)
+  shadow(libs.aws2CognitoIdentityProvider)
+  shadow(libs.aws2UrlConnectionClient)
   shadow(libs.commonsCli)
   shadow(libs.commonsLang3)
+  shadow(libs.commonsLogging)
+  shadow(libs.jakartaTransactionApi)
   shadow(libs.guava)
   shadow(libs.slf4jApi)
+  shadow(libs.log4jApi)
+  shadow(libs.log4jCore)
 }
 
 tasks.jar {
@@ -47,32 +60,29 @@ tasks.shadowJar {
   // included. An alternative would be an explicit deny-list, but this is seen as safer. Engineers should take care to
   // update it when they update the dependencies of this project.
   dependencies {
-    include(dependency("com.amazonaws:DynamoDBLocal"))
+    include(dependency("software.amazon.dynamodb:DynamoDBLocal"))
     include(dependency("com.fasterxml.jackson.core:.*"))
     include(dependency("com.fasterxml.jackson.dataformat:.*"))
     include(dependency("com.fasterxml.jackson.datatype:.*"))
     include(dependency("com.fasterxml.jackson.module:.*"))
     include(dependency("org.antlr:.*"))
     include(dependency("org.eclipse.jetty:.*"))
+    include(dependency("org.partiql:.*"))
+    include(dependency("joda-time:.*"))
   }
 
   // Relocate packages to avoid conflicts.
   listOf(
     "com.amazon.dynamodb.grammar",
     "com.amazon.ion",
-    "com.amazonaws.services.dynamodbv2.dataMembers",
-    "com.amazonaws.services.dynamodbv2.datamodel",
-    "com.amazonaws.services.dynamodbv2.dbenv",
-    "com.amazonaws.services.dynamodbv2.exceptions",
-    "com.amazonaws.services.dynamodbv2.local",
-    "com.amazonaws.services.dynamodbv2.parser",
-    "com.amazonaws.services.dynamodbv2.rr",
+    "com.amazonaws.services.dynamodbv2",
     "com.fasterxml.jackson",
     "ddb.partiql",
-    "kotlin",
     "org.antlr",
     "org.eclipse.jetty",
+    "org.joda.time",
     "org.partiql",
+    "software.amazon.dynamodb.services",
   ).forEach { relocate(it, "app.cash.tempest.testing.dynamodb.local.shaded.${it}") }
 
   mergeServiceFiles()
