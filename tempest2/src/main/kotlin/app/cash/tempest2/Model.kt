@@ -85,28 +85,53 @@ data class BatchWriteResult(
 
 data class TransactionWriteSet(
   val itemsToSave: ItemSet,
+  val itemsToPut: ItemSet,
   val keysToDelete: KeySet,
   val keysToCheck: KeySet,
   val writeExpressions: Map<Any, Expression>,
   val idempotencyToken: String?
 ) {
 
+  /**
+   * The save/put/delete/check operations in the order the caller added them via the [Builder].
+   *
+   * DynamoDB aligns the `List<CancellationReason>` on a `TransactionCanceledException` positionally
+   * with the items in the submitted request, so preserving the caller's insertion order across
+   * operation kinds lets callers map a cancellation reason back to the operation that triggered it.
+   *
+   * When a [TransactionWriteSet] is constructed directly rather than through the [Builder], this
+   * defaults to save → put → delete → check order, matching the historical request ordering.
+   */
+  var operations: List<WriteOperation> = buildList {
+    itemsToSave.forEach { add(WriteOperation.Save(it)) }
+    itemsToPut.forEach { add(WriteOperation.Put(it)) }
+    keysToDelete.forEach { add(WriteOperation.Delete(it)) }
+    keysToCheck.forEach { add(WriteOperation.Check(it)) }
+  }
+    internal set
+
   val sizeDynamoDbTable
-    get() = itemsToSave.size + keysToDelete.size + keysToCheck.size
+    get() = itemsToSave.size + itemsToPut.size + keysToDelete.size + keysToCheck.size
 
   class Builder {
     private val itemsToSave = mutableSetOf<Any>()
+    private val itemsToPut = mutableSetOf<Any>()
     private val keysToDelete = mutableSetOf<Any>()
     private val keysToCheck = mutableSetOf<Any>()
     private val writeExpressions = mutableMapOf<Any, Expression>()
+    private val operations = mutableListOf<WriteOperation>()
     private var idempotencyToken: String? = null
 
     val size
-      get() = itemsToSave.size + keysToDelete.size + keysToCheck.size
+      get() = itemsToSave.size + itemsToPut.size + keysToDelete.size + keysToCheck.size
 
     /**
-     * This adds a put operation to clear and replace all attributes, including unmodeled ones.
-     * Partial update is not supported.
+     * Saves an item using DynamoDB's UpdateItem operation. This supports `@DynamoDbVersionAttribute`
+     * for optimistic locking, but generates an UpdateExpression which is subject to a 4KB size limit.
+     *
+     * For items with many attributes that may exceed the 4KB UpdateExpression limit, use [put] instead.
+     *
+     * Note: Versioning annotations cannot be used in conjunction with condition expressions.
      */
     @JvmOverloads
     fun save(
@@ -117,6 +142,28 @@ data class TransactionWriteSet(
       require(added) {
         "Duplicate items are not allowed"
       }
+      operations.add(WriteOperation.Save(item))
+      if (expression != null) {
+        writeExpressions[item] = expression
+      }
+    }
+
+    /**
+     * Puts an item using DynamoDB's PutItem operation. This replaces all attributes and avoids
+     * the 4KB UpdateExpression size limit that [save] is subject to.
+     *
+     * Supports `@DynamoDbVersionAttribute` for optimistic locking with or without condition expression
+     */
+    @JvmOverloads
+    fun put(
+      item: Any,
+      expression: Expression? = null
+    ) = apply {
+      val added = itemsToPut.add(item)
+      require(added) {
+        "Duplicate items are not allowed"
+      }
+      operations.add(WriteOperation.Put(item))
       if (expression != null) {
         writeExpressions[item] = expression
       }
@@ -132,6 +179,7 @@ data class TransactionWriteSet(
         "Duplicate items are not allowed: $key."
       }
       keysToDelete.add(key)
+      operations.add(WriteOperation.Delete(key))
       if (expression != null) {
         writeExpressions[key] = expression
       }
@@ -146,6 +194,7 @@ data class TransactionWriteSet(
         "Duplicate items are not allowed: $key."
       }
       keysToCheck.add(key)
+      operations.add(WriteOperation.Check(key))
       if (expression != null) {
         writeExpressions[key] = expression
       }
@@ -158,14 +207,15 @@ data class TransactionWriteSet(
     fun addAll(builder: Builder) {
       check(builder.idempotencyToken == null) { "too many idempotency tokens" }
 
-      for (item in builder.itemsToSave) {
-        save(item)
-      }
-      for (item in builder.keysToDelete) {
-        delete(item)
-      }
-      for (item in builder.keysToCheck) {
-        checkCondition(item)
+      // Replay in the source builder's insertion order so the merged set preserves ordering across
+      // operation kinds. Expressions are merged below rather than per-operation.
+      for (operation in builder.operations) {
+        when (operation) {
+          is WriteOperation.Save -> save(operation.item)
+          is WriteOperation.Put -> put(operation.item)
+          is WriteOperation.Delete -> delete(operation.key)
+          is WriteOperation.Check -> checkCondition(operation.key)
+        }
       }
 
       writeExpressions += builder.writeExpressions
@@ -174,12 +224,40 @@ data class TransactionWriteSet(
     fun build(): TransactionWriteSet {
       return TransactionWriteSet(
         ItemSet(itemsToSave),
+        ItemSet(itemsToPut),
         KeySet(keysToDelete),
         KeySet(keysToCheck),
         writeExpressions.toMap(),
         idempotencyToken
-      )
+      ).also {
+        it.operations = operations.toList()
+      }
     }
+  }
+}
+
+/**
+ * A single operation in a [TransactionWriteSet], retaining the order it was added to the
+ * [TransactionWriteSet.Builder].
+ */
+sealed class WriteOperation {
+  /** The item or key this operation acts on; the lookup key into [TransactionWriteSet.writeExpressions]. */
+  abstract val subject: Any
+
+  data class Save(val item: Any) : WriteOperation() {
+    override val subject get() = item
+  }
+
+  data class Put(val item: Any) : WriteOperation() {
+    override val subject get() = item
+  }
+
+  data class Delete(val key: Any) : WriteOperation() {
+    override val subject get() = key
+  }
+
+  data class Check(val key: Any) : WriteOperation() {
+    override val subject get() = key
   }
 }
 

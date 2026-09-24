@@ -18,6 +18,7 @@ dependencies {
 
   testImplementation(libs.assertj)
   testImplementation(libs.junitEngine)
+  testRuntimeOnly(libs.junitLauncher)
   testImplementation(project(":samples:urlshortener2"))
   testImplementation(project(":tempest2-testing-junit5"))
 }

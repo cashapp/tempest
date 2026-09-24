@@ -22,12 +22,12 @@ import app.cash.tempest2.musiclibrary.testDb
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import java.time.Duration
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteItemEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteResult
 import software.amazon.awssdk.services.dynamodb.model.DeleteRequest
 import software.amazon.awssdk.services.dynamodb.model.WriteRequest
+import java.time.Duration
 
 class LogicalDbFailureTest {
 

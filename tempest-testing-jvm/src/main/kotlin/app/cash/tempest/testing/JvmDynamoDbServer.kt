@@ -16,10 +16,11 @@
 
 package app.cash.tempest.testing
 
-import com.amazonaws.services.dynamodbv2.local.main.ServerRunner
-import com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer
+import app.cash.tempest.testing.dynamodb.local.shaded.software.amazon.dynamodb.services.local.main.ServerRunner
+import app.cash.tempest.testing.dynamodb.local.shaded.software.amazon.dynamodb.services.local.server.DynamoDBProxyServer
+import app.cash.tempest.testing.internal.getLogger
+import app.cash.tempest.testing.internal.isServerListening
 import com.google.common.util.concurrent.AbstractIdleService
-import java.io.File
 
 class JvmDynamoDbServer private constructor(
   override val port: Int,
@@ -31,57 +32,40 @@ class JvmDynamoDbServer private constructor(
   private lateinit var server: DynamoDBProxyServer
 
   override fun startUp() {
-    val libraryFile = libsqlite4javaNativeLibrary()
-    System.setProperty("sqlite4java.library.path", libraryFile.parent)
-
+    log.info { "releasing port $port for $id" }
     onBeforeStartup()
-    server = ServerRunner.createServerFromCommandLineArgs(
-      arrayOf("-inMemory", "-port", port.toString())
-    )
-    server.start()
-  }
+    try {
+      log.info { "starting DynamoDB Local server on port $port for $id" }
+      server = ServerRunner.createServerFromCommandLineArgs(
+        arrayOf("-inMemory", "-disableTelemetry", "-port", port.toString())
+      )
+      server.start()
+      log.info { "DynamoDB Local server started on port $port for $id" }
+    } catch (e: Exception) {
+      log.error(e) { "failed to start DynamoDB Local server on port $port for $id" }
+      throw e
+    }
 
-  private fun libsqlite4javaNativeLibrary(): File {
-    val prefix = libsqlite4javaPrefix()
-    val classpath = System.getProperty("java.class.path")
-    val classpathElements = classpath.split(File.pathSeparator)
-    for (element in classpathElements) {
-      val file = File(element)
-      if (file.name.startsWith(prefix)) {
-        return file
+    // Health check: verify the server is actually listening
+    var serverReady = false
+    for (attempt in 1..5) {
+      if (isServerListening("localhost", port)) {
+        log.info { "health check passed for $id on port $port (attempt $attempt/5)" }
+        serverReady = true
+        break
+      }
+      log.info { "health check attempt $attempt/5 for $id on port $port - server not yet listening" }
+      if (attempt < 5) {
+        Thread.sleep(200)
       }
     }
-    throw IllegalArgumentException("couldn't find native library for $prefix")
+    if (!serverReady) {
+      log.warn { "health check failed after 5 attempts for $id on port $port - server may not be ready" }
+    }
   }
 
-  /**
-   * Returns the prefix of the sqlite4java native library for the current platform.
-   *
-   * Observed values of os.arch include:
-   *  * x86_64
-   *  * amd64
-   *  * aarch64
-   *
-   * Observed values of os.name include:
-   *  * Linux
-   *  * Mac OS X
-   *
-   * Available native versions of sqlite4java are:
-   *  * libsqlite4java-linux-amd64-1.0.392.so
-   *  * libsqlite4java-linux-i386-1.0.392.so
-   *  * libsqlite4java-osx-1.0.392.dylib
-   *  * sqlite4java-win32-x64-1.0.392.dll
-   *  * sqlite4java-win32-x86-1.0.392.dll
-   */
-  private fun libsqlite4javaPrefix(): String {
-    val osArch = System.getProperty("os.arch")
-    val osName = System.getProperty("os.name")
-
-    return when {
-      osName == "Linux" && osArch == "amd64" -> "libsqlite4java-linux-amd64-"
-      osName == "Mac OS X" && osArch in listOf("x86_64", "aarch64") -> "libsqlite4java-osx-"
-      else -> throw IllegalStateException("unexpected platform: os.name=$osName os.arch=$osArch")
-    }
+  companion object {
+    private val log = getLogger<JvmDynamoDbServer>()
   }
 
   override fun shutDown() {
@@ -89,6 +73,7 @@ class JvmDynamoDbServer private constructor(
   }
 
   object Factory : TestDynamoDbServer.Factory<JvmDynamoDbServer> {
+    override fun hostName(port: Int) = "localhost"
     override fun create(port: Int, onBeforeStartup: () -> Unit) = JvmDynamoDbServer(port, onBeforeStartup)
   }
 }

@@ -13,10 +13,6 @@ dependencies {
   api(libs.findbugsJsr305)
   api(libs.guava)
   implementation(libs.kotlinStdLib)
-
-  testImplementation(libs.assertj)
-  testImplementation(libs.junitApi)
-  testImplementation(libs.junitEngine)
 }
 
 configure<MavenPublishBaseExtension> {

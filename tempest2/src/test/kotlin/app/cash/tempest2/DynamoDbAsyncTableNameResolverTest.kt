@@ -21,10 +21,10 @@ import app.cash.tempest2.musiclibrary.AsyncMusicDb
 import app.cash.tempest2.musiclibrary.AsyncMusicTable
 import app.cash.tempest2.musiclibrary.testDb
 import app.cash.tempest2.testing.asyncLogicalDb
-import java.time.LocalDate
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.time.LocalDate
 
 class DynamoDbAsyncTableNameResolverTest {
 

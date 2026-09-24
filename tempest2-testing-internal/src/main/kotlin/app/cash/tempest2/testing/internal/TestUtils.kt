@@ -39,6 +39,7 @@ fun pickRandomPort(): Int {
 
 fun allocateRandomPort(): ServerSocket {
   val socket = ServerSocket(0)
+  getLogger<TestDynamoDbService>().info { "[tempest2] allocated random port ${socket.localPort}" }
   Runtime.getRuntime().addShutdownHook(
     Thread { socket.close() }
   )

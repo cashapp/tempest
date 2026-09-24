@@ -68,7 +68,7 @@ internal class DynamoDbQueryable<K : Any, I : Any>(
       val specificAttributeNamesAliased = mutableListOf<String>()
       val expressionAttributeNames = mutableMapOf<String, String>()
       for (name in specificAttributeNames) {
-        val upperName = name.toUpperCase()
+        val upperName = name.uppercase()
         if (reservedWords.contains(upperName)) {
           val alias = "#$name"
           specificAttributeNamesAliased.add(alias)

@@ -13,10 +13,6 @@ dependencies {
   api(libs.loggingApi)
   implementation(libs.log4jCore)
   implementation(libs.kotlinStdLib)
-
-  testImplementation(libs.assertj)
-  testImplementation(libs.junitApi)
-  testImplementation(libs.junitEngine)
 }
 
 

@@ -20,6 +20,7 @@ dependencies {
   testImplementation(project(":tempest2-testing-jvm"))
   testImplementation(libs.assertj)
   testImplementation(libs.junitEngine)
+  testRuntimeOnly(libs.junitLauncher)
 }
 
 
