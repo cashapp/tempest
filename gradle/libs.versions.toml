@@ -43,8 +43,8 @@ kotlinStdLib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "k
 kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.10.2" }
 kotlinxCoroutinesJdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8", version = "1.10.2" }
 kotlinxCoroutinesReactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version = "1.10.2" }
-log4jApi = { module = "org.apache.logging.log4j:log4j-api", version = "2.25.1" } # for DynamoDBLocal
-log4jCore = { module = "org.apache.logging.log4j:log4j-core", version = "2.25.1" }
+log4jApi = { module = "org.apache.logging.log4j:log4j-api", version = "2.26.1" } # for DynamoDBLocal
+log4jCore = { module = "org.apache.logging.log4j:log4j-core", version = "2.26.1" }
 loggingApi = { module = "io.github.microutils:kotlin-logging", version = "3.0.5" }
 mavenPublishGradlePlugin = { module = "com.vanniktech:gradle-maven-publish-plugin", version = "0.33.0" }
 moshiCore = { module = "com.squareup.moshi:moshi", version = "1.15.2" }
