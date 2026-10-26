@@ -5,6 +5,8 @@ import app.cash.tempest2.testing.TestDynamoDbServer
 import app.cash.tempest2.testing.TestTable
 import com.google.common.util.concurrent.AbstractIdleService
 import java.net.ServerSocket
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionException
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -15,6 +17,9 @@ class TestDynamoDbService(
   val client: TestDynamoDbClient,
   val server: TestDynamoDbServer
 ) : AbstractIdleService() {
+
+  // Tests set this before starting the service to control the claim/start interleaving.
+  internal var onStartupDecisionForTest: (Boolean) -> Unit = {}
 
   override fun startUp() {
     server.startIfNeeded()
@@ -30,24 +35,41 @@ class TestDynamoDbService(
   }
 
   private fun TestDynamoDbServer.startIfNeeded() {
-    if (runningServers.contains(id)) {
-      log.info { "$id already running, not starting anything" }
-      return
-    }
-    val startTime = System.currentTimeMillis()
-    log.info { "starting $id" }
-    startAsync()
-    awaitRunning()
-    val elapsed = System.currentTimeMillis() - startTime
-    log.info { "$id started in ${elapsed}ms" }
-    Runtime.getRuntime().addShutdownHook(
-      Thread {
-        log.info { "stopping $id" }
-        stopAsync()
-        awaitTerminated()
+    val startup = CompletableFuture<Unit>()
+    val existingStartup = serverStarts.putIfAbsent(id, startup)
+    val ownsStartup = existingStartup == null
+    try {
+      onStartupDecisionForTest(ownsStartup)
+      if (existingStartup != null) {
+        try {
+          existingStartup.join()
+        } catch (e: CompletionException) {
+          throw (e.cause ?: e)
+        }
+        log.info { "$id already running, not starting anything" }
+        return
       }
-    )
-    runningServers.add(id)
+      val startTime = System.currentTimeMillis()
+      log.info { "starting $id" }
+      startAsync()
+      awaitRunning()
+      val elapsed = System.currentTimeMillis() - startTime
+      log.info { "$id started in ${elapsed}ms" }
+      Runtime.getRuntime().addShutdownHook(
+        Thread {
+          log.info { "stopping $id" }
+          stopAsync()
+          awaitTerminated()
+        }
+      )
+      startup.complete(Unit)
+    } catch (failure: Throwable) {
+      if (ownsStartup) {
+        startup.completeExceptionally(failure)
+        serverStarts.remove(id, startup)
+      }
+      throw failure
+    }
   }
 
   companion object {
@@ -64,7 +86,7 @@ class TestDynamoDbService(
       }
     }
 
-    private val runningServers = ConcurrentHashMap.newKeySet<String>()
+    private val serverStarts = ConcurrentHashMap<String, CompletableFuture<Unit>>()
     private val log = getLogger<TestDynamoDbService>()
 
     @JvmStatic
