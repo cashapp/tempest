@@ -32,6 +32,8 @@ import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.URI
+import java.util.concurrent.CompletableFuture
+import software.amazon.awssdk.endpoints.Endpoint
 
 fun pickRandomPort(): Int {
   ServerSocket(0).use { socket -> return socket.localPort }
@@ -73,37 +75,46 @@ fun hostName(port: Int): String {
 
 fun buildDynamoDb(port: Int): DynamoDbClient = buildDynamoDb(hostName(port), port)
 
-fun buildDynamoDb(host: String, port: Int): DynamoDbClient {
+fun buildDynamoDb(host: String, port: Int): DynamoDbClient =
+  buildDynamoDb { URI.create("http://$host:$port") }
+
+internal fun buildDynamoDb(endpoint: () -> URI): DynamoDbClient {
   return DynamoDbClient.builder()
     // The values that you supply for the AWS access key and the Region are only used to name
     // the database file.
     .credentialsProvider(AWS_CREDENTIALS_PROVIDER)
     .region(Region.US_WEST_2)
-    .endpointOverride(URI.create("http://$host:$port"))
+    .endpointProvider { CompletableFuture.completedFuture(Endpoint.builder().url(endpoint()).build()) }
     .build()
 }
 
 fun buildAsyncDynamoDb(port: Int): DynamoDbAsyncClient = buildAsyncDynamoDb(hostName(port), port)
 
-fun buildAsyncDynamoDb(host: String, port: Int): DynamoDbAsyncClient {
+fun buildAsyncDynamoDb(host: String, port: Int): DynamoDbAsyncClient =
+  buildAsyncDynamoDb { URI.create("http://$host:$port") }
+
+internal fun buildAsyncDynamoDb(endpoint: () -> URI): DynamoDbAsyncClient {
   return DynamoDbAsyncClient.builder()
     // The values that you supply for the AWS access key and the Region are only used to name
     // the database file.
     .credentialsProvider(AWS_CREDENTIALS_PROVIDER)
     .region(Region.US_WEST_2)
-    .endpointOverride(URI.create("http://$host:$port"))
+    .endpointProvider { CompletableFuture.completedFuture(Endpoint.builder().url(endpoint()).build()) }
     .build()
 }
 
 fun buildDynamoDbStreams(port: Int): DynamoDbStreamsClient = buildDynamoDbStreams(hostName(port), port)
 
-fun buildDynamoDbStreams(host: String, port: Int): DynamoDbStreamsClient {
+fun buildDynamoDbStreams(host: String, port: Int): DynamoDbStreamsClient =
+  buildDynamoDbStreams { URI.create("http://$host:$port") }
+
+internal fun buildDynamoDbStreams(endpoint: () -> URI): DynamoDbStreamsClient {
   return DynamoDbStreamsClient.builder()
     // The values that you supply for the AWS access key and the Region are only used to name
     // the database file.
     .credentialsProvider(AWS_CREDENTIALS_PROVIDER)
     .region(Region.US_WEST_2)
-    .endpointOverride(URI.create("http://$host:$port"))
+    .endpointProvider { CompletableFuture.completedFuture(Endpoint.builder().url(endpoint()).build()) }
     .build()
 }
 
@@ -111,13 +122,16 @@ fun buildAsyncDynamoDbStreams(port: Int): DynamoDbStreamsAsyncClient =
   buildAsyncDynamoDbStreams(hostName(port), port)
 
 
-fun buildAsyncDynamoDbStreams(host: String, port: Int): DynamoDbStreamsAsyncClient {
+fun buildAsyncDynamoDbStreams(host: String, port: Int): DynamoDbStreamsAsyncClient =
+  buildAsyncDynamoDbStreams { URI.create("http://$host:$port") }
+
+internal fun buildAsyncDynamoDbStreams(endpoint: () -> URI): DynamoDbStreamsAsyncClient {
   return DynamoDbStreamsAsyncClient.builder()
     // The values that you supply for the AWS access key and the Region are only used to name
     // the database file.
     .credentialsProvider(AWS_CREDENTIALS_PROVIDER)
     .region(Region.US_WEST_2)
-    .endpointOverride(URI.create("http://$host:$port"))
+    .endpointProvider { CompletableFuture.completedFuture(Endpoint.builder().url(endpoint()).build()) }
     .build()
 }
 

@@ -4,7 +4,8 @@ import app.cash.tempest2.testing.TestDynamoDbClient
 import app.cash.tempest2.testing.TestDynamoDbServer
 import app.cash.tempest2.testing.TestTable
 import com.google.common.util.concurrent.AbstractIdleService
-import java.net.ServerSocket
+import java.net.BindException
+import java.net.URI
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -17,7 +18,7 @@ class TestDynamoDbService(
 ) : AbstractIdleService() {
 
   override fun startUp() {
-    server.startIfNeeded()
+    synchronized(server) { server.startIfNeeded() }
     log.info { "starting client for ${server.id}" }
     client.startAsync()
     client.awaitRunning()
@@ -51,10 +52,8 @@ class TestDynamoDbService(
   }
 
   companion object {
-    private val allocatedSockets = ConcurrentHashMap<String, ServerSocket>()
-    private fun defaultPortHolder(key: String): PortHolder {
-      // Only pick random port once to share one test server with multiple tests.
-      val socket = allocatedSockets.getOrPut(key) { allocateRandomPort() }
+    private fun reservePort(): PortHolder {
+      val socket = allocateRandomPort()
       return PortHolder(socket.localPort) {
         if (!socket.isClosed) {
           val portNumber = socket.localPort
@@ -63,6 +62,8 @@ class TestDynamoDbService(
         }
       }
     }
+
+    private val sharedServers = ConcurrentHashMap<String, TestDynamoDbServer>()
 
     private val runningServers = ConcurrentHashMap.newKeySet<String>()
     private val log = getLogger<TestDynamoDbService>()
@@ -73,11 +74,57 @@ class TestDynamoDbService(
       tables: List<TestTable>,
       port: Int? = null
     ): TestDynamoDbService {
-      val portHolder = port?.let { PortHolder(it) } ?: defaultPortHolder(serverFactory.toString())
+      val server = if (port != null) {
+        serverFactory.create(port)
+      } else {
+        // Share both the selected port and retry state across injectors in this JVM.
+        sharedServers.computeIfAbsent(serverFactory.toString()) {
+          RetryingServer(serverFactory, reservePort())
+        }
+      }
       return TestDynamoDbService(
-        DefaultTestDynamoDbClient(tables, serverFactory.hostName(portHolder.value), portHolder.value),
-        serverFactory.create(portHolder.value, portHolder.releasePort)
+        DefaultTestDynamoDbClient(tables) {
+          URI.create("http://${serverFactory.hostName(server.port)}:${server.port}")
+        },
+        server
       )
+    }
+  }
+
+  /** Only automatically allocated ports may move; callers requesting a port retain fail-fast behavior. */
+  private class RetryingServer(
+    private val factory: TestDynamoDbServer.Factory<*>,
+    initialPort: PortHolder
+  ) : AbstractIdleService(), TestDynamoDbServer {
+    override val id = "tempest-retrying-${factory}-${initialPort.value}"
+    @Volatile
+    private var delegate = factory.create(initialPort.value, initialPort.releasePort)
+    override val port: Int get() = delegate.port
+
+    override fun startUp() {
+      val failures = mutableListOf<Exception>()
+      for (attempt in 1..3) {
+        try {
+          delegate.startAsync()
+          delegate.awaitRunning()
+          return
+        } catch (e: Exception) {
+          val bindFailure = generateSequence<Throwable>(e) { it.cause }.any { it is BindException }
+          if (!bindFailure || attempt == 3) {
+            failures.forEach { e.addSuppressed(it) }
+            throw e
+          }
+          failures.add(e)
+          log.warn(e) { "DynamoDB bind failed on port $port (attempt $attempt/3); allocating a fresh port" }
+          val socket = allocateRandomPort()
+          delegate = factory.create(socket.localPort) { socket.close() }
+        }
+      }
+    }
+
+    override fun shutDown() {
+      delegate.stopAsync()
+      delegate.awaitTerminated()
     }
   }
 

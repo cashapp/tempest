@@ -19,18 +19,21 @@ package app.cash.tempest2.testing.internal
 import app.cash.tempest2.testing.TestDynamoDbClient
 import app.cash.tempest2.testing.TestTable
 import com.google.common.util.concurrent.AbstractIdleService
+import java.net.URI
 import software.amazon.awssdk.services.dynamodb.model.DeleteTableRequest
 
-class DefaultTestDynamoDbClient(
+class DefaultTestDynamoDbClient internal constructor(
   override val tables: List<TestTable>,
-  private val hostName: String,
-  private val port: Int,
+  private val endpoint: () -> URI,
 ) : AbstractIdleService(), TestDynamoDbClient {
 
-  override val dynamoDb = buildDynamoDb(hostName, port)
-  override val asyncDynamoDb = buildAsyncDynamoDb(hostName, port)
-  override val dynamoDbStreams = buildDynamoDbStreams(hostName, port)
-  override val asyncDynamoDbStreams = buildAsyncDynamoDbStreams(hostName, port)
+  constructor(tables: List<TestTable>, hostName: String, port: Int) :
+    this(tables, { URI.create("http://$hostName:$port") })
+
+  override val dynamoDb = buildDynamoDb(endpoint)
+  override val asyncDynamoDb = buildAsyncDynamoDb(endpoint)
+  override val dynamoDbStreams = buildDynamoDbStreams(endpoint)
+  override val asyncDynamoDbStreams = buildAsyncDynamoDbStreams(endpoint)
 
   override fun startUp() {
     reset()
@@ -43,12 +46,12 @@ class DefaultTestDynamoDbClient(
 
   override fun reset() {
     // Cleans up the tables before each run.
-    log.info { "connecting to DynamoDB Local at $hostName:$port" }
+    log.info { "connecting to DynamoDB Local at ${endpoint()}" }
     var lastException: Exception? = null
     for (attempt in 1..3) {
       try {
         val tableNames = dynamoDb.listTables().tableNames()
-        log.info { "successfully connected to DynamoDB Local at $hostName:$port" }
+        log.info { "successfully connected to DynamoDB Local at ${endpoint()}" }
         for (tableName in tableNames) {
           dynamoDb.deleteTable(DeleteTableRequest.builder().tableName(tableName).build())
         }
@@ -58,13 +61,13 @@ class DefaultTestDynamoDbClient(
         return
       } catch (e: Exception) {
         lastException = e
-        log.warn(e) { "failed to connect to DynamoDB Local at $hostName:$port (attempt $attempt/3), retrying..." }
+        log.warn(e) { "failed to connect to DynamoDB Local at ${endpoint()} (attempt $attempt/3), retrying..." }
         if (attempt < 3) {
           Thread.sleep(500)
         }
       }
     }
-    log.error(lastException!!) { "failed to connect to DynamoDB Local at $hostName:$port after 3 attempts" }
+    log.error(lastException!!) { "failed to connect to DynamoDB Local at ${endpoint()} after 3 attempts" }
     throw lastException
   }
 
