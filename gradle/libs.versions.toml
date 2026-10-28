@@ -7,7 +7,7 @@ sqlite4java = "1.0.392"
 
 [libraries]
 antlr4Runtime = { module = "org.antlr:antlr4-runtime", version = "4.10.1" } # for DynamoDBLocal
-assertj = { module = "org.assertj:assertj-core", version = "3.27.4" }
+assertj = { module = "org.assertj:assertj-core", version = "3.27.7" }
 aws2CognitoIdentity = { module = "software.amazon.awssdk:cognitoidentity", version.ref = "aws2" } # for DynamoDBLocal
 aws2CognitoIdentityProvider = { module = "software.amazon.awssdk:cognitoidentityprovider", version.ref = "aws2" } # for DynamoDBLocal
 aws2Dynamodb = { module = "software.amazon.awssdk:dynamodb", version.ref = "aws2" }
