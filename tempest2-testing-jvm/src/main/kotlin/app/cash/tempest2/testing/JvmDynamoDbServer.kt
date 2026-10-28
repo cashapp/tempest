@@ -43,6 +43,15 @@ class JvmDynamoDbServer private constructor(
       log.info { "DynamoDB Local server started on port $port for $id" }
     } catch (e: Exception) {
       log.error(e) { "failed to start DynamoDB Local server on port $port for $id" }
+      // A failed Guava service cannot be stopped via stopAsync(). Clean up Jetty here,
+      // before the caller retries with a new server on another port.
+      if (::server.isInitialized) {
+        try {
+          server.stop()
+        } catch (cleanupFailure: Exception) {
+          e.addSuppressed(cleanupFailure)
+        }
+      }
       throw e
     }
 
