@@ -11,6 +11,7 @@ plugins {
 dependencies {
   api(project(":tempest2-testing"))
   api(libs.loggingApi)
+  api(libs.slf4jApi)
   implementation(libs.log4jCore)
   implementation(libs.kotlinStdLib)
 }
