@@ -187,7 +187,7 @@ class Composer(private val name: String, private vararg val containers: Containe
         ResultCallbackTemplate<LogContainerResultCallback, Frame>() {
         override fun onNext(item: Frame) {
             String(item.payload).trim().split('\r', '\n').filter { it.isNotBlank() }.forEach {
-                log.info(it)
+                log.info { it }
             }
         }
     }

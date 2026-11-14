@@ -16,8 +16,8 @@
 
 package app.cash.tempest2.testing.internal
 
-import mu.KLogger
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KLogger
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.slf4j.MDC
 import org.slf4j.event.Level
 
